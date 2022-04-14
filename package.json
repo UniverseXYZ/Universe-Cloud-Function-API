@@ -1,0 +1,38 @@
+{
+  "name": "apollographql-typescript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/pg": "^8.6.5",
+    "@types/uuid": "^8.3.4",
+    "apollo-datasource": "^3.3.1",
+    "apollo-datasource-mongodb": "^0.5.4",
+    "apollo-datasource-rest": "^3.5.2",
+    "apollo-server": "^3.6.7",
+    "dataloader": "^2.0.0",
+    "dotenv": "^16.0.0",
+    "graphql": "^16.3.0",
+    "mongoose": "^6.2.10",
+    "pg": "^8.7.3",
+    "pg-hstore": "^2.3.4",
+    "ramda": "^0.28.0",
+    "sequelize": "^6.18.0",
+    "uuid": "^8.3.2",
+    "datascraper-schema": "git+https://github.com/UniverseXYZ/Universe-Datascraper-Schema.git#dev"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.23",
+    "@types/ramda": "^0.28.8",
+    "sequelize-cli": "^6.4.1",
+    "ts-node": "^10.7.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.6.3"
+  }
+}
