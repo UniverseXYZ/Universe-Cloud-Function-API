@@ -3,43 +3,46 @@ import ProjectsAPI from "./datasources/project";
 import PriceAPI from "./datasources/price";
 import TokenAPI from "./datasources/token";
 import CollectionAPI from "./datasources/collection";
+import MongoAPI from "./datasources/mongo";
+import TokenOwnersAPI from "./datasources/tokenOwners";
 
 // Apollo Types
 export interface DataSourceConfig<TContext = any> {
-    context: TContext;
-    cache: KeyValueCache;
+  context: TContext;
+  cache: KeyValueCache;
 }
 
 // Project Types
 export interface project {
-    id: number;
-    title: string;
-    status: string;
+  id: number;
+  title: string;
+  status: string;
 }
 
 export interface projectAssignment {
-    projectId: number;
-    userId: string;
-    user: user;
-    project: project;
+  projectId: number;
+  userId: string;
+  user: user;
+  project: project;
 }
 
 export interface user {
-    id: string;
-    name: string;
-    email: string;
-    Projects: project[]
+  id: string;
+  name: string;
+  email: string;
+  Projects: project[];
 }
 
 export interface Iprice {
-    coin: string;
-    value: string;
+  coin: string;
+  value: string;
 }
 
 export interface IDataSources {
-    userAPI: UserAPI;
-    projectsAPI: ProjectsAPI;
-    priceAPI: PriceAPI;
-    tokenAPI: TokenAPI;
-    collectionAPI: CollectionAPI;
+  userAPI: UserAPI;
+  projectsAPI: ProjectsAPI;
+  priceAPI: PriceAPI;
+  tokenAPI: TokenAPI;
+  collectionAPI: CollectionAPI;
+  tokenOwnersAPI: TokenOwnersAPI;
 }

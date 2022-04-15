@@ -1,14 +1,14 @@
 export const assignments = [
-    {
-        ProjectId: 1,
-        UserId: '1312d6ea-b88a-4602-833d-ed076a52c296'
-    },
-    {
-        ProjectId: 2,
-        UserId: '1312d6ea-b88a-4602-833d-ed076a52c296'
-    },
-    {
-        ProjectId: 1,
-        UserId: 'fa935124-06c8-4f06-a6e9-720fa5f595d9'
-    },
-]
+  {
+    ProjectId: 1,
+    UserId: "19541101-24eb-4c5b-8e53-c3a9f15bd494",
+  },
+  {
+    ProjectId: 2,
+    UserId: "19541101-24eb-4c5b-8e53-c3a9f15bd494",
+  },
+  {
+    ProjectId: 1,
+    UserId: "7ffb99d8-ccdf-459c-86f6-bbb5f1bcc1ce",
+  },
+];
