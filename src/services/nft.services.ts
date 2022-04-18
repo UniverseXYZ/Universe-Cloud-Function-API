@@ -1,78 +1,7 @@
 import { ethers } from "ethers";
+import { AssetClass, OrderSide, OrderStatus } from "../models/order";
 import { IDataSources } from "../types";
-
-export const fetchUserNfts = async (
-  ownerAddress: string,
-  tokenAddress: string,
-  tokenType: string,
-  searchQuery: string,
-  page: number,
-  limit: number,
-  dataSources: IDataSources
-) => {
-  console.log("Starting to fetch owned tokens");
-  const tokenOwners = await dataSources.tokenOwnersAPI.getOwnedTokens(
-    ownerAddress,
-    tokenAddress
-  );
-  console.log("Fetched owned tokens");
-
-  if (!tokenOwners.length) {
-    return {
-      page: page,
-      size: limit,
-      total: 0,
-      data: [],
-    };
-  }
-  console.log("Starting to fetch nfts");
-
-  // Owners query might be unnecessary as we already have the info in tokenOwners
-  const [{ tokens, count }, owners] = await Promise.all([
-    dataSources.tokenAPI.getTokensDetailsByTokens(
-      tokenOwners,
-      searchQuery,
-      tokenType,
-      tokenAddress,
-      page,
-      limit
-    ),
-    dataSources.tokenOwnersAPI.getOwners(tokenOwners),
-  ]);
-
-  console.log("Fetched nfts");
-
-  const data = tokens.map((token: any) => {
-    const ownersInfo = owners.filter(
-      (owner: any) =>
-        owner.contractAddress === token.contractAddress &&
-        owner.tokenId === token.tokenId
-    );
-    const ownerAddresses = ownersInfo.map((owner: any) => ({
-      owner: owner.address,
-      value: owner.value
-        ? owner.value.toString()
-        : ethers.BigNumber.from(owner.value).toString(),
-    }));
-    return {
-      contractAddress: token.contractAddress,
-      tokenId: token.tokenId,
-      tokenType: token.tokenType,
-      metadata: token.metadata,
-      externalDomainViewUrl: token.externalDomainViewUrl,
-      alternativeMediaFiles: token.alternativeMediaFiles,
-      owners: [...ownerAddresses],
-    };
-  });
-  console.log("Mapped nfts");
-
-  return {
-    page: page,
-    size: limit,
-    total: count,
-    nfts: data,
-  };
-};
+import { Utils } from "../utils/index";
 
 export const fetchUserNfts2 = async (
   ownerAddress: string,
@@ -81,32 +10,139 @@ export const fetchUserNfts2 = async (
   searchQuery: string,
   page: number,
   limit: number,
-  dataSources: IDataSources
+  dataSources: IDataSources,
+  side: number,
+  assetClass: string,
+  tokenIds: string,
+  beforeTimestamp: number,
+  token: string,
+  minPrice: string,
+  maxPrice: string,
+  sortBy: string,
+  hasOffers: boolean
 ) => {
-  const nftFilters = [] as any;
-  nftFilters.push({
+  const utcTimestamp = Utils.getUtcTimestamp();
+
+  const filters = [] as any;
+
+  // NFT FILTERS
+  filters.push({
     "owner.address": ownerAddress,
   });
   if (tokenAddress) {
-    nftFilters.push({ contractAddress: tokenAddress });
+    filters.push({ contractAddress: tokenAddress });
   }
   if (tokenType) {
-    nftFilters.push({ tokenType });
+    filters.push({ tokenType });
   }
 
   if (searchQuery) {
-    nftFilters.push({
+    filters.push({
       "metadata.name": { $regex: new RegExp(searchQuery, "i") },
     });
   }
-  console.log(nftFilters);
-  console.log(limit);
-  console.log(page);
-  // const data1 = await dataSources.tokenAPI.store.find();
-  // console.log("data1:");
-  // console.log(data1);
 
-  const mandatoryAggregation = [
+  // ORDER FILTERS
+  if (side) {
+    filters.push({
+      orders: { elemMatch: { side } },
+    });
+  }
+
+  if (beforeTimestamp) {
+    const milisecTimestamp = Number(beforeTimestamp) * 1000;
+    const utcDate = new Date(milisecTimestamp);
+
+    filters.push({
+      createdAt: { $gt: utcDate.toDateString() },
+    });
+  }
+
+  if (token) {
+    if (token === ethers.constants.AddressZero) {
+      console.log("FILTERING BY ZERO ADDRESS");
+      filters.push({
+        "orders.take.assetType.assetClass": AssetClass.ETH,
+      });
+    } else {
+      // REGEX SEARCH IS NOT PERFORMANT
+      // DOCUMENTDB DOESNT SUPPORT COLLATION INDICES
+      // query.token address MUST BE UPPERCASE CONTRACT ADDRESS
+      console.log("FILTERING BY non zero address");
+      filters.push({
+        "take.assetType.contract": token,
+      });
+    }
+  }
+
+  if (assetClass) {
+    const assetClasses = assetClass.replace(/\s/g, "").split(",");
+
+    filters.push({ "orders.make.assetType.assetClass": { $in: assetClasses } });
+  }
+
+  if (tokenIds) {
+    const tokenIdsSplit = tokenIds.replace(/\s/g, "").split(",");
+
+    // If query gets slow we can try to conditionally add the queries depending on whether
+    // we have side filter or not
+    filters.push({
+      "orders.make.assetType.tokenId": { $in: tokenIdsSplit },
+    });
+  }
+
+  if (!!hasOffers) {
+    // Get all buy orders
+    const buyOffers = await dataSources.tokenAPI.store.find({
+      $and: [
+        {
+          status: OrderStatus.CREATED,
+          side: OrderSide.BUY,
+        },
+        {
+          $or: [{ start: { $lt: utcTimestamp } }, { start: 0 }],
+        },
+        { $or: [{ end: { $gt: utcTimestamp } }, { end: 0 }] },
+      ],
+    });
+
+    const innerQuery: any[] = [];
+
+    // Search for any sell orders that have offers
+    buyOffers.forEach((offer: any) => {
+      // Offers(buy orders) have the nft info in 'take'
+      const tokenId = offer.take.assetType.tokenId;
+      const contract = offer.take.assetType.contract;
+      if (tokenId && contract) {
+        innerQuery.push({
+          make: {
+            assetType: {
+              tokenId: tokenId,
+            },
+            contract: contract.toLowerCase(),
+          },
+        });
+      }
+    });
+
+    // If query is empty --> there are no orders with offers
+    if (!innerQuery.length) {
+      return {
+        page: page,
+        size: limit,
+        total: 0,
+        nfts: [],
+      };
+    }
+
+    filters["$and"] = innerQuery;
+  }
+
+  // console.log(nftFilters);
+  // console.log(limit);
+  // console.log(page);
+  console.log(filters);
+  const ownersAggregation = [
     {
       $lookup: {
         from: "nft-token-owners",
@@ -133,28 +169,84 @@ export const fetchUserNfts2 = async (
         as: "owner",
       },
     },
+    {
+      $lookup: {
+        from: "marketplace-orders",
+        let: {
+          tokenId: "$tokenId",
+          contractAddress: { $toLower: "$contractAddress" },
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  // Return only active in order to not bottleneck the query
+                  { status: OrderStatus.CREATED },
+                  {
+                    $or: [
+                      {
+                        $and: [
+                          {
+                            $eq: ["$make.assetType.tokenId", "$$tokenId"],
+                          },
+                          {
+                            $eq: [
+                              "$make.assetType.contract",
+                              "$$contractAddress",
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        $and: [
+                          {
+                            $eq: ["$take.assetType.tokenId", "$$tokenId"],
+                          },
+                          {
+                            $eq: [
+                              "$take.assetType.contract",
+                              "$$contractAddress",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        as: "orders",
+      },
+    },
     { $unwind: "$owner" },
-    { $match: { $and: nftFilters } },
+    { $match: { $and: filters } },
   ];
+
+  // const ordersAggregation = [];
+
   const skippedItems = (page - 1) * limit;
 
   const [data, count] = await Promise.all([
     dataSources.tokenAPI.store.aggregate([
-      ...mandatoryAggregation,
+      ...ownersAggregation,
+      // ...ordersAggregation,
       { $skip: skippedItems },
       { $limit: limit },
       { $sort: { updatedAt: -1 } },
     ]),
     dataSources.tokenAPI.store.aggregate([
-      ...mandatoryAggregation,
+      ...ownersAggregation,
       { $count: "tokenId" },
     ]),
   ]);
 
   // console.log(data.owner((a: any) => a.owner));
-  console.log(data);
-  console.log(count);
-  console.log(`skip: ${skippedItems}`);
+  // console.log(data);
+  // console.log(count);
+  // console.log(`skip: ${skippedItems}`);
 
   return {
     page: page,

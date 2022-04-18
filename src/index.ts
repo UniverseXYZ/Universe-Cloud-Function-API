@@ -24,7 +24,7 @@ import CollectionsAPI from "./datasources/collection";
 import CollectionModel from "./models/collection";
 import OrdersAPI from "./datasources/order";
 import TokenModel from "./models/token";
-import { Order } from "./models/order";
+import { Order, OrderModel } from "./models/order";
 import TokenOwnersAPI from "./datasources/tokenOwners";
 import TokenOwnersModel from "./models/tokenOwner";
 
@@ -35,7 +35,7 @@ const dataSources = () => ({
   priceAPI: new PriceAPI(),
   tokenAPI: new TokensAPI({ store: TokenModel }),
   collectionAPI: new CollectionsAPI({ store: CollectionModel }),
-  mongoModel: new OrdersAPI({ store: Order }),
+  ordersAPI: new OrdersAPI({ store: OrderModel }),
   tokenOwnersAPI: new TokenOwnersAPI({ store: TokenOwnersModel }),
 });
 

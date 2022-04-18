@@ -1,5 +1,6 @@
+import { NFTToken } from "datascraper-schema";
 import { ethers } from "ethers";
-import { fetchUserNfts, fetchUserNfts2 } from "../services/nft.services";
+import { fetchUserNfts2 } from "../services/nft.services";
 import { IDataSources } from "../types";
 
 // let count = 0;
@@ -84,6 +85,15 @@ export const resolvers = {
         tokenType,
         page,
         limit,
+        side,
+        assetClass,
+        tokenIds,
+        beforeTimestamp,
+        token,
+        minPrice,
+        maxPrice,
+        sortBy,
+        hasOffers,
       }: {
         ownerAddress: string;
         tokenAddress: string;
@@ -91,6 +101,15 @@ export const resolvers = {
         searchQuery: string;
         page: number;
         limit: number;
+        side: number;
+        assetClass: string;
+        tokenIds: string;
+        beforeTimestamp: number;
+        token: string;
+        minPrice: string;
+        maxPrice: string;
+        sortBy: string;
+        hasOffers: boolean;
       },
       { dataSources }: { dataSources: IDataSources }
     ) =>
@@ -101,12 +120,32 @@ export const resolvers = {
         searchQuery,
         page,
         limit,
-        dataSources
+        dataSources,
+        side,
+        assetClass,
+        tokenIds,
+        beforeTimestamp,
+        token,
+        minPrice,
+        maxPrice,
+        sortBy,
+        hasOffers
       ),
   },
   NFT: {
     offers: () => [],
-    orders: () => [],
+    activeListing: (
+      parent: NFTToken,
+      context: any,
+      { dataSources }: { dataSources: IDataSources }
+    ) => {
+      const listing = dataSources.ordersAPI.getOrder(
+        parent.tokenId,
+        parent.contractAddress.toLowerCase()
+      );
+
+      return listing;
+    },
 
     // We cannot fetch best and last offers as cloud function are stateless
     // and we need to keep the prices of ERC20 tokens in the server state.

@@ -9,6 +9,15 @@ export const typeDefs = gql`
       tokenType: String
       page: Int!
       limit: Int!
+      side: Int
+      assetClass: String
+      tokenIds: String
+      beforeTimestamp: Int!
+      token: String
+      minPrice: String
+      maxPrice: String
+      sortBy: String
+      hasOffers: Boolean
     ): NFTResponse
   }
 
@@ -27,8 +36,9 @@ export const typeDefs = gql`
     alternativeMediaFiles: [MediaFile]
     metadata: Metadata
     owners: [Owner]
-    orders: [Order]
+    activeListing: Order
     offers: [Order]
+    orders: [Order]
     bestOffer: Order
     lastOffer: Order
   }
@@ -64,5 +74,44 @@ export const typeDefs = gql`
 
   type Order {
     _id: ID
+    status: Int!
+    hash: String!
+    type: String!
+    side: Int!
+    maker: String!
+    make: Asset
+    taker: String!
+    take: Asset
+    salt: Int!
+    start: Int!
+    end: Int!
+    data: OrderData
+    signature: String!
+    fill: String
+    makeStock: String
+    makeBalance: String
+    cancelledTxHash: String
+    matchedTxHash: String
+  }
+
+  type Asset {
+    value: String
+    assetType: AssetType
+  }
+
+  type AssetType {
+    tokenId: String
+    contract: String
+    assetClass: String
+  }
+
+  type OrderData {
+    dataType: String
+    revenueSplit: [Part]
+  }
+
+  type Part {
+    account: String
+    value: String
   }
 `;

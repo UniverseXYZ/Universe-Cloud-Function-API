@@ -1,5 +1,17 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import { Document, Model, model } from "mongoose";
+
+export enum AssetClass {
+  ETH = "ETH",
+  USDC = "USDC",
+  XYZ = "XYZ",
+  DAI = "DAI",
+  WETH = "WETH",
+  ERC20 = "ERC20",
+  ERC721 = "ERC721",
+  ERC721_BUNDLE = "ERC721_BUNDLE",
+  ERC1155 = "ERC1155",
+}
 
 export enum OrderStatus {
   CREATED,
@@ -88,4 +100,10 @@ type OrderDocument = Order & Document;
 
 const OrderSchema = SchemaFactory.createForClass(Order);
 
-export { OrderDocument, OrderSchema };
+const OrderModel: Model<Order> = model<Order>(
+  "Order",
+  OrderSchema as any,
+  "marketplace-orders"
+);
+
+export { OrderDocument, OrderSchema, OrderModel };

@@ -5,6 +5,7 @@ import TokenAPI from "./datasources/token";
 import CollectionAPI from "./datasources/collection";
 import MongoAPI from "./datasources/mongo";
 import TokenOwnersAPI from "./datasources/tokenOwners";
+import OrdersAPI from "./datasources/order";
 
 // Apollo Types
 export interface DataSourceConfig<TContext = any> {
@@ -45,4 +46,5 @@ export interface IDataSources {
   tokenAPI: TokenAPI;
   collectionAPI: CollectionAPI;
   tokenOwnersAPI: TokenOwnersAPI;
+  ordersAPI: OrdersAPI;
 }
