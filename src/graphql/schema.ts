@@ -38,7 +38,7 @@ export const typeDefs = gql`
     owners: [Owner]
     activeListing: Order
     offers: [Order]
-    orders: [Order]
+    order: Order
     bestOffer: Order
     lastOffer: Order
   }

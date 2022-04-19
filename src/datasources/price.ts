@@ -26,6 +26,22 @@ export default class PriceAPI extends RESTDataSource {
     return pricesData;
   });
 
+  public getPrices = async (coinIds: string[]) => {
+    const pricePromises = coinIds.map(async (id: any) => {
+      const priceData = await this.get(
+        `price?ids=${encodeURIComponent(id)}&vs_currencies=usd`
+      );
+      const price: IPrice = {
+        coin: id,
+        value: priceData[id]?.usd,
+      };
+      return price;
+    });
+
+    const pricesData: IPrice[] = await Promise.all(pricePromises);
+    return pricesData;
+  };
+
   async getPrice(id: string) {
     return this.priceLoader.load(id);
   }

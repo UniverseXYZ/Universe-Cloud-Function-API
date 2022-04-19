@@ -1,6 +1,6 @@
 import { NFTToken } from "datascraper-schema";
 import { ethers } from "ethers";
-import { fetchUserNfts2 } from "../services/nft.services";
+import { fetchUserNfts } from "../services/nft.services";
 import { IDataSources } from "../types";
 
 // let count = 0;
@@ -113,7 +113,7 @@ export const resolvers = {
       },
       { dataSources }: { dataSources: IDataSources }
     ) =>
-      await fetchUserNfts2(
+      await fetchUserNfts(
         ownerAddress,
         tokenAddress,
         tokenType,

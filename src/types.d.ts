@@ -14,7 +14,7 @@ export interface DataSourceConfig<TContext = any> {
 }
 export interface IPrice {
   coin: string;
-  value: string;
+  value: number;
 }
 
 export interface IDataSources {

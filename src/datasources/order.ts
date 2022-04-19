@@ -19,8 +19,8 @@ export default class OrdersAPI extends DataSource {
 
   private ordersLoader = new DataLoader(
     async (orderKeys: readonly string[]) => {
-      console.log(orderKeys);
-      console.log(this.store);
+      // console.log(orderKeys);
+      // console.log(this.store);
       const utcTimestamp = Utils.getUtcTimestamp();
 
       const queryFilters: any[] = [
@@ -52,7 +52,7 @@ export default class OrdersAPI extends DataSource {
         .find({ $and: queryFilters })
         .sort({ updatedAt: -1 });
 
-      console.log(orders);
+      // console.log(orders);
 
       const ordersContractsMap = orders.reduce(
         (acc: any, order: any) => ({
@@ -62,7 +62,7 @@ export default class OrdersAPI extends DataSource {
         {} as Record<string, Order>
       );
 
-      console.log(ordersContractsMap);
+      // console.log(ordersContractsMap);
 
       const mapResult = orderKeys.map((key: string) => {
         const [tokenId, contract] = key.split("-");
@@ -77,7 +77,7 @@ export default class OrdersAPI extends DataSource {
         return ordersContractsMap[contract][tokenId][0];
       });
 
-      console.log(mapResult);
+      // console.log(mapResult);
       return mapResult;
     }
   );
