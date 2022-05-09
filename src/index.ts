@@ -1,50 +1,75 @@
-const { ApolloServer } = require("apollo-server");
-import { typeDefs } from "./graphql/schema";
-import { resolvers } from "./graphql/resolvers";
+import { Request, Response } from "express";
+import { fetchNfts } from "./services/query.service";
 
-// Plugins
-// Dev usage only, make sure to remove it before deploying on prod
-import { ApolloServerPluginInlineTrace } from "apollo-server-core";
+const mongoose = require("mongoose");
 
-// DBs
-import { connectDatascraperDB } from "./datascraper-client/index";
+require("dotenv").config();
 
-// APIs
-import PriceAPI from "./datasources/price";
-import TokensAPI from "./datasources/token";
-import CollectionsAPI from "./datasources/collection";
+var client: any;
 
-// Models
-import CollectionModel from "./models/collection";
-import OrdersAPI from "./datasources/order";
-import TokenModel from "./models/token";
-import { Order, OrderModel } from "./models/order";
-import TokenOwnersAPI from "./datasources/tokenOwners";
-import TokenOwnersModel from "./models/tokenOwner";
+const getClient = async () => {
+  const url = process.env.DB_URL;
+  if (client && client.isConnected()) {
+    console.log("MONGODB CLIENT ALREADY CONNECTED!");
+  } else if (client instanceof Promise) {
+    client = await client;
+    console.log("MONGODB CLIENT RECONNECTED!");
+  } else {
+    try {
+      client = await mongoose.connect(url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
 
-// The data sources are getting passed to the resolvers into the context arg on each request
-const dataSources = () => ({
-  priceAPI: new PriceAPI(),
-  tokenAPI: new TokensAPI({ store: TokenModel }),
-  collectionAPI: new CollectionsAPI({ store: CollectionModel }),
-  ordersAPI: new OrdersAPI({ store: OrderModel }),
-  tokenOwnersAPI: new TokenOwnersAPI({ store: TokenOwnersModel }),
-});
+      console.log("MONGODB CLIENT CONNECTED!");
+    } catch (e) {
+      throw e;
+    }
+  }
 
-const context = async ({ req }: { req: any }) => {
-  return null;
+  return client;
 };
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  dataSources,
-  context,
-  plugins: [ApolloServerPluginInlineTrace()],
-});
+export async function queryNfts(req: Request, res: Response) {
+  try {
+    const client = await getClient();
+    console.log(req.query);
+    const result = await fetchNfts(
+      req.query.ownerAddress,
+      req.query.tokenAddress,
+      req.query.tokenType,
+      req.query.searchQuery,
+      req.query.page,
+      req.query.limit,
+      req.query.side,
+      req.query.assetClass,
+      req.query.tokenIds,
+      req.query.beforeTimestamp,
+      req.query.token,
+      req.query.minPrice,
+      req.query.maxPrice,
+      req.query.sortBy,
+      req.query.hasOffers
+    );
 
-connectDatascraperDB().then(() => {
-  server.listen().then(({ url }: { url: String }) => {
-    console.log(`🚀  Server ready at ${url}`);
+    res.status(200);
+    res.send(result);
+  } catch (err) {
+    res.status(500);
+    res.send(err);
+  }
+}
+
+if (process.env.NODE_ENV !== "production") {
+  const express = require("express");
+  const app = express();
+  const port = 3000;
+
+  app.get("/nftquery", (req, res) => {
+    queryNfts(req, res);
   });
-});
+
+  app.listen(port, () => {
+    console.log(`Local function is listening on port ${port}`);
+  });
+}

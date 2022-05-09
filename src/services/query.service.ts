@@ -1,25 +1,29 @@
 import { ethers } from "ethers";
 import web3 from "web3";
-import { AssetClass, OrderSide, OrderStatus } from "../models/order";
-import { IDataSources } from "../types";
+import {
+  AssetClass,
+  OrderModel,
+  OrderSide,
+  OrderStatus,
+} from "../models/order";
 import { Utils } from "../utils/index";
 import { TOKENS, TOKEN_DECIMALS } from "../utils/tokens";
-
+import { getPrices } from "./price.service";
 export enum SortOrderOptionsEnum {
   EndingSoon = 1,
   HighestPrice = 2,
   LowestPrice = 3,
   RecentlyListed = 4,
 }
-
-export const fetchUserNfts = async (
+import { TokenModel } from "../models/token";
+export const fetchNfts = async (
+  // db: any,
   ownerAddress: string,
   tokenAddress: string,
   tokenType: string,
   searchQuery: string,
   page: number,
   limit: number,
-  dataSources: IDataSources,
   side: number,
   assetClass: string,
   tokenIds: string,
@@ -35,9 +39,11 @@ export const fetchUserNfts = async (
   const filters = [] as any;
 
   // NFT FILTERS
-  filters.push({
-    "owner.address": ownerAddress,
-  });
+  if (ownerAddress) {
+    filters.push({
+      "owner.address": ownerAddress,
+    });
+  }
 
   if (tokenAddress) {
     filters.push({ contractAddress: tokenAddress });
@@ -102,7 +108,7 @@ export const fetchUserNfts = async (
 
   if (!!hasOffers) {
     // Get all buy orders
-    const buyOffers = await dataSources.ordersAPI.store.find({
+    const buyOffers = await OrderModel.find({
       $and: [
         {
           status: OrderStatus.CREATED,
@@ -134,8 +140,8 @@ export const fetchUserNfts = async (
     // If query is empty --> there are no orders with offers
     if (!innerQuery.length) {
       return {
-        page: page,
-        size: limit,
+        page: Number(page),
+        size: Number(limit),
         total: 0,
         nfts: [],
       };
@@ -172,17 +178,11 @@ export const fetchUserNfts = async (
       sort.orderSort = 1;
       break;
     case SortOrderOptionsEnum.HighestPrice:
-      sortingAggregation = await addPriceSortingAggregation(
-        OrderSide.SELL,
-        dataSources
-      );
+      sortingAggregation = await addPriceSortingAggregation(OrderSide.SELL);
       sort.usd_value = -1;
       break;
     case SortOrderOptionsEnum.LowestPrice:
-      sortingAggregation = await addPriceSortingAggregation(
-        OrderSide.SELL,
-        dataSources
-      );
+      sortingAggregation = await addPriceSortingAggregation(OrderSide.SELL);
       sort.usd_value = 1;
       break;
     case SortOrderOptionsEnum.RecentlyListed:
@@ -298,24 +298,21 @@ export const fetchUserNfts = async (
     { $match: { $and: filters } },
   ];
 
-  const skippedItems = (page - 1) * limit;
+  const skippedItems = (Number(page) - 1) * Number(limit);
   const [data, count] = await Promise.all([
-    dataSources.tokenAPI.store.aggregate([
+    TokenModel.aggregate([
       ...tableAggregation,
       ...sortingAggregation,
       { $skip: skippedItems },
-      { $limit: limit },
+      { $limit: Number(limit) },
       { $sort: sort },
     ]),
-    dataSources.tokenAPI.store.aggregate([
-      ...tableAggregation,
-      { $count: "tokenId" },
-    ]),
+    TokenModel.aggregate([...tableAggregation, { $count: "tokenId" }]),
   ]);
-
+  console.log(data);
   return {
-    page: page,
-    size: limit,
+    page: Number(page),
+    size: Number(limit),
     total: !count.length ? 0 : count[0].tokenId,
     nfts: data,
   };
@@ -345,17 +342,14 @@ const addEndSortingAggregation = () => {
   ];
 };
 
-const addPriceSortingAggregation = async (
-  orderSide: OrderSide,
-  dataSources: IDataSources
-) => {
+const addPriceSortingAggregation = async (orderSide: OrderSide) => {
   const [
     { value: ethPrice },
     { value: usdcPrice },
     { value: xyzPrice },
     { value: daiPrice },
     { value: wethPrice },
-  ] = await dataSources.priceAPI.getPrices([
+  ] = await getPrices([
     TOKENS.ETH,
     TOKENS.USDC,
     TOKENS.XYZ,

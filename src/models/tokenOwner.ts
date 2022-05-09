@@ -1,14 +1,18 @@
-import { Model, model } from "mongoose";
-import {
-  NFTToken,
-  NFTTokenOwner,
-  NFTTokenOwnerSchema,
-  NFTTokensSchema,
-} from "datascraper-schema";
+const mongoose = require("mongoose");
 
-const TokenOwnersModel: Model<NFTTokenOwner> = model<NFTTokenOwner>(
-  "TokenOwner",
-  NFTTokenOwnerSchema,
-  "nft-token-owners"
+export const NFTTokenOwnerSchema = new mongoose.Schema({
+  contractAddress: String,
+  tokenId: String,
+  address: String,
+  blockNum: Number,
+  logIndex: Number,
+  transactionHash: String,
+  value: String,
+  tokenType: String,
+  tokenName: String,
+});
+
+export const NFTTokenOwnerModel = mongoose.model(
+  "nft-token-owners",
+  NFTTokenOwnerSchema
 );
-export default TokenOwnersModel;

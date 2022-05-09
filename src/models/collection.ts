@@ -1,10 +1,22 @@
-import { Model, model  } from 'mongoose';
+const mongoose = require("mongoose");
 
-import {
-    NFTCollection,
-    NFTCollectionSchema,
-  } from 'datascraper-schema';
+export const NFTCollectionSchema = new mongoose.Schema({
+  contractAddress: String,
+  tokenType: String,
+  createdAtBlock: Number,
+  ignoreForRetrieveCreatedAtBlock: Boolean,
+  firstProcessedBlock: Number,
+  lastProcessedBlock: Number,
+  targetBlock: Number,
+  sentAt: Date,
+  isProcessing: Boolean,
+  name: String,
+  symbol: String,
+  owner: String,
+  vip: Boolean,
+});
 
-
-const CollectionModel: Model<NFTCollection> = model<NFTCollection>('Collection', NFTCollectionSchema, 'nft-collections');
-export default CollectionModel;
+export const NFTCollectionModel = mongoose.model(
+  "nft-collections",
+  NFTCollectionSchema
+);
