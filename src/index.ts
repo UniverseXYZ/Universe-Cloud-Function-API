@@ -9,11 +9,11 @@ var client: any;
 
 const getClient = async () => {
   const url = process.env.DB_URL;
-  if (client && client.isConnected()) {
-    console.log("MONGODB CLIENT ALREADY CONNECTED!");
-  } else if (client instanceof Promise) {
-    client = await client;
+  if (client instanceof Promise) {
     console.log("MONGODB CLIENT RECONNECTED!");
+  } else if (client) {
+    client = await client;
+    console.log("MONGODB CLIENT ALREADY CONNECTED!");
   } else {
     try {
       client = await mongoose.connect(url, {
@@ -54,6 +54,9 @@ export async function queryNfts(req: Request, res: Response) {
 
     res.status(200);
     res.send(result);
+
+    // TODO: Close connection to DB
+    client.disconnect();
   } catch (err) {
     res.status(500);
     res.send(err);
