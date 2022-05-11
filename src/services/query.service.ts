@@ -9,13 +9,14 @@ import {
 import { Utils } from "../utils/index";
 import { TOKENS, TOKEN_DECIMALS } from "../utils/tokens";
 import { getPrices } from "./price.service";
+import { TokenModel } from "../models/token";
+
 export enum SortOrderOptionsEnum {
   EndingSoon = 1,
   HighestPrice = 2,
   LowestPrice = 3,
   RecentlyListed = 4,
 }
-import { TokenModel } from "../models/token";
 export const fetchNfts = async (
   // db: any,
   ownerAddress: string,
@@ -318,7 +319,7 @@ export const fetchNfts = async (
   };
 };
 
-const addEndSortingAggregation = () => {
+export const addEndSortingAggregation = () => {
   // We want to show orders with offers in ascending order but also show offers without offers at the end
   return [
     {
@@ -342,7 +343,7 @@ const addEndSortingAggregation = () => {
   ];
 };
 
-const addPriceSortingAggregation = async (orderSide: OrderSide) => {
+export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
   const [
     { value: ethPrice },
     { value: usdcPrice },

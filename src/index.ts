@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { fetchNfts } from "./services/query.service";
+import { fetchNftsNew } from "./services/query.service.new";
 
 const mongoose = require("mongoose");
 
@@ -34,7 +35,7 @@ export async function queryNfts(req: Request, res: Response) {
   try {
     const client = await getClient();
     console.log(req.query);
-    const result = await fetchNfts(
+    const result = await fetchNftsNew(
       req.query.ownerAddress,
       req.query.tokenAddress,
       req.query.tokenType,
@@ -56,8 +57,9 @@ export async function queryNfts(req: Request, res: Response) {
     res.send(result);
 
     // TODO: Close connection to DB
-    client.disconnect();
+    // client.disconnect();
   } catch (err) {
+    console.log(err);
     res.status(500);
     res.send(err);
   }
