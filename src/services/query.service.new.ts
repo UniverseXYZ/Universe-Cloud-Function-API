@@ -282,7 +282,13 @@ const queryOnlyOwnerParams = async (
   ]);
 
   console.timeEnd("query-time");
+
+  if (!tokenFilters.length) {
+    return [];
+  }
+
   console.time("query-time2");
+
   const results = await TokenModel.aggregate(
     [
       { $match: { $and: [{ $or: tokenFilters }] } },
@@ -317,6 +323,11 @@ const queryNftAndOwnerParams = async (
   console.timeEnd("query-time");
   // Apply Pagination
   const filtered = [];
+
+  if (!nfts.length || !owners.length) {
+    return [];
+  }
+
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i];
 
@@ -382,6 +393,10 @@ const queryNftAndOrderParams = async (
     OrderModel.find(orderFilters).lean(),
   ]);
 
+  if (!nfts.length || !orders.length) {
+    return [];
+  }
+
   // Apply Pagination
   const filtered = [];
   for (let i = 0; i < nfts.length; i++) {
@@ -426,6 +441,10 @@ const querOrderAndOwnerParams = async (
     NFTTokenOwnerModel.find(ownerFilters).lean(),
   ]);
 
+  if (!orders.length || !owners.length) {
+    return [];
+  }
+
   // Apply Pagination
   const filtered = [];
   for (let i = 0; i < owners.length; i++) {
@@ -460,6 +479,10 @@ const querOrderAndOwnerParams = async (
   const nfts = await OrderModel.find({
     $and: [{ $or: nftsQuery }],
   }).lean();
+
+  if (!nfts.length) {
+    return [];
+  }
 
   const finalNfts = nfts.map((nft) => ({
     ...nft,
@@ -497,6 +520,10 @@ const queryMixedParams = async (
     OrderModel.find(orderFilters).lean(),
   ]);
   console.timeEnd("query-time");
+
+  if (!nfts.length || !owners.length || !orders.length) {
+    return [];
+  }
 
   // Apply Pagination
   const filtered = [];
