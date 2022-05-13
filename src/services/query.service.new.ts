@@ -196,7 +196,9 @@ const queryOnlyNftParams = async (
       ],
       { collation: { locale: "en", strength: 2 } }
     ),
-    TokenModel.aggregate([...dbQuery, { $count: "tokenId" }]),
+    TokenModel.aggregate([...dbQuery, { $count: "tokenId" }], {
+      collation: { locale: "en", strength: 2 },
+    }),
   ]);
 
   console.timeEnd("query-time");
@@ -284,23 +286,39 @@ const queryOnlyOwnerParams = async (
   console.timeEnd("query-time");
 
   if (!tokenFilters.length) {
-    return [];
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   console.time("query-time2");
 
-  const results = await TokenModel.aggregate(
-    [
-      { $match: { $and: [{ $or: tokenFilters }] } },
-      { $skip: skippedItems },
-      { $limit: Number(limit) },
-      getOrdersLookup(),
-    ],
-    { collation: { locale: "en", strength: 2 } }
-  );
+  const [data, count] = await Promise.all([
+    TokenModel.aggregate(
+      [
+        { $match: { $and: [{ $or: tokenFilters }] } },
+        { $skip: skippedItems },
+        { $limit: Number(limit) },
+        getOrdersLookup(),
+      ],
+      { collation: { locale: "en", strength: 2 } }
+    ),
+    TokenModel.aggregate(
+      [{ $match: { $and: [{ $or: tokenFilters }] } }, { $count: "tokenId" }],
+      { collation: { locale: "en", strength: 2 } }
+    ),
+  ]);
   console.timeEnd("query-time2");
 
-  return results;
+  return {
+    page: Number(page),
+    size: Number(limit),
+    total: !count.length ? 0 : count[0].tokenId,
+    nfts: data,
+  };
 };
 
 const queryNftAndOwnerParams = async (
@@ -325,7 +343,12 @@ const queryNftAndOwnerParams = async (
   const filtered = [];
 
   if (!nfts.length || !owners.length) {
-    return [];
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   for (let i = 0; i < nfts.length; i++) {
@@ -343,6 +366,15 @@ const queryNftAndOwnerParams = async (
         break;
       }
     }
+  }
+
+  if (!filtered.length) {
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   const paginated = filtered.slice(skippedItems);
@@ -373,7 +405,12 @@ const queryNftAndOwnerParams = async (
       ) || [],
   }));
 
-  return finalNfts;
+  return {
+    page: Number(page),
+    size: Number(limit),
+    total: filtered.length,
+    nfts: finalNfts,
+  };
 };
 
 const queryNftAndOrderParams = async (
@@ -394,7 +431,12 @@ const queryNftAndOrderParams = async (
   ]);
 
   if (!nfts.length || !orders.length) {
-    return [];
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   // Apply Pagination
@@ -419,9 +461,23 @@ const queryNftAndOrderParams = async (
     }
   }
 
+  if (!filtered.length) {
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
+  }
+
   const paginated = filtered.slice(skippedItems);
 
-  return paginated;
+  return {
+    page: Number(page),
+    size: Number(limit),
+    total: filtered.length,
+    nfts: paginated,
+  };
 };
 
 const querOrderAndOwnerParams = async (
@@ -442,7 +498,12 @@ const querOrderAndOwnerParams = async (
   ]);
 
   if (!orders.length || !owners.length) {
-    return [];
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   // Apply Pagination
@@ -468,6 +529,15 @@ const querOrderAndOwnerParams = async (
     }
   }
 
+  if (!filtered.length) {
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
+  }
+
   const paginated = filtered.slice(skippedItems);
 
   //  Populate order
@@ -481,7 +551,12 @@ const querOrderAndOwnerParams = async (
   }).lean();
 
   if (!nfts.length) {
-    return [];
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   const finalNfts = nfts.map((nft) => ({
@@ -496,7 +571,12 @@ const querOrderAndOwnerParams = async (
         .lean() || [],
   }));
 
-  return finalNfts;
+  return {
+    page: Number(page),
+    size: Number(limit),
+    total: filtered.length,
+    nfts: finalNfts,
+  };
 };
 
 const queryMixedParams = async (
@@ -522,7 +602,12 @@ const queryMixedParams = async (
   console.timeEnd("query-time");
 
   if (!nfts.length || !owners.length || !orders.length) {
-    return [];
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
   }
 
   // Apply Pagination
@@ -551,7 +636,21 @@ const queryMixedParams = async (
     }
   }
 
+  if (!filtered.length) {
+    return {
+      page: Number(page),
+      size: Number(limit),
+      total: 0,
+      nfts: [],
+    };
+  }
+
   const paginated = filtered.slice(skippedItems);
 
-  return paginated;
+  return {
+    page: Number(page),
+    size: Number(limit),
+    total: filtered.length,
+    nfts: paginated,
+  };
 };
