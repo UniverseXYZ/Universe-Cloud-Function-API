@@ -22,7 +22,6 @@ import {
   buildOrderFilters,
   buildOwnerParams,
   getNFTLookup,
-  getNFTLookup2,
   getOrdersLookup,
 } from "./query.service.new.builder";
 
@@ -238,7 +237,7 @@ const queryOnlyOrderParams = async (
         // ...sortingAggregation,
         { $skip: skippedItems },
         { $limit: Number(limit) },
-        ...getNFTLookup2(),
+        ...getNFTLookup(),
         { $sort: sort },
       ],
       { collation: { locale: "en", strength: 2 } }
@@ -279,21 +278,21 @@ const queryOnlyOwnerParams = async (
       },
     },
     { $match: filters },
-    { $project: { contractAddress: 1, tokenId: 1 } },
+    { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
   ]);
-  console.timeEnd("query-time");
 
-  console.time("query-time");
+  console.timeEnd("query-time");
+  console.time("query-time2");
   const results = await TokenModel.aggregate(
     [
-      { $match: { $and: tokenFilters } },
+      { $match: { $and: [{ $or: tokenFilters }] } },
       { $skip: skippedItems },
       { $limit: Number(limit) },
       getOrdersLookup(),
     ],
     { collation: { locale: "en", strength: 2 } }
   );
-  console.timeEnd("query-time");
+  console.timeEnd("query-time2");
 
   return results;
 };
@@ -310,11 +309,12 @@ const queryNftAndOwnerParams = async (
   const nftFilters = buildNftQuery(nftParams);
   const ownerFilters = buildOwnerParams(ownerParams);
 
+  console.time("query-time");
   const [nfts, owners] = await Promise.all([
-    TokenModel.find(nftFilters),
-    NFTTokenOwnerModel.find(ownerFilters),
+    TokenModel.find(nftFilters).lean(),
+    NFTTokenOwnerModel.find(ownerFilters).lean(),
   ]);
-
+  console.timeEnd("query-time");
   // Apply Pagination
   const filtered = [];
   for (let i = 0; i < nfts.length; i++) {
@@ -341,16 +341,18 @@ const queryNftAndOwnerParams = async (
     "make.assetType.tokenId": nft.tokenId,
     "make.assetType.contract": nft.contractAddress.toLowerCase(),
   }));
+  console.time("query-time");
 
   const orders = await OrderModel.find({
     $and: [
+      { $or: orderQuery },
       { $eq: ["$status", OrderStatus.CREATED] },
       { $eq: ["$side", OrderSide.SELL] },
-      { $or: orderQuery },
     ],
   });
+  console.timeEnd("query-time");
 
-  const finalNfts = nfts.map((nft) => ({
+  const finalNfts = paginated.map((nft) => ({
     ...nft,
     orders:
       orders.find(
@@ -376,8 +378,8 @@ const queryNftAndOrderParams = async (
   const orderFilters = buildOwnerParams(orderParams);
 
   const [nfts, orders] = await Promise.all([
-    TokenModel.find(nftFilters),
-    OrderModel.find(orderFilters),
+    TokenModel.find(nftFilters).lean(),
+    OrderModel.find(orderFilters).lean(),
   ]);
 
   // Apply Pagination
@@ -385,11 +387,13 @@ const queryNftAndOrderParams = async (
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i];
 
-    const nftOrders = orders.find(
-      (order) =>
-        order.make.tokenId === nft.tokenId &&
-        order.make.contract?.toLowerCase() === nft.contractAddress
-    );
+    const nftOrders = orders
+      .find(
+        (order) =>
+          order.make.tokenId === nft.tokenId &&
+          order.make.contract?.toLowerCase() === nft.contractAddress
+      )
+      .lean();
 
     if (nftOrders) {
       nft.orders = nftOrders;
@@ -418,8 +422,8 @@ const querOrderAndOwnerParams = async (
   const ownerFilters = buildOwnerParams(ownerParams);
 
   const [orders, owners] = await Promise.all([
-    TokenModel.find(orderFilters),
-    NFTTokenOwnerModel.find(ownerFilters),
+    TokenModel.find(orderFilters).lean(),
+    NFTTokenOwnerModel.find(ownerFilters).lean(),
   ]);
 
   // Apply Pagination
@@ -427,11 +431,13 @@ const querOrderAndOwnerParams = async (
   for (let i = 0; i < owners.length; i++) {
     const owner = owners[i];
 
-    const order = orders.find(
-      (owner) =>
-        owner.make.assetType.tokenId === owner.tokenId &&
-        owner.make.assetType?.contract === owner.contractAddress
-    );
+    const order = orders
+      .find(
+        (owner) =>
+          owner.make.assetType.tokenId === owner.tokenId &&
+          owner.make.assetType?.contract === owner.contractAddress
+      )
+      .lean();
 
     if (owner) {
       owner.order === order;
@@ -453,16 +459,18 @@ const querOrderAndOwnerParams = async (
 
   const nfts = await OrderModel.find({
     $and: [{ $or: nftsQuery }],
-  });
+  }).lean();
 
   const finalNfts = nfts.map((nft) => ({
     ...nft,
     orders:
-      orders.find(
-        (order) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract === nft.contractAddress.toLowerCase()
-      ) || [],
+      orders
+        .find(
+          (order) =>
+            order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType.contract === nft.contractAddress.toLowerCase()
+        )
+        .lean() || [],
   }));
 
   return finalNfts;
@@ -480,13 +488,15 @@ const queryMixedParams = async (
 
   const nftFilters = buildNftQuery(nftParams);
   const ownerFilters = buildOwnerParams(ownerParams);
-  const orderFilters = buildOrderFilters(orderParams, generalParams);
+  const orderFilters = await buildOrderFilters(orderParams, generalParams);
 
+  console.time("query-time");
   const [nfts, owners, orders] = await Promise.all([
-    TokenModel.find(nftFilters),
-    NFTTokenOwnerModel.find(ownerFilters),
-    OrderModel.find(orderFilters),
+    TokenModel.find(nftFilters).lean(),
+    NFTTokenOwnerModel.find(ownerFilters).lean(),
+    OrderModel.find(orderFilters).lean(),
   ]);
+  console.timeEnd("query-time");
 
   // Apply Pagination
   const filtered = [];

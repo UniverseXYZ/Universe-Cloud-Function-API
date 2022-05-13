@@ -33,7 +33,10 @@ const getClient = async () => {
 
 export async function queryNfts(req: Request, res: Response) {
   try {
+    console.time("service-execution-time");
+    console.time("db-connection-time");
     const client = await getClient();
+    console.timeEnd("db-connection-time");
     console.log(req.query);
     const result = await fetchNftsNew(
       req.query.ownerAddress,
@@ -55,6 +58,8 @@ export async function queryNfts(req: Request, res: Response) {
 
     res.status(200);
     res.send(result);
+
+    console.timeEnd("service-execution-time");
 
     // TODO: Close connection to DB
     // client.disconnect();

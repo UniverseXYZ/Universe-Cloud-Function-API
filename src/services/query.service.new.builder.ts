@@ -71,10 +71,7 @@ export const getOrdersLookup = () => ({
                         $eq: ["$make.assetType.tokenId", "$$tokenId"],
                       },
                       {
-                        $eq: [
-                          { $toLower: "$make.assetType.contract" },
-                          "$$contractAddress",
-                        ],
+                        $eq: ["$make.assetType.contract", "$$contractAddress"],
                       },
                     ],
                   },
@@ -84,10 +81,7 @@ export const getOrdersLookup = () => ({
                         $eq: ["$take.assetType.tokenId", "$$tokenId"],
                       },
                       {
-                        $eq: [
-                          { $toLower: "$make.assetType.contract" },
-                          "$$contractAddress",
-                        ],
+                        $eq: ["$make.assetType.contract", "$$contractAddress"],
                       },
                     ],
                   },
@@ -103,42 +97,42 @@ export const getOrdersLookup = () => ({
         $sort: { createdAt: -1 },
       },
     ],
-    as: "order",
+    as: "orders",
   },
 });
 
-export const getNFTLookup = () => ({
-  $lookup: {
-    from: "nft-tokens",
-    let: {
-      makeTokenId: "$make.assetType.tokenId",
-      //TODO: WE NEED COLLATION INDEX HERE
-      makeContractAddress: "$make.assetType.contract",
-    },
-    pipeline: [
-      {
-        $match: {
-          $expr: {
-            $and: [
-              {
-                $eq: ["$tokenId", "$$makeTokenId"],
-              },
-              {
-                $eq: ["$contractAddress", "$$makeContractAddress"],
-              },
-            ],
-          },
-        },
-      },
-      {
-        $limit: 1,
-      },
-    ],
-    as: "nft",
-  },
-});
+// export const getNFTLookup = () => ({
+//   $lookup: {
+//     from: "nft-tokens",
+//     let: {
+//       makeTokenId: "$make.assetType.tokenId",
+//       //TODO: WE NEED COLLATION INDEX HERE
+//       makeContractAddress: "$make.assetType.contract",
+//     },
+//     pipeline: [
+//       {
+//         $match: {
+//           $expr: {
+//             $and: [
+//               {
+//                 $eq: ["$tokenId", "$$makeTokenId"],
+//               },
+//               {
+//                 $eq: ["$contractAddress", "$$makeContractAddress"],
+//               },
+//             ],
+//           },
+//         },
+//       },
+//       {
+//         $limit: 1,
+//       },
+//     ],
+//     as: "nft",
+//   },
+// });
 
-export const getNFTLookup2 = () => [
+export const getNFTLookup = () => [
   {
     $lookup: {
       from: "nft-tokens",
