@@ -159,10 +159,6 @@ export const buildNftQuery = (nftParams: INFTParams) => {
     filters.push({ contractAddress: tokenAddress });
   }
 
-  if (tokenType) {
-    filters.push({ tokenType });
-  }
-
   if (searchQuery) {
     filters.push({
       "metadata.name": { $regex: new RegExp(searchQuery, "i") },
@@ -176,6 +172,11 @@ export const buildNftQuery = (nftParams: INFTParams) => {
       tokenId: { $in: tokenIdsSplit },
     });
   }
+
+  if (tokenType) {
+    filters.push({ tokenType });
+  }
+
   const finalFilters = { $and: filters };
 
   return finalFilters;

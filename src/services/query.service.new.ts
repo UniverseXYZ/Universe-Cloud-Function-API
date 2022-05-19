@@ -330,8 +330,10 @@ const queryNftAndOwnerParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const nftFilters = buildNftQuery(nftParams);
   const ownerFilters = buildOwnerParams(ownerParams);
+  // TOOO: Make several execution pathways
+  // Option 1
+  const nftFilters = buildNftQuery(nftParams);
 
   console.time("query-time");
   const [nfts, owners] = await Promise.all([
@@ -339,7 +341,25 @@ const queryNftAndOwnerParams = async (
     NFTTokenOwnerModel.find(ownerFilters).lean(),
   ]);
   console.timeEnd("query-time");
-  // Apply Pagination
+
+  // Option 2
+  // console.time("query-time");
+  // const owners = await NFTTokenOwnerModel.find(ownerFilters).lean();
+  // console.timeEnd("query-time");
+
+  // const newTokenIds = owners.map((owner) => owner.tokenId);
+  // if (nftParams.tokenIds) {
+  //   const mergedIds = nftParams.tokenIds.split(",");
+  //   nftParams.tokenIds = new Set([...newTokenIds, ...mergedIds]);
+  // }
+  // nftParams.tokenIds = Array.from(new Set([...newTokenIds])).join(',');
+
+  // const nftFilters = await buildNftQuery(nftParams);
+  // // Apply Pagination
+  // console.time("query-time");
+  // const nfts = await TokenModel.find(nftFilters).skip(skippedItems).limit(Number(limit)).lean();
+  // console.timeEnd("query-time");
+
   const filtered = [];
 
   if (!nfts.length || !owners.length) {
