@@ -13,7 +13,7 @@ export interface IOrderParams {
   maxPrice: string;
   sortBy: string;
   hasOffers: boolean;
-  token: string;
+  collection: string;
 }
 
 export interface IOwnerParams {

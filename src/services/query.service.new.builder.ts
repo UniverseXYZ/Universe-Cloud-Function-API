@@ -20,6 +20,7 @@ import {
   addPriceSortingAggregation,
   SortOrderOptionsEnum,
 } from "./query.service";
+import { constants } from '../constants';
 
 // Lookup to join the document representing the owner of the nft from nft-token-owners
 export const getNFTOwnersLookup = () => ({
@@ -87,7 +88,17 @@ export const getOrdersLookup = () => ({
                   },
                 ],
               },
-              { $eq: ["$status", OrderStatus.CREATED] },
+              {
+                $or: [
+                  { 
+                    $eq: ["$status", OrderStatus.CREATED],
+                  },
+                  { 
+                    $eq: ["$status", OrderStatus.PARTIALFILLED],
+                  },
+                ],
+              },
+              // { $eq: ["$status", OrderStatus.CREATED] },
               { $eq: ["$side", OrderSide.SELL] },
             ],
           },
@@ -101,55 +112,57 @@ export const getOrdersLookup = () => ({
   },
 });
 
-// export const getNFTLookup = () => ({
-//   $lookup: {
-//     from: "nft-tokens",
-//     let: {
-//       makeTokenId: "$make.assetType.tokenId",
-//       //TODO: WE NEED COLLATION INDEX HERE
-//       makeContractAddress: "$make.assetType.contract",
-//     },
-//     pipeline: [
-//       {
-//         $match: {
-//           $expr: {
-//             $and: [
-//               {
-//                 $eq: ["$tokenId", "$$makeTokenId"],
-//               },
-//               {
-//                 $eq: ["$contractAddress", "$$makeContractAddress"],
-//               },
-//             ],
-//           },
-//         },
-//       },
-//       {
-//         $limit: 1,
-//       },
-//     ],
-//     as: "nft",
-//   },
-// });
+export const getNFTLookup = () => ({
+  $lookup: {
+    from: "nft-tokens",
+    let: {
+      // makeTokenId: "$make.assetType.tokenId",
+      makeTokenId: "$_id.tokenId",
+      //TODO: WE NEED COLLATION INDEX HERE
+      // makeContractAddress: "$make.assetType.contract",
+      makeContractAddress: "$_id.contract",
+    },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ["$tokenId", "$$makeTokenId"],
+              },
+              {
+                $eq: ["$contractAddress", "$$makeContractAddress"],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $limit: 1,
+      },
+    ],
+    as: "nft",
+  },
+});
 
-export const getNFTLookup = () => [
-  {
-    $lookup: {
-      from: "nft-tokens",
-      localField: "make.assetType.tokenId",
-      foreignField: "tokenId",
-      as: "nft",
-    },
-  },
-  {
-    $lookup: {
-      from: "nft-tokens",
-      localField: "make.assetType.contract",
-      foreignField: "nft.contractAddress",
-      as: "nft",
-    },
-  },
-];
+// export const getNFTLookup = () => [
+//   {
+//     $lookup: {
+//       from: "nft-tokens",
+//       localField: "make.assetType.tokenId",
+//       foreignField: "tokenId",
+//       as: "nft",
+//     },
+//   },
+//   {
+//     $lookup: {
+//       from: "nft-tokens",
+//       localField: "make.assetType.contract",
+//       foreignField: "nft.contractAddress",
+//       as: "nft",
+//     },
+//   },
+// ];
 
 export const buildNftQuery = (nftParams: INFTParams) => {
   const { tokenAddress, tokenIds, searchQuery, tokenType } = nftParams;
@@ -200,8 +213,34 @@ export const buildOrderFilters = async (
     side,
     assetClass,
     beforeTimestamp,
-    token,
+    collection,
   } = orderParams;
+
+  //assuming that, when querying orders, certain filtering should exist by default
+  if(!side) {
+    filters.push({
+      side: OrderSide.SELL,
+    });
+  }
+  filters.push({
+    // $or: [
+    //   { 
+    //     // $eq: ["$status", OrderStatus.CREATED],
+    //     status: OrderStatus.CREATED,
+    //   },
+    //   {
+    //     // $eq: ["$status", OrderStatus.PARTIALFILLED],
+    //     status: OrderStatus.PARTIALFILLED,
+    //   },
+    // ],
+    'status': { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] },
+  });
+  filters.push({
+    $or: [{start: {$lt: utcTimestamp}}, {start: 0}],
+  });
+  filters.push({
+    $or: [{end: {$gt: utcTimestamp}}, {end: 0}],
+  });
 
   // ORDER FILTERS
   if (minPrice) {
@@ -235,17 +274,18 @@ export const buildOrderFilters = async (
     });
   }
 
-  if (token) {
-    if (token === ethers.constants.AddressZero) {
+  if (collection) {
+    const sideToFilter = side && OrderSide.BUY === side ? 'take' : 'make';
+    if (collection === ethers.constants.AddressZero) {
       filters.push({
-        "take.assetType.assetClass": AssetClass.ETH,
+        [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
       });
     } else {
       // REGEX SEARCH IS NOT PERFORMANT
       // DOCUMENTDB DOESNT SUPPORT COLLATION INDICES
-      // query.token address MUST BE UPPERCASE CONTRACT ADDRESS
+      // query.collection address MUST BE UPPERCASE CONTRACT ADDRESS
       filters.push({
-        "take.assetType.contract": token,
+        [`${sideToFilter}.assetType.contract`]: collection,
       });
     }
   }
@@ -353,3 +393,12 @@ export const buildOwnerParams = (ownerParams: IOwnerParams) => {
 
   return finalFilters;
 };
+
+export const buildGeneralParams = (page: any, limit: any) => {
+  return {
+    page : Number(page) > 0 ? Math.floor(Number(page)) : 1,
+    limit: Number(limit) > 0 && Math.floor(Number(limit)) <= constants.QUERY_SIZE_LIMIT 
+      ? Number(limit) 
+      : constants.DEFAULT_QUERY_SIZE,
+  }
+}
