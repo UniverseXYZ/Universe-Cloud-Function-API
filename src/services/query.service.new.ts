@@ -285,6 +285,7 @@ const queryOnlyOrderParams = async (
       [
         ...dbQuery,
         // ...sortingAggregation,
+        { $sort: sort },
         { 
           $group: {
             _id: {
@@ -321,7 +322,6 @@ const queryOnlyOrderParams = async (
             orders: '$orders',
           }
         },
-        { $sort: sort },
       ],
       { collation: { locale: "en", strength: 2 } }
     ),
