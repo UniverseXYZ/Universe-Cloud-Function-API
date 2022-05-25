@@ -49,7 +49,7 @@ export async function queryNfts(req: Request, res: Response) {
       req.query.assetClass,
       req.query.tokenIds,
       req.query.beforeTimestamp,
-      req.query.token,
+      req.query.collection,
       req.query.minPrice,
       req.query.maxPrice,
       req.query.sortBy,
