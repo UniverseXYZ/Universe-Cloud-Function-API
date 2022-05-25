@@ -211,6 +211,7 @@ const queryOnlyNftParams = async (
   };
 };
 
+// @Deprecated
 // const queryOnlyOrderParams = async (
 //   orderParams: IOrderParams,
 //   generalParams: IGeneralParams

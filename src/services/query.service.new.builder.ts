@@ -223,16 +223,6 @@ export const buildOrderFilters = async (
     });
   }
   filters.push({
-    // $or: [
-    //   { 
-    //     // $eq: ["$status", OrderStatus.CREATED],
-    //     status: OrderStatus.CREATED,
-    //   },
-    //   {
-    //     // $eq: ["$status", OrderStatus.PARTIALFILLED],
-    //     status: OrderStatus.PARTIALFILLED,
-    //   },
-    // ],
     'status': { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] },
   });
   filters.push({
