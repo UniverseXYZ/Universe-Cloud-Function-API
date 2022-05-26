@@ -430,7 +430,18 @@ const queryNftAndOwnerParams = async (
   console.time("query-time");
   const [nfts, owners] = await Promise.all([
     TokenModel.find(nftFilters).lean(),
-    NFTTokenOwnerModel.find(ownerFilters).lean(),
+    NFTTokenOwnerModel.aggregate([
+      {
+        $unionWith: {
+          coll: "nft-erc1155-token-owners",
+          pipeline: [
+            { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
+          ],
+        },
+      },
+      { $match: ownerFilters },
+      { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+    ]),
   ]);
   console.timeEnd("query-time");
 
@@ -606,7 +617,18 @@ const querOrderAndOwnerParams = async (
 
   const [orders, owners] = await Promise.all([
     TokenModel.find(orderFilters).lean(),
-    NFTTokenOwnerModel.find(ownerFilters).lean(),
+    NFTTokenOwnerModel.aggregate([
+      {
+        $unionWith: {
+          coll: "nft-erc1155-token-owners",
+          pipeline: [
+            { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
+          ],
+        },
+      },
+      { $match: ownerFilters },
+      { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+    ]),
   ]);
 
   if (!orders.length || !owners.length) {
@@ -708,7 +730,18 @@ const queryMixedParams = async (
   console.time("query-time");
   const [nfts, owners, orders] = await Promise.all([
     TokenModel.find(nftFilters).lean(),
-    NFTTokenOwnerModel.find(ownerFilters).lean(),
+    NFTTokenOwnerModel.aggregate([
+      {
+        $unionWith: {
+          coll: "nft-erc1155-token-owners",
+          pipeline: [
+            { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
+          ],
+        },
+      },
+      { $match: ownerFilters },
+      { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+    ]),
     OrderModel.find(orderFilters).lean(),
   ]);
   console.timeEnd("query-time");
