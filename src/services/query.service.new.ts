@@ -27,6 +27,8 @@ import {
   getOrdersLookup,
 } from "./query.service.new.builder";
 
+// TODO:: Add params type
+// TODO:: We might need to gather info about the NFT collection, so we can display it's name, address and owner in the collection popup
 export const fetchNftsNew = async (
   // db: any,
   ownerAddress: string,
@@ -80,8 +82,9 @@ export const fetchNftsNew = async (
     queryParams.orderParams.assetClass ||
     queryParams.orderParams.minPrice ||
     queryParams.orderParams.maxPrice ||
-    queryParams.orderParams.beforeTimestamp || 
-    queryParams.orderParams.collection
+    queryParams.orderParams.beforeTimestamp ||
+    queryParams.orderParams.collection ||
+    queryParams.orderParams.sortBy // Include SortBy so it can kick the function without any other params, as can be used in the BrowseMarketplace Page
   );
 
   const hasOwnerParams = !!queryParams.ownerParams.ownerAddress;
@@ -148,7 +151,7 @@ export const fetchNftsNew = async (
   if (hasOrderParams && hasOwnerParams && !hasNftParams) {
     console.log("Querying order and owner params");
 
-    return querOrderAndOwnerParams(
+    return queryOrderAndOwnerParams(
       queryParams.nftParams,
       queryParams.ownerParams,
       queryParams.generalParams
@@ -602,8 +605,7 @@ const queryNftAndOrderParams = async (
     nfts: paginated,
   };
 };
-
-const querOrderAndOwnerParams = async (
+const queryOrderAndOwnerParams = async (
   orderParams,
   ownerParams,
   generalParams

@@ -9,7 +9,11 @@ require("dotenv").config();
 var client: any;
 
 const getClient = async () => {
-  const url = process.env.DB_URL;
+  const DB_URL = process.env.DB_URL;
+  if (!DB_URL) {
+    return console.error("Missing MONGODB Connection String !");
+  }
+
   if (client instanceof Promise) {
     console.log("MONGODB CLIENT RECONNECTED!");
   } else if (client) {
@@ -17,7 +21,7 @@ const getClient = async () => {
     console.log("MONGODB CLIENT ALREADY CONNECTED!");
   } else {
     try {
-      client = await mongoose.connect(url, {
+      client = await mongoose.connect(DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
