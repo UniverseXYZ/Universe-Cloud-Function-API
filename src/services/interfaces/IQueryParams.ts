@@ -1,3 +1,4 @@
+// TODO:: Describe what TokenType could be
 export interface INFTParams {
   tokenAddress: string;
   tokenType: string;

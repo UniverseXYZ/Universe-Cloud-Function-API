@@ -1,8 +1,12 @@
-import { OrderModel, OrderSide, OrderStatus } from "../models/order";
-import { TokenModel } from "../models/token";
-import { NFTTokenOwnerModel } from "../models/tokenOwner";
-import { ERC1155NFTTokenOwnerModel } from "../models/erc1155tokenOwner";
-import { Utils } from '../utils';
+
+import {
+  OrderModel,
+  OrderSide,
+  OrderStatus,
+  TokenModel,
+  NFTTokenOwnerModel,
+  NFTCollectionModel,
+} from '../models';
 
 import {
   IGeneralParams,
@@ -28,7 +32,7 @@ import {
 } from "./query.service.new.builder";
 
 // TODO:: Add params type
-// TODO:: We might need to gather info about the NFT collection, so we can display it's name, address and owner in the collection popup
+// TODO:: Write down the minimum required params for the Cloud function to be able to return a result without timing out from the DB
 export const fetchNftsNew = async (
   // db: any,
   ownerAddress: string,
@@ -175,6 +179,7 @@ const queryOnlyNftParams = async (
   generalParams: IGeneralParams
 ) => {
   const { page, limit } = generalParams;
+  const { tokenAddress } = nftParams;
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
