@@ -33,6 +33,7 @@ import {
 
 // TODO:: Add params type
 // TODO:: Write down the minimum required params for the Cloud function to be able to return a result without timing out from the DB
+// TODO:: Upon retrieving orders, find return the Last & Best offers info
 export const fetchNftsNew = async (
   // db: any,
   ownerAddress: string,
@@ -88,7 +89,8 @@ export const fetchNftsNew = async (
     queryParams.orderParams.maxPrice ||
     queryParams.orderParams.beforeTimestamp ||
     queryParams.orderParams.collection ||
-    queryParams.orderParams.sortBy // Include SortBy so it can kick the function without any other params, as can be used in the BrowseMarketplace Page
+    queryParams.orderParams.sortBy || // Include SortBy so it can kick the function without any other params, as can be used in the BrowseMarketplace Page
+    queryParams.orderParams.hasOffers
   );
 
   const hasOwnerParams = !!queryParams.ownerParams.ownerAddress;
@@ -354,7 +356,7 @@ const queryOnlyOrderParams = async (
   return {
     page: Number(page),
     size: Number(limit),
-    total: count[0].count,
+    total: !count.length ? 0 : count[0].count,
     nfts: data,
   };
 };

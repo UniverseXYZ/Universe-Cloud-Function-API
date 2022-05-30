@@ -6,7 +6,6 @@ import {
   IOwnerParams,
 } from "./interfaces/IQueryParams";
 import { Utils } from "../utils/index";
-import web3 from "web3";
 
 import {
   AssetClass,
@@ -234,7 +233,7 @@ export const buildOrderFilters = async (
 
   // ORDER FILTERS
   if (minPrice) {
-    const weiPrice = web3.utils.toWei(minPrice as string);
+    const weiPrice = ethers.utils.parseUnits(minPrice as string, 18).toString();
     // TODO: If possible remove $expr because it can't use the mulitykey index
 
     filters.push({
@@ -245,7 +244,7 @@ export const buildOrderFilters = async (
   }
 
   if (maxPrice) {
-    const weiPrice = web3.utils.toWei(maxPrice as string);
+    const weiPrice = ethers.utils.parseUnits(maxPrice as string, 18).toString();
 
     // TODO: If possible remove $expr because it can't use the mulitykey index
     filters.push({
