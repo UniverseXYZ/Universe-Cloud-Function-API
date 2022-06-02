@@ -19,6 +19,7 @@ export interface IOrderParams {
 
 export interface IOwnerParams {
   ownerAddress: string;
+  tokenType: string;
 }
 
 export interface IGeneralParams {

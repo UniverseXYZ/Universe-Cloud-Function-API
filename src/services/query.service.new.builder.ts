@@ -19,7 +19,8 @@ import {
   addPriceSortingAggregation,
   SortOrderOptionsEnum,
 } from "./query.service";
-import { constants } from '../constants';
+import { constants } from "../constants";
+import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../models";
 
 // Lookup to join the document representing the owner of the nft from nft-token-owners
 export const getNFTOwnersLookup = () => ({
@@ -89,10 +90,10 @@ export const getOrdersLookup = () => ({
               },
               {
                 $or: [
-                  { 
+                  {
                     $eq: ["$status", OrderStatus.CREATED],
                   },
-                  { 
+                  {
                     $eq: ["$status", OrderStatus.PARTIALFILLED],
                   },
                 ],
@@ -163,7 +164,7 @@ export const getNFTLookup = () => ({
 //   },
 // ];
 
-export const buildNftQuery = (nftParams: INFTParams) => {
+export const buildNftQueryFilters = (nftParams: INFTParams) => {
   const { tokenAddress, tokenIds, searchQuery, tokenType } = nftParams;
   const filters = [] as any;
 
@@ -194,7 +195,7 @@ export const buildNftQuery = (nftParams: INFTParams) => {
   return finalFilters;
 };
 
-export const buildOrderFilters = async (
+export const buildOrderQueryFilters = async (
   orderParams: IOrderParams,
   generalParams: IGeneralParams
 ) => {
@@ -216,19 +217,19 @@ export const buildOrderFilters = async (
   } = orderParams;
 
   //assuming that, when querying orders, certain filtering should exist by default
-  if(!side) {
+  if (!side) {
     filters.push({
       side: OrderSide.SELL,
     });
   }
   filters.push({
-    'status': { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] },
+    status: { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] },
   });
   filters.push({
-    $or: [{start: {$lt: utcTimestamp}}, {start: 0}],
+    $or: [{ start: { $lt: utcTimestamp } }, { start: 0 }],
   });
   filters.push({
-    $or: [{end: {$gt: utcTimestamp}}, {end: 0}],
+    $or: [{ end: { $gt: utcTimestamp } }, { end: 0 }],
   });
 
   // ORDER FILTERS
@@ -264,7 +265,7 @@ export const buildOrderFilters = async (
   }
 
   if (collection) {
-    const sideToFilter = side && OrderSide.BUY === side ? 'take' : 'make';
+    const sideToFilter = side && OrderSide.BUY === side ? "take" : "make";
     if (collection === ethers.constants.AddressZero) {
       filters.push({
         [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
@@ -371,23 +372,49 @@ export const buildOrderFilters = async (
   return { finalFilters, sort };
 };
 
-export const buildOwnerParams = (ownerParams: IOwnerParams) => {
+export const buildOwnerQueryFilters = (ownerParams: IOwnerParams) => {
   const filters = [] as any;
-
+  // TODO: Add validation when request is received to validate ERC721 or ERC1155 strings
   filters.push({
     address: ownerParams.ownerAddress,
   });
 
   const finalFilters = { $and: filters };
 
-  return finalFilters;
+  switch (ownerParams.tokenType) {
+    case "ERC721":
+      return NFTTokenOwnerModel.aggregate([
+        { $match: finalFilters },
+        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+      ]);
+    case "ERC1155":
+      return ERC1155NFTTokenOwnerModel.aggregate([
+        { $match: finalFilters },
+        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+      ]);
+    default:
+      return NFTTokenOwnerModel.aggregate([
+        {
+          $unionWith: {
+            coll: "nft-erc1155-token-owners",
+            pipeline: [
+              { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
+            ],
+          },
+        },
+        { $match: finalFilters },
+        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+      ]);
+  }
 };
 
 export const buildGeneralParams = (page: any, limit: any) => {
   return {
-    page : Number(page) > 0 ? Math.floor(Number(page)) : 1,
-    limit: Number(limit) > 0 && Math.floor(Number(limit)) <= constants.QUERY_SIZE_LIMIT 
-      ? Number(limit) 
-      : constants.DEFAULT_QUERY_SIZE,
-  }
-}
+    page: Number(page) > 0 ? Math.floor(Number(page)) : 1,
+    limit:
+      Number(limit) > 0 &&
+      Math.floor(Number(limit)) <= constants.QUERY_SIZE_LIMIT
+        ? Number(limit)
+        : constants.DEFAULT_QUERY_SIZE,
+  };
+};
