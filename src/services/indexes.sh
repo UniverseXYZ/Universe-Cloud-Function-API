@@ -115,6 +115,7 @@ db.getCollection("marketplace-orders").createIndex(
 // because it's not selective enough (better performance to make full collection scan)
 
 Combinations using 1 index (4)
+// DEPLOYED
 db.getCollection("nft-tokens").createIndex({
   "contractAddress": 1,
   },
@@ -123,8 +124,6 @@ db.getCollection("nft-tokens").createIndex({
      collation: { locale: "en", strength: 2 }
    }
  );
-
-
 
 db.getCollection("nft-tokens").createIndex(
   {
@@ -140,6 +139,7 @@ db.getCollection("nft-tokens").createIndex({
   "tokenId": 1,
   }, {name: "tokenId_1"})
 
+// DEPLOYED
 db.getCollection("nft-tokens").createIndex(
   {
     "metadata.name": 1,
@@ -150,6 +150,7 @@ db.getCollection("nft-tokens").createIndex(
   }
 );
 
+// DEPLOYED
 Combinations using 2 indexes(6)
 db.getCollection("nft-tokens").createIndex(
   {
@@ -162,6 +163,7 @@ db.getCollection("nft-tokens").createIndex(
   }
 );
 
+// Deployed
 db.getCollection("nft-tokens").createIndex(
   {
     tokenId: 1,
@@ -215,6 +217,7 @@ db.getCollection("nft-tokens").createIndex(
 );
 
 Combinations using 3 indexes (4)
+// FOR DEPLOY
 db.getCollection("nft-tokens").createIndex(
   {
     tokenId: 1,
@@ -278,6 +281,8 @@ db.getCollection("nft-tokens").createIndex(
 );
 
 // OWNERS INDEXES
+
+// DEPLOYED
 db.getCollection("nft-erc1155-token-owners").createIndex(
   {
     "address": 1,
@@ -287,7 +292,8 @@ db.getCollection("nft-erc1155-token-owners").createIndex(
     collation: { locale: "en", strength: 2 },
   }
 );
-\
+
+// DEPLOYED
 db.getCollection("nft-token-owners").createIndex(
   {
     "address": 1,
