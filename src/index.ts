@@ -36,6 +36,8 @@ const getClient = async () => {
 };
 
 export async function queryNfts(req: Request, res: Response) {
+  res.set("Access-Control-Allow-Origin", "*");
+
   try {
     console.time("service-execution-time");
     console.time("db-connection-time");
@@ -57,7 +59,8 @@ export async function queryNfts(req: Request, res: Response) {
       req.query.minPrice,
       req.query.maxPrice,
       req.query.sortBy,
-      req.query.hasOffers
+      req.query.hasOffers,
+      req.query.buyNow
     );
 
     res.status(200);
@@ -65,8 +68,9 @@ export async function queryNfts(req: Request, res: Response) {
 
     console.timeEnd("service-execution-time");
 
-    // TODO: Close connection to DB
-    // client.disconnect();
+    if (process.env.NODE_ENV === "production") {
+      client.disconnect();
+    }
   } catch (err) {
     console.log(err);
     res.status(500);
@@ -79,7 +83,7 @@ if (process.env.NODE_ENV !== "production") {
   const app = express();
   const port = 3000;
 
-  app.get("/nftquery", (req, res) => {
+  app.get("/queryNfts", (req, res) => {
     queryNfts(req, res);
   });
 
