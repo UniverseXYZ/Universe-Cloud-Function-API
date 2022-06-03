@@ -24,7 +24,7 @@ import {
 import {
   buildNftQueryFilters,
   buildOrderQueryFilters,
-  buildOwnerQueryFilters as buildOwnerQuery,
+  buildOwnerQuery,
   buildGeneralParams,
   getNFTLookup,
   getOrdersLookup,

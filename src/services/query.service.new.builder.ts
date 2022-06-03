@@ -165,7 +165,7 @@ export const getNFTLookup = () => ({
 //   },
 // ];
 
-export const buildNftQuery = async (nftParams: INFTParams) => {
+export const buildNftQueryFilters = async (nftParams: INFTParams) => {
   const { tokenAddress, tokenIds, searchQuery, tokenType, traits } = nftParams;
   const filters = [] as any;
 
@@ -385,7 +385,7 @@ export const buildOrderQueryFilters = async (
   return { finalFilters, sort };
 };
 
-export const buildOwnerQueryFilters = (ownerParams: IOwnerParams) => {
+export const buildOwnerQuery = (ownerParams: IOwnerParams) => {
   const filters = [] as any;
   // TODO: Add validation when request is received to validate ERC721 or ERC1155 strings
   filters.push({
