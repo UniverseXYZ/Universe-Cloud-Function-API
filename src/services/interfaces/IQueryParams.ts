@@ -4,6 +4,7 @@ export interface INFTParams {
   tokenType: string;
   searchQuery: string;
   tokenIds: string;
+  traits: any;
 }
 
 export interface IOrderParams {

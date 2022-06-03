@@ -1,4 +1,5 @@
 export * from "./collection";
+export * from "./collection-attributes";
 export * from "./order";
 export * from "./token";
 export * from "./tokenOwner";

@@ -44,24 +44,7 @@ export async function queryNfts(req: Request, res: Response) {
     const client = await getClient();
     console.timeEnd("db-connection-time");
     console.log(req.query);
-    const result = await fetchNftsNew(
-      req.query.ownerAddress,
-      req.query.tokenAddress,
-      req.query.tokenType,
-      req.query.searchQuery,
-      req.query.page,
-      req.query.limit,
-      req.query.side,
-      req.query.assetClass,
-      req.query.tokenIds,
-      req.query.beforeTimestamp,
-      req.query.collection,
-      req.query.minPrice,
-      req.query.maxPrice,
-      req.query.sortBy,
-      req.query.hasOffers,
-      req.query.buyNow
-    );
+    const result = await fetchNftsNew(req.query);
 
     res.status(200);
     res.send(result);

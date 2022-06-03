@@ -30,38 +30,58 @@ import {
   getOrdersLookup,
 } from "./query.service.new.builder";
 
-// TODO:: Add params type
+type FetchParams = {
+  ownerAddress: string;
+  tokenAddress: string;
+  tokenType: string;
+  searchQuery: string;
+  page: number;
+  limit: number;
+  side: number;
+  // NFT Type
+  assetClass: string;
+  tokenIds: string;
+  // New checkbox
+  beforeTimestamp: number;
+  collection: string;
+  minPrice: string;
+  maxPrice: string;
+  sortBy: string;
+  // Has offers checkbox
+  hasOffers: boolean;
+  //Buy Now checkbox
+  buyNow: boolean;
+};
+
 // TODO:: Write down the minimum required params for the Cloud function to be able to return a result without timing out from the DB
 // TODO:: Upon retrieving orders, find return the Last & Best offers info
-export const fetchNftsNew = async (
-  // db: any,
-  ownerAddress: string,
-  tokenAddress: string,
-  tokenType: string,
-  searchQuery: string,
-  page: number,
-  limit: number,
-  side: number,
-  // NFT Type
-  assetClass: string,
-  tokenIds: string,
-  // New checkbox
-  beforeTimestamp: number,
-  collection: string,
-  minPrice: string,
-  maxPrice: string,
-  sortBy: string,
-  // Has offers checkbox
-  hasOffers: boolean,
-  //Buy Now checkbox
-  buyNow: boolean
-) => {
+export const fetchNftsNew = async (params: FetchParams) => {
+  const {
+    ownerAddress,
+    tokenAddress,
+    tokenType,
+    searchQuery,
+    page,
+    limit,
+    side,
+    assetClass,
+    tokenIds,
+    beforeTimestamp,
+    collection,
+    minPrice,
+    maxPrice,
+    sortBy,
+    hasOffers,
+    ...traits
+  } = params;
+
   const queryParams: IQueryParams = {
     nftParams: {
       tokenAddress,
       tokenIds,
       searchQuery,
       tokenType,
+      traits,
     },
     orderParams: {
       minPrice,
@@ -84,7 +104,8 @@ export const fetchNftsNew = async (
     queryParams.nftParams.tokenAddress ||
     queryParams.nftParams.tokenType ||
     queryParams.nftParams.searchQuery ||
-    queryParams.nftParams.tokenIds
+    queryParams.nftParams.tokenIds ||
+    queryParams.nftParams.traits
   );
 
   const hasOrderParams = !!(
@@ -186,7 +207,6 @@ const queryOnlyNftParams = async (
   generalParams: IGeneralParams
 ) => {
   const { page, limit } = generalParams;
-  const { tokenAddress } = nftParams;
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 

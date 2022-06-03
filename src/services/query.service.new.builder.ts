@@ -12,7 +12,8 @@ import {
   OrderModel,
   OrderSide,
   OrderStatus,
-} from "../models/order";
+  NFTCollectionAttributesModel,
+} from "../models";
 
 import {
   addEndSortingAggregation,
@@ -164,8 +165,8 @@ export const getNFTLookup = () => ({
 //   },
 // ];
 
-export const buildNftQueryFilters = (nftParams: INFTParams) => {
-  const { tokenAddress, tokenIds, searchQuery, tokenType } = nftParams;
+export const buildNftQuery = async (nftParams: INFTParams) => {
+  const { tokenAddress, tokenIds, searchQuery, tokenType, traits } = nftParams;
   const filters = [] as any;
 
   if (tokenAddress) {
@@ -178,7 +179,19 @@ export const buildNftQueryFilters = (nftParams: INFTParams) => {
     });
   }
 
-  if (tokenIds) {
+  // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
+  const hasTraitParams = tokenAddress && Object.keys(traits).length > 0;
+
+  // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
+  if (hasTraitParams) {
+    const ids = await getTokenIdsByCollectionAttributes(tokenAddress, traits);
+
+    if (ids && ids.length) {
+      filters.push({
+        tokenId: { $in: ids },
+      });
+    }
+  } else if (tokenIds) {
     const tokenIdsSplit = tokenIds.replace(/\s/g, "").split(",");
 
     filters.push({
@@ -417,4 +430,52 @@ export const buildGeneralParams = (page: any, limit: any) => {
         ? Number(limit)
         : constants.DEFAULT_QUERY_SIZE,
   };
+};
+
+// TODO:: add description
+// TODO:: Add traits type
+export const getTokenIdsByCollectionAttributes = async (
+  contractAddress: string,
+  traits: any
+) => {
+  const allTraitsArray = [];
+
+  // construct fields for the database query
+  for (const trait in traits) {
+    traits[trait].split(",").forEach((type) => {
+      const field = `$attributes.${trait.trim()}.${type.trim()}`;
+      allTraitsArray.push(field);
+    });
+  }
+
+  const filter = {
+    contractAddress: ethers.utils.getAddress(contractAddress),
+  };
+
+  try {
+    const tokenIds = await NFTCollectionAttributesModel.aggregate([
+      { $match: filter },
+      {
+        $project: {
+          tokens: {
+            $concatArrays: allTraitsArray,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          tokens: { $addToSet: "$tokens" },
+        },
+      },
+      { $unwind: "$tokens" },
+      { $unset: "_id" },
+    ]);
+
+    return tokenIds[0]?.tokens || [];
+  } catch (error) {
+    console.error(
+      `Error while trying to get Collection attributes for, ${contractAddress} for traits ${traits}`
+    );
+  }
 };
