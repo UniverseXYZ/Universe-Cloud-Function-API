@@ -12,14 +12,16 @@ import {
   OrderModel,
   OrderSide,
   OrderStatus,
-} from "../models/order";
+  NFTCollectionAttributesModel,
+} from "../models";
 
 import {
   addEndSortingAggregation,
   addPriceSortingAggregation,
   SortOrderOptionsEnum,
 } from "./query.service";
-import { constants } from '../constants';
+import { constants } from "../constants";
+import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../models";
 
 // Lookup to join the document representing the owner of the nft from nft-token-owners
 export const getNFTOwnersLookup = () => ({
@@ -89,10 +91,10 @@ export const getOrdersLookup = () => ({
               },
               {
                 $or: [
-                  { 
+                  {
                     $eq: ["$status", OrderStatus.CREATED],
                   },
-                  { 
+                  {
                     $eq: ["$status", OrderStatus.PARTIALFILLED],
                   },
                 ],
@@ -163,8 +165,8 @@ export const getNFTLookup = () => ({
 //   },
 // ];
 
-export const buildNftQuery = (nftParams: INFTParams) => {
-  const { tokenAddress, tokenIds, searchQuery, tokenType } = nftParams;
+export const buildNftQuery = async (nftParams: INFTParams) => {
+  const { tokenAddress, tokenIds, searchQuery, tokenType, traits } = nftParams;
   const filters = [] as any;
 
   if (tokenAddress) {
@@ -177,7 +179,19 @@ export const buildNftQuery = (nftParams: INFTParams) => {
     });
   }
 
-  if (tokenIds) {
+  // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
+  const hasTraitParams = tokenAddress && Object.keys(traits).length > 0;
+
+  // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
+  if (hasTraitParams) {
+    const ids = await getTokenIdsByCollectionAttributes(tokenAddress, traits);
+
+    if (ids && ids.length) {
+      filters.push({
+        tokenId: { $in: ids },
+      });
+    }
+  } else if (tokenIds) {
     const tokenIdsSplit = tokenIds.replace(/\s/g, "").split(",");
 
     filters.push({
@@ -194,7 +208,7 @@ export const buildNftQuery = (nftParams: INFTParams) => {
   return finalFilters;
 };
 
-export const buildOrderFilters = async (
+export const buildOrderQueryFilters = async (
   orderParams: IOrderParams,
   generalParams: IGeneralParams
 ) => {
@@ -216,19 +230,19 @@ export const buildOrderFilters = async (
   } = orderParams;
 
   //assuming that, when querying orders, certain filtering should exist by default
-  if(!side) {
+  if (!side) {
     filters.push({
       side: OrderSide.SELL,
     });
   }
   filters.push({
-    'status': { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] },
+    status: { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] },
   });
   filters.push({
-    $or: [{start: {$lt: utcTimestamp}}, {start: 0}],
+    $or: [{ start: { $lt: utcTimestamp } }, { start: 0 }],
   });
   filters.push({
-    $or: [{end: {$gt: utcTimestamp}}, {end: 0}],
+    $or: [{ end: { $gt: utcTimestamp } }, { end: 0 }],
   });
 
   // ORDER FILTERS
@@ -264,7 +278,7 @@ export const buildOrderFilters = async (
   }
 
   if (collection) {
-    const sideToFilter = side && OrderSide.BUY === side ? 'take' : 'make';
+    const sideToFilter = side && OrderSide.BUY === side ? "take" : "make";
     if (collection === ethers.constants.AddressZero) {
       filters.push({
         [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
@@ -371,23 +385,97 @@ export const buildOrderFilters = async (
   return { finalFilters, sort };
 };
 
-export const buildOwnerParams = (ownerParams: IOwnerParams) => {
+export const buildOwnerQueryFilters = (ownerParams: IOwnerParams) => {
   const filters = [] as any;
-
+  // TODO: Add validation when request is received to validate ERC721 or ERC1155 strings
   filters.push({
     address: ownerParams.ownerAddress,
   });
 
   const finalFilters = { $and: filters };
 
-  return finalFilters;
+  switch (ownerParams.tokenType) {
+    case "ERC721":
+      return NFTTokenOwnerModel.aggregate([
+        { $match: finalFilters },
+        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+      ]);
+    case "ERC1155":
+      return ERC1155NFTTokenOwnerModel.aggregate([
+        { $match: finalFilters },
+        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+      ]);
+    default:
+      return NFTTokenOwnerModel.aggregate([
+        {
+          $unionWith: {
+            coll: "nft-erc1155-token-owners",
+            pipeline: [
+              { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
+            ],
+          },
+        },
+        { $match: finalFilters },
+        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+      ]);
+  }
 };
 
 export const buildGeneralParams = (page: any, limit: any) => {
   return {
-    page : Number(page) > 0 ? Math.floor(Number(page)) : 1,
-    limit: Number(limit) > 0 && Math.floor(Number(limit)) <= constants.QUERY_SIZE_LIMIT 
-      ? Number(limit) 
-      : constants.DEFAULT_QUERY_SIZE,
+    page: Number(page) > 0 ? Math.floor(Number(page)) : 1,
+    limit:
+      Number(limit) > 0 &&
+      Math.floor(Number(limit)) <= constants.QUERY_SIZE_LIMIT
+        ? Number(limit)
+        : constants.DEFAULT_QUERY_SIZE,
+  };
+};
+
+// TODO:: add description
+// TODO:: Add traits type
+export const getTokenIdsByCollectionAttributes = async (
+  contractAddress: string,
+  traits: any
+) => {
+  const allTraitsArray = [];
+
+  // construct fields for the database query
+  for (const trait in traits) {
+    traits[trait].split(",").forEach((type) => {
+      const field = `$attributes.${trait.trim()}.${type.trim()}`;
+      allTraitsArray.push(field);
+    });
   }
-}
+
+  const filter = {
+    contractAddress: ethers.utils.getAddress(contractAddress),
+  };
+
+  try {
+    const tokenIds = await NFTCollectionAttributesModel.aggregate([
+      { $match: filter },
+      {
+        $project: {
+          tokens: {
+            $concatArrays: allTraitsArray,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          tokens: { $addToSet: "$tokens" },
+        },
+      },
+      { $unwind: "$tokens" },
+      { $unset: "_id" },
+    ]);
+
+    return tokenIds[0]?.tokens || [];
+  } catch (error) {
+    console.error(
+      `Error while trying to get Collection attributes for, ${contractAddress} for traits ${traits}`
+    );
+  }
+};

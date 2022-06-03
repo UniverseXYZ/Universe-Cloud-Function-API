@@ -350,13 +350,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
     { value: xyzPrice },
     { value: daiPrice },
     { value: wethPrice },
-  ] = await getPrices([
-    TOKENS.ETH,
-    TOKENS.USDC,
-    TOKENS.XYZ,
-    TOKENS.DAI,
-    TOKENS.WETH,
-  ]);
+  ] = await getPrices();
 
   console.log(`ETH Price: ${ethPrice}`);
   console.log(`USDC Price: ${usdcPrice}`);

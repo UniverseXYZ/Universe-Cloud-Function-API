@@ -1,4 +1,3 @@
-
 import {
   OrderModel,
   OrderSide,
@@ -6,7 +5,7 @@ import {
   TokenModel,
   NFTTokenOwnerModel,
   NFTCollectionModel,
-} from '../models';
+} from "../models";
 
 import {
   IGeneralParams,
@@ -23,41 +22,66 @@ import {
 } from "./query.service.new.helpers";
 
 import {
-  buildNftQuery,
-  buildOrderFilters,
-  buildOwnerParams,
+  buildNftQueryFilters,
+  buildOrderQueryFilters,
+  buildOwnerQueryFilters as buildOwnerQuery,
   buildGeneralParams,
   getNFTLookup,
   getOrdersLookup,
 } from "./query.service.new.builder";
 
-// TODO:: Add params type
+type FetchParams = {
+  ownerAddress: string;
+  tokenAddress: string;
+  tokenType: string;
+  searchQuery: string;
+  page: number;
+  limit: number;
+  side: number;
+  // NFT Type
+  assetClass: string;
+  tokenIds: string;
+  // New checkbox
+  beforeTimestamp: number;
+  collection: string;
+  minPrice: string;
+  maxPrice: string;
+  sortBy: string;
+  // Has offers checkbox
+  hasOffers: boolean;
+  //Buy Now checkbox
+  buyNow: boolean;
+};
+
 // TODO:: Write down the minimum required params for the Cloud function to be able to return a result without timing out from the DB
 // TODO:: Upon retrieving orders, find return the Last & Best offers info
-export const fetchNftsNew = async (
-  // db: any,
-  ownerAddress: string,
-  tokenAddress: string,
-  tokenType: string,
-  searchQuery: string,
-  page: number,
-  limit: number,
-  side: number,
-  assetClass: string,
-  tokenIds: string,
-  beforeTimestamp: number,
-  collection: string,
-  minPrice: string,
-  maxPrice: string,
-  sortBy: string,
-  hasOffers: boolean,
-) => {
+export const fetchNftsNew = async (params: FetchParams) => {
+  const {
+    ownerAddress,
+    tokenAddress,
+    tokenType,
+    searchQuery,
+    page,
+    limit,
+    side,
+    assetClass,
+    tokenIds,
+    beforeTimestamp,
+    collection,
+    minPrice,
+    maxPrice,
+    sortBy,
+    hasOffers,
+    ...traits
+  } = params;
+
   const queryParams: IQueryParams = {
     nftParams: {
       tokenAddress,
       tokenIds,
       searchQuery,
       tokenType,
+      traits,
     },
     orderParams: {
       minPrice,
@@ -71,6 +95,7 @@ export const fetchNftsNew = async (
     },
     ownerParams: {
       ownerAddress,
+      tokenType,
     },
     generalParams: buildGeneralParams(page, limit),
   };
@@ -79,7 +104,8 @@ export const fetchNftsNew = async (
     queryParams.nftParams.tokenAddress ||
     queryParams.nftParams.tokenType ||
     queryParams.nftParams.searchQuery ||
-    queryParams.nftParams.tokenIds
+    queryParams.nftParams.tokenIds ||
+    queryParams.nftParams.traits
   );
 
   const hasOrderParams = !!(
@@ -181,11 +207,10 @@ const queryOnlyNftParams = async (
   generalParams: IGeneralParams
 ) => {
   const { page, limit } = generalParams;
-  const { tokenAddress } = nftParams;
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const finalFilters = buildNftQuery(nftParams);
+  const finalFilters = buildNftQueryFilters(nftParams);
 
   const dbQuery = [{ $match: finalFilters }];
 
@@ -278,7 +303,7 @@ const queryOnlyOrderParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const { finalFilters, sort } = await buildOrderFilters(
+  const { finalFilters, sort } = await buildOrderQueryFilters(
     orderParams,
     generalParams
   );
@@ -297,15 +322,15 @@ const queryOnlyOrderParams = async (
         ...dbQuery,
         // ...sortingAggregation,
         { $sort: sort },
-        { 
+        {
           $group: {
             _id: {
-              contract: '$make.assetType.contract',
-              tokenId: '$make.assetType.tokenId',
+              contract: "$make.assetType.contract",
+              tokenId: "$make.assetType.tokenId",
             },
-            contractAddress: { $first: '$make.assetType.contract' },
-            tokenId: { $first: '$make.assetType.tokenId' },
-          } 
+            contractAddress: { $first: "$make.assetType.contract" },
+            tokenId: { $first: "$make.assetType.tokenId" },
+          },
         },
 
         { $skip: skippedItems },
@@ -317,39 +342,38 @@ const queryOnlyOrderParams = async (
         {
           $project: {
             _id: 0,
-            contractAddress: '$contractAddress',
-            tokenId: '$tokenId',
-            tokenType: { $first: '$nft.tokenType' },
-            externalDomainViewUrl: { $first: '$nft.externalDomainViewUrl' },
-            metadata: { $first: '$nft.metadata' },
-            firstOwner: { $first: '$nft.firstOwner' },
-            metadataFetchError: { $first: '$nft.metadataFetchError' },
-            processingSentAt: { $first: '$nft.processingSentAt' },
-            sentAt: { $first: '$nft.sentAt' },
-            sentForMediaAt: { $first: '$nft.sentForMediaAt' },
-            alternativeMediaFiles: { $first: '$nft.alternativeMediaFiles' },
-            needToRefresh: { $first: '$nft.needToRefresh' },
-            source: { $first: '$nft.source' },
-            orders: '$orders',
-          }
+            contractAddress: "$contractAddress",
+            tokenId: "$tokenId",
+            tokenType: { $first: "$nft.tokenType" },
+            externalDomainViewUrl: { $first: "$nft.externalDomainViewUrl" },
+            metadata: { $first: "$nft.metadata" },
+            firstOwner: { $first: "$nft.firstOwner" },
+            metadataFetchError: { $first: "$nft.metadataFetchError" },
+            processingSentAt: { $first: "$nft.processingSentAt" },
+            sentAt: { $first: "$nft.sentAt" },
+            sentForMediaAt: { $first: "$nft.sentForMediaAt" },
+            alternativeMediaFiles: { $first: "$nft.alternativeMediaFiles" },
+            needToRefresh: { $first: "$nft.needToRefresh" },
+            source: { $first: "$nft.source" },
+            orders: "$orders",
+          },
         },
       ],
       { collation: { locale: "en", strength: 2 } }
     ),
     OrderModel.aggregate([
       ...dbQuery,
-      { 
+      {
         $group: {
           _id: {
-            contract: '$make.assetType.contract',
-            tokenId: '$make.assetType.tokenId',
+            contract: "$make.assetType.contract",
+            tokenId: "$make.assetType.tokenId",
           },
-        } 
+        },
       },
-      { $count: "count" }]),
+      { $count: "count" },
+    ]),
   ]);
-
-  console.log(data);
 
   console.timeEnd("query-time");
 
@@ -369,21 +393,10 @@ const queryOnlyOwnerParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const filters = buildOwnerParams(ownerParams);
+  const ownerQuery = buildOwnerQuery(ownerParams);
 
   console.time("query-time");
-  const tokenFilters = await NFTTokenOwnerModel.aggregate([
-    {
-      $unionWith: {
-        coll: "nft-erc1155-token-owners",
-        pipeline: [
-          { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
-        ],
-      },
-    },
-    { $match: filters },
-    { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-  ]);
+  const tokenFilters = await ownerQuery;
 
   console.timeEnd("query-time");
 
@@ -432,46 +445,39 @@ const queryNftAndOwnerParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const ownerFilters = buildOwnerParams(ownerParams);
+  const ownerQuery = buildOwnerQuery(ownerParams);
   // TOOO: Make several execution pathways
-  // Option 1
-  const nftFilters = buildNftQuery(nftParams);
 
-  console.time("query-time");
-  const [nfts, owners] = await Promise.all([
-    TokenModel.find(nftFilters).lean(),
-    NFTTokenOwnerModel.aggregate([
-      {
-        $unionWith: {
-          coll: "nft-erc1155-token-owners",
-          pipeline: [
-            { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
-          ],
-        },
-      },
-      { $match: ownerFilters },
-      { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-    ]),
-  ]);
-  console.timeEnd("query-time");
+  // Option 1 [NOT WORKING]
+  // JS Heap out of memory because we don't limit the results for the TokenModel query
+  // const nftFilters = buildNftQueryFilters(nftParams);
+  // console.time("query-time");
+  // const [nfts, owners] = await Promise.all([
+  //   TokenModel.find(nftFilters).lean(),
+  //   ownerQuery,
+  // ]);
+  // console.timeEnd("query-time");
 
   // Option 2
-  // console.time("query-time");
-  // const owners = await NFTTokenOwnerModel.find(ownerFilters).lean();
-  // console.timeEnd("query-time");
+  console.time("owner-query-time");
+  const owners = await ownerQuery;
+  console.timeEnd("owner-query-time");
 
-  // const newTokenIds = owners.map((owner) => owner.tokenId);
-  // if (nftParams.tokenIds) {
-  //   const mergedIds = nftParams.tokenIds.split(",");
-  //   nftParams.tokenIds = new Set([...newTokenIds, ...mergedIds]);
-  // }
-  // nftParams.tokenIds = Array.from(new Set([...newTokenIds])).join(',');
-
-  // const nftFilters = await buildNftQuery(nftParams);
-  // // Apply Pagination
-  // console.time("query-time");
-  // const nfts = await TokenModel.find(nftFilters).skip(skippedItems).limit(Number(limit)).lean();
-  // console.timeEnd("query-time");
+  const nftFilters = await buildNftQueryFilters(nftParams);
+  // Apply Pagination
+  console.time("nft-query-time");
+  const nfts = await TokenModel.find({
+    $and: [
+      {
+        $or: owners,
+      },
+      ...nftFilters.$and,
+    ],
+  })
+    .skip(skippedItems)
+    .limit(Number(limit))
+    .lean();
+  console.timeEnd("nft-query-time");
 
   const filtered = [];
 
@@ -517,7 +523,7 @@ const queryNftAndOwnerParams = async (
     "make.assetType.tokenId": nft.tokenId,
     "make.assetType.contract": nft.contractAddress.toLowerCase(),
   }));
-  console.time("query-time");
+  console.time("order-query-time");
 
   const orders = await OrderModel.find({
     $and: [
@@ -526,7 +532,7 @@ const queryNftAndOwnerParams = async (
       { $eq: ["$side", OrderSide.SELL] },
     ],
   });
-  console.timeEnd("query-time");
+  console.timeEnd("order-query-time");
 
   const finalNfts = paginated.map((nft) => ({
     ...nft,
@@ -555,8 +561,8 @@ const queryNftAndOrderParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const nftFilters = buildNftQuery(nftParams);
-  const orderFilters = buildOwnerParams(orderParams);
+  const nftFilters = buildNftQueryFilters(nftParams);
+  const orderFilters = buildOrderQueryFilters(orderParams, generalParams);
 
   const [nfts, orders] = await Promise.all([
     TokenModel.find(nftFilters).lean(),
@@ -621,23 +627,12 @@ const queryOrderAndOwnerParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const orderFilters = await buildOrderFilters(orderParams, generalParams);
-  const ownerFilters = buildOwnerParams(ownerParams);
+  const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
+  const ownerQuery = buildOwnerQuery(ownerParams);
 
   const [orders, owners] = await Promise.all([
     TokenModel.find(orderFilters).lean(),
-    NFTTokenOwnerModel.aggregate([
-      {
-        $unionWith: {
-          coll: "nft-erc1155-token-owners",
-          pipeline: [
-            { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
-          ],
-        },
-      },
-      { $match: ownerFilters },
-      { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-    ]),
+    ownerQuery,
   ]);
 
   if (!orders.length || !owners.length) {
@@ -732,25 +727,14 @@ const queryMixedParams = async (
 
   const skippedItems = (Number(page) - 1) * Number(limit);
 
-  const nftFilters = buildNftQuery(nftParams);
-  const ownerFilters = buildOwnerParams(ownerParams);
-  const orderFilters = await buildOrderFilters(orderParams, generalParams);
+  const nftFilters = buildNftQueryFilters(nftParams);
+  const ownerQuery = buildOwnerQuery(ownerParams);
+  const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
 
   console.time("query-time");
   const [nfts, owners, orders] = await Promise.all([
     TokenModel.find(nftFilters).lean(),
-    NFTTokenOwnerModel.aggregate([
-      {
-        $unionWith: {
-          coll: "nft-erc1155-token-owners",
-          pipeline: [
-            { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
-          ],
-        },
-      },
-      { $match: ownerFilters },
-      { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-    ]),
+    ownerQuery,
     OrderModel.find(orderFilters).lean(),
   ]);
   console.timeEnd("query-time");

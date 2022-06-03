@@ -4,6 +4,7 @@ export interface INFTParams {
   tokenType: string;
   searchQuery: string;
   tokenIds: string;
+  traits: any;
 }
 
 export interface IOrderParams {
@@ -19,6 +20,7 @@ export interface IOrderParams {
 
 export interface IOwnerParams {
   ownerAddress: string;
+  tokenType: string;
 }
 
 export interface IGeneralParams {
