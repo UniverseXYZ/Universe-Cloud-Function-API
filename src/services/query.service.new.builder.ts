@@ -99,7 +99,6 @@ export const getOrdersLookup = () => ({
                   },
                 ],
               },
-              // { $eq: ["$status", OrderStatus.CREATED] },
               { $eq: ["$side", OrderSide.SELL] },
             ],
           },
@@ -387,24 +386,39 @@ export const buildOrderQueryFilters = async (
   return { finalFilters, sort };
 };
 
-export const buildOwnerQuery = (ownerParams: IOwnerParams) => {
+export const buildOwnerQuery = (
+  ownerParams: IOwnerParams,
+  tokenType: string,
+  skip = 0,
+  limit = 0
+) => {
   const filters = [] as any;
+  const limitFilters = [] as any;
   // TODO: Add validation when request is received to validate ERC721 or ERC1155 strings
   filters.push({
     address: ownerParams.ownerAddress,
   });
 
+  if (limit) {
+    limitFilters.push({ $limit: limit });
+  }
+  if (skip) {
+    limitFilters.push({ $skip: skip });
+  }
+
   const finalFilters = { $and: filters };
 
-  switch (ownerParams.tokenType) {
+  switch (tokenType) {
     case "ERC721":
       return NFTTokenOwnerModel.aggregate([
         { $match: finalFilters },
+        ...limitFilters,
         { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
       ]);
     case "ERC1155":
       return ERC1155NFTTokenOwnerModel.aggregate([
         { $match: finalFilters },
+        ...limitFilters,
         { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
       ]);
     default:
@@ -418,20 +432,26 @@ export const buildOwnerQuery = (ownerParams: IOwnerParams) => {
           },
         },
         { $match: finalFilters },
+        ...limitFilters,
         { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
       ]);
   }
 };
 
-export const buildGeneralParams = (page: any, limit: any) => {
-  return {
+export const buildGeneralParams = (page: any, limit: any): IGeneralParams => {
+  const generalParams = {
     page: Number(page) > 0 ? Math.floor(Number(page)) : 1,
     limit:
       Number(limit) > 0 &&
       Math.floor(Number(limit)) <= constants.QUERY_SIZE_LIMIT
         ? Number(limit)
         : constants.DEFAULT_QUERY_SIZE,
-  };
+  } as any;
+
+  generalParams.skippedItems =
+    (Number(generalParams.page) - 1) * Number(generalParams.limit);
+
+  return generalParams;
 };
 
 // TODO:: add description

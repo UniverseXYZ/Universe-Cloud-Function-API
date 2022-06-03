@@ -20,12 +20,12 @@ export interface IOrderParams {
 
 export interface IOwnerParams {
   ownerAddress: string;
-  tokenType: string;
 }
 
 export interface IGeneralParams {
   page: number;
   limit: number;
+  skippedItems: number;
 }
 
 export interface IQueryParams {

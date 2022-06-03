@@ -89,7 +89,6 @@ export const fetchNftsNew = async (params: FetchParams) => {
     },
     ownerParams: {
       ownerAddress,
-      tokenType,
     },
     generalParams: buildGeneralParams(page, limit),
   };
@@ -99,7 +98,7 @@ export const fetchNftsNew = async (params: FetchParams) => {
     queryParams.nftParams.tokenType ||
     queryParams.nftParams.searchQuery ||
     queryParams.nftParams.tokenIds ||
-    queryParams.nftParams.traits
+    Object.keys(queryParams.nftParams.traits).length
   );
 
   const hasOrderParams = !!(
@@ -149,7 +148,8 @@ export const fetchNftsNew = async (params: FetchParams) => {
     console.log("Querying only owner params");
     return queryOnlyOwnerParams(
       queryParams.ownerParams,
-      queryParams.generalParams
+      queryParams.generalParams,
+      queryParams.nftParams.tokenType
     );
   }
 
@@ -178,9 +178,10 @@ export const fetchNftsNew = async (params: FetchParams) => {
     console.log("Querying order and owner params");
 
     return queryOrderAndOwnerParams(
-      queryParams.nftParams,
+      queryParams.orderParams,
       queryParams.ownerParams,
-      queryParams.generalParams
+      queryParams.generalParams,
+      queryParams.nftParams.tokenType
     );
   }
 
@@ -189,7 +190,7 @@ export const fetchNftsNew = async (params: FetchParams) => {
 
     return queryMixedParams(
       queryParams.nftParams,
-      queryParams.ownerParams,
+      queryParams.orderParams,
       queryParams.ownerParams,
       queryParams.generalParams
     );
@@ -202,8 +203,6 @@ const queryOnlyNftParams = async (
 ) => {
   const { page, limit } = generalParams;
 
-  const skippedItems = (Number(page) - 1) * Number(limit);
-
   const finalFilters = buildNftQueryFilters(nftParams);
 
   const dbQuery = [{ $match: finalFilters }];
@@ -214,28 +213,22 @@ const queryOnlyNftParams = async (
   console.log("Querying...");
   console.time("query-time");
 
-  const [data, count] = await Promise.all([
-    TokenModel.aggregate(
-      [
-        ...dbQuery,
-        { $skip: skippedItems },
-        { $limit: Number(limit) },
-        getOrdersLookup(),
-        { $sort: { updatedAt: -1 } },
-      ],
-      { collation: { locale: "en", strength: 2 } }
-    ),
-    TokenModel.aggregate([...dbQuery, { $count: "tokenId" }], {
-      collation: { locale: "en", strength: 2 },
-    }),
-  ]);
+  const data = await TokenModel.aggregate(
+    [
+      ...dbQuery,
+      { $skip: generalParams.skippedItems },
+      { $limit: Number(limit) },
+      getOrdersLookup(),
+      { $sort: { updatedAt: -1 } },
+    ],
+    { collation: { locale: "en", strength: 2 } }
+  );
 
   console.timeEnd("query-time");
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: !count.length ? 0 : count[0].tokenId,
+    page: page,
+    size: limit,
     nfts: data,
   };
 };
@@ -246,8 +239,6 @@ const queryOnlyNftParams = async (
 //   generalParams: IGeneralParams
 // ) => {
 //   const { page, limit } = generalParams;
-
-//   const skippedItems = (Number(page) - 1) * Number(limit);
 
 //   const { finalFilters, sort } = await buildOrderFilters(
 //     orderParams,
@@ -262,29 +253,25 @@ const queryOnlyNftParams = async (
 //   console.log("Querying...");
 //   console.time("query-time");
 
-//   const [data, count] = await Promise.all([
+//   const data = await
 //     OrderModel.aggregate(
 //       [
 //         ...dbQuery,
 //         // ...sortingAggregation,
-//         { $skip: skippedItems },
+//         { $skip: generalParams.skippedItems },
 //         { $limit: Number(limit) },
 //         getNFTLookup(),
 //         { $sort: sort },
 //       ],
 //       { collation: { locale: "en", strength: 2 } }
-//     ),
-//     OrderModel.aggregate([...dbQuery, { $count: "count" }]),
-//   ]);
-
+//     )
 //   console.log(data);
 
 //   console.timeEnd("query-time");
 
 //   return {
-//     page: Number(page),
-//     size: Number(limit),
-//     total: count.count,
+//     page: page,
+//     size: limit,
 //     nfts: data,
 //   };
 // };
@@ -294,8 +281,6 @@ const queryOnlyOrderParams = async (
   generalParams: IGeneralParams
 ) => {
   const { page, limit } = generalParams;
-
-  const skippedItems = (Number(page) - 1) * Number(limit);
 
   const { finalFilters, sort } = await buildOrderQueryFilters(
     orderParams,
@@ -310,84 +295,73 @@ const queryOnlyOrderParams = async (
   console.log("Querying...");
   console.time("query-time");
 
-  const [data, count] = await Promise.all([
-    OrderModel.aggregate(
-      [
-        ...dbQuery,
-        // ...sortingAggregation,
-        { $sort: sort },
-        {
-          $group: {
-            _id: {
-              contract: "$make.assetType.contract",
-              tokenId: "$make.assetType.tokenId",
-            },
-            contractAddress: { $first: "$make.assetType.contract" },
-            tokenId: { $first: "$make.assetType.tokenId" },
-          },
-        },
-
-        { $skip: skippedItems },
-        { $limit: Number(limit) },
-        // assuming that an order cannot be created if the noten in question is
-        // absent in the "nft-token" table. i.e. there's always an NFT for an existing order.
-        getNFTLookup(),
-        getOrdersLookup(),
-        {
-          $project: {
-            _id: 0,
-            contractAddress: "$contractAddress",
-            tokenId: "$tokenId",
-            tokenType: { $first: "$nft.tokenType" },
-            externalDomainViewUrl: { $first: "$nft.externalDomainViewUrl" },
-            metadata: { $first: "$nft.metadata" },
-            firstOwner: { $first: "$nft.firstOwner" },
-            metadataFetchError: { $first: "$nft.metadataFetchError" },
-            processingSentAt: { $first: "$nft.processingSentAt" },
-            sentAt: { $first: "$nft.sentAt" },
-            sentForMediaAt: { $first: "$nft.sentForMediaAt" },
-            alternativeMediaFiles: { $first: "$nft.alternativeMediaFiles" },
-            needToRefresh: { $first: "$nft.needToRefresh" },
-            source: { $first: "$nft.source" },
-            orders: "$orders",
-          },
-        },
-      ],
-      { collation: { locale: "en", strength: 2 } }
-    ),
-    OrderModel.aggregate([
+  const data = await OrderModel.aggregate(
+    [
       ...dbQuery,
+      // ...sortingAggregation,
+      { $sort: sort },
       {
         $group: {
           _id: {
             contract: "$make.assetType.contract",
             tokenId: "$make.assetType.tokenId",
           },
+          contractAddress: { $first: "$make.assetType.contract" },
+          tokenId: { $first: "$make.assetType.tokenId" },
         },
       },
-      { $count: "count" },
-    ]),
-  ]);
+
+      { $skip: generalParams.skippedItems },
+      { $limit: Number(limit) },
+      // assuming that an order cannot be created if the noten in question is
+      // absent in the "nft-token" table. i.e. there's always an NFT for an existing order.
+      getNFTLookup(),
+      getOrdersLookup(),
+      {
+        $project: {
+          _id: 0,
+          contractAddress: "$contractAddress",
+          tokenId: "$tokenId",
+          tokenType: { $first: "$nft.tokenType" },
+          externalDomainViewUrl: { $first: "$nft.externalDomainViewUrl" },
+          metadata: { $first: "$nft.metadata" },
+          firstOwner: { $first: "$nft.firstOwner" },
+          metadataFetchError: { $first: "$nft.metadataFetchError" },
+          processingSentAt: { $first: "$nft.processingSentAt" },
+          sentAt: { $first: "$nft.sentAt" },
+          sentForMediaAt: { $first: "$nft.sentForMediaAt" },
+          alternativeMediaFiles: { $first: "$nft.alternativeMediaFiles" },
+          needToRefresh: { $first: "$nft.needToRefresh" },
+          source: { $first: "$nft.source" },
+          orders: "$orders",
+        },
+      },
+    ],
+    { collation: { locale: "en", strength: 2 } }
+  );
 
   console.timeEnd("query-time");
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: !count.length ? 0 : count[0].count,
+    page: page,
+    size: limit,
     nfts: data,
   };
 };
 
 const queryOnlyOwnerParams = async (
   ownerParams: IOwnerParams,
-  generalParams: IGeneralParams
+  generalParams: IGeneralParams,
+  tokenType: string
 ) => {
   const { page, limit } = generalParams;
 
-  const skippedItems = (Number(page) - 1) * Number(limit);
-
-  const ownerQuery = buildOwnerQuery(ownerParams);
+  const ownerQuery = buildOwnerQuery(
+    ownerParams,
+    tokenType,
+    generalParams.skippedItems,
+    generalParams.limit
+  );
 
   console.time("query-time");
   const tokenFilters = await ownerQuery;
@@ -396,50 +370,40 @@ const queryOnlyOwnerParams = async (
 
   if (!tokenFilters.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
 
   console.time("query-time2");
 
-  const [data, count] = await Promise.all([
-    TokenModel.aggregate(
-      [
-        { $match: { $and: [{ $or: tokenFilters }] } },
-        { $skip: skippedItems },
-        { $limit: Number(limit) },
-        getOrdersLookup(),
-      ],
-      { collation: { locale: "en", strength: 2 } }
-    ),
-    TokenModel.aggregate(
-      [{ $match: { $and: [{ $or: tokenFilters }] } }, { $count: "tokenId" }],
-      { collation: { locale: "en", strength: 2 } }
-    ),
-  ]);
+  const data = await TokenModel.aggregate(
+    [
+      { $match: { $and: [{ $or: tokenFilters }] } },
+      { $skip: generalParams.skippedItems },
+      { $limit: Number(limit) },
+      getOrdersLookup(),
+    ],
+    { collation: { locale: "en", strength: 2 } }
+  );
   console.timeEnd("query-time2");
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: !count.length ? 0 : count[0].tokenId,
+    page: page,
+    size: limit,
     nfts: data,
   };
 };
 
 const queryNftAndOwnerParams = async (
-  nftParams,
-  ownerParams,
-  generalParams
+  nftParams: INFTParams,
+  ownerParams: IOwnerParams,
+  generalParams: IGeneralParams
 ) => {
   const { page, limit } = generalParams;
 
-  const skippedItems = (Number(page) - 1) * Number(limit);
-
-  const ownerQuery = buildOwnerQuery(ownerParams);
+  const ownerQuery = buildOwnerQuery(ownerParams, nftParams.tokenType);
   // TOOO: Make several execution pathways
 
   // Option 1 [NOT WORKING]
@@ -468,8 +432,8 @@ const queryNftAndOwnerParams = async (
       ...nftFilters.$and,
     ],
   })
-    .skip(skippedItems)
-    .limit(Number(limit))
+    .skip(generalParams.skippedItems)
+    .limit(limit)
     .lean();
   console.timeEnd("nft-query-time");
 
@@ -477,9 +441,8 @@ const queryNftAndOwnerParams = async (
 
   if (!nfts.length || !owners.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
@@ -495,7 +458,7 @@ const queryNftAndOwnerParams = async (
 
     if (owner) {
       filtered.push(nft);
-      if (filtered.length === skippedItems + limit) {
+      if (filtered.length === generalParams.skippedItems + limit) {
         break;
       }
     }
@@ -503,14 +466,13 @@ const queryNftAndOwnerParams = async (
 
   if (!filtered.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
 
-  const paginated = filtered.slice(skippedItems);
+  const paginated = filtered.slice(generalParams.skippedItems);
 
   //  Populate order
   const orderQuery = paginated.map((nft) => ({
@@ -539,9 +501,8 @@ const queryNftAndOwnerParams = async (
   }));
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: filtered.length,
+    page: page,
+    size: limit,
     nfts: finalNfts,
   };
 };
@@ -553,8 +514,6 @@ const queryNftAndOrderParams = async (
 ) => {
   const { page, limit } = generalParams;
 
-  const skippedItems = (Number(page) - 1) * Number(limit);
-
   const nftFilters = buildNftQueryFilters(nftParams);
   const orderFilters = buildOrderQueryFilters(orderParams, generalParams);
 
@@ -565,9 +524,8 @@ const queryNftAndOrderParams = async (
 
   if (!nfts.length || !orders.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
@@ -588,7 +546,7 @@ const queryNftAndOrderParams = async (
     if (nftOrders) {
       nft.orders = nftOrders;
       filtered.push(nft);
-      if (filtered.length === skippedItems + limit) {
+      if (filtered.length === generalParams.skippedItems + limit) {
         break;
       }
     }
@@ -596,33 +554,30 @@ const queryNftAndOrderParams = async (
 
   if (!filtered.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
 
-  const paginated = filtered.slice(skippedItems);
+  const paginated = filtered.slice(generalParams.skippedItems);
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: filtered.length,
+    page: page,
+    size: limit,
     nfts: paginated,
   };
 };
 const queryOrderAndOwnerParams = async (
-  orderParams,
-  ownerParams,
-  generalParams
+  orderParams: IOrderParams,
+  ownerParams: IOwnerParams,
+  generalParams: IGeneralParams,
+  tokenType: string
 ) => {
   const { page, limit } = generalParams;
 
-  const skippedItems = (Number(page) - 1) * Number(limit);
-
   const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
-  const ownerQuery = buildOwnerQuery(ownerParams);
+  const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
 
   const [orders, owners] = await Promise.all([
     TokenModel.find(orderFilters).lean(),
@@ -631,9 +586,8 @@ const queryOrderAndOwnerParams = async (
 
   if (!orders.length || !owners.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
@@ -655,7 +609,7 @@ const queryOrderAndOwnerParams = async (
       owner.order === order;
       filtered.push(owner);
 
-      if (filtered.length === skippedItems + limit) {
+      if (filtered.length === generalParams.skippedItems + limit) {
         break;
       }
     }
@@ -663,14 +617,13 @@ const queryOrderAndOwnerParams = async (
 
   if (!filtered.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
 
-  const paginated = filtered.slice(skippedItems);
+  const paginated = filtered.slice(generalParams.skippedItems);
 
   //  Populate order
   const nftsQuery = paginated.map((nft) => ({
@@ -684,9 +637,8 @@ const queryOrderAndOwnerParams = async (
 
   if (!nfts.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
@@ -704,25 +656,22 @@ const queryOrderAndOwnerParams = async (
   }));
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: filtered.length,
+    page: page,
+    size: limit,
     nfts: finalNfts,
   };
 };
 
 const queryMixedParams = async (
-  nftParams,
-  orderParams,
-  ownerParams,
-  generalParams
+  nftParams: INFTParams,
+  orderParams: IOrderParams,
+  ownerParams: IOwnerParams,
+  generalParams: IGeneralParams
 ) => {
   const { page, limit } = generalParams;
 
-  const skippedItems = (Number(page) - 1) * Number(limit);
-
   const nftFilters = buildNftQueryFilters(nftParams);
-  const ownerQuery = buildOwnerQuery(ownerParams);
+  const ownerQuery = buildOwnerQuery(ownerParams, nftParams.tokenType);
   const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
 
   console.time("query-time");
@@ -735,9 +684,8 @@ const queryMixedParams = async (
 
   if (!nfts.length || !owners.length || !orders.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
@@ -762,7 +710,7 @@ const queryMixedParams = async (
     if (owner && nftOrders) {
       nft.orders = nftOrders;
       filtered.push(nft);
-      if (filtered.length === skippedItems + limit) {
+      if (filtered.length === generalParams.skippedItems + limit) {
         break;
       }
     }
@@ -770,19 +718,17 @@ const queryMixedParams = async (
 
   if (!filtered.length) {
     return {
-      page: Number(page),
-      size: Number(limit),
-      total: 0,
+      page: page,
+      size: limit,
       nfts: [],
     };
   }
 
-  const paginated = filtered.slice(skippedItems);
+  const paginated = filtered.slice(generalParams.skippedItems);
 
   return {
-    page: Number(page),
-    size: Number(limit),
-    total: filtered.length,
+    page: page,
+    size: limit,
     nfts: paginated,
   };
 };
