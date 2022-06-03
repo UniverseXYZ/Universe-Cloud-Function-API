@@ -203,23 +203,18 @@ const queryOnlyNftParams = async (
 ) => {
   const { page, limit } = generalParams;
 
-  const finalFilters = buildNftQueryFilters(nftParams);
-
-  const dbQuery = [{ $match: finalFilters }];
-
-  console.log("FILTERS:");
-  console.log(finalFilters);
+  const nftFilters = await buildNftQueryFilters(nftParams);
 
   console.log("Querying...");
   console.time("query-time");
 
   const data = await TokenModel.aggregate(
     [
-      ...dbQuery,
+      ...nftFilters,
       { $skip: generalParams.skippedItems },
       { $limit: Number(limit) },
       getOrdersLookup(),
-      { $sort: { updatedAt: -1 } },
+      { $sort: { searchScore: -1, updatedAt: -1 } },
     ],
     { collation: { locale: "en", strength: 2 } }
   );
@@ -404,37 +399,24 @@ const queryNftAndOwnerParams = async (
   const { page, limit } = generalParams;
 
   const ownerQuery = buildOwnerQuery(ownerParams, nftParams.tokenType);
-  // TOOO: Make several execution pathways
 
-  // Option 1 [NOT WORKING]
-  // JS Heap out of memory because we don't limit the results for the TokenModel query
-  // const nftFilters = buildNftQueryFilters(nftParams);
-  // console.time("query-time");
-  // const [nfts, owners] = await Promise.all([
-  //   TokenModel.find(nftFilters).lean(),
-  //   ownerQuery,
-  // ]);
-  // console.timeEnd("query-time");
-
-  // Option 2
   console.time("owner-query-time");
   const owners = await ownerQuery;
   console.timeEnd("owner-query-time");
 
-  const nftFilters = await buildNftQueryFilters(nftParams);
+  const nftFilters = await buildNftQueryFilters(nftParams, owners);
   // Apply Pagination
   console.time("nft-query-time");
-  const nfts = await TokenModel.find({
-    $and: [
-      {
-        $or: owners,
-      },
-      ...nftFilters.$and,
+  const nfts = await TokenModel.aggregate(
+    [
+      ...nftFilters,
+      { $skip: generalParams.skippedItems },
+      { $limit: Number(limit) },
+      { $sort: { searchScore: -1 } },
     ],
-  })
-    .skip(generalParams.skippedItems)
-    .limit(limit)
-    .lean();
+    { collation: { locale: "en", strength: 2 } }
+  );
+
   console.timeEnd("nft-query-time");
 
   const filtered = [];
@@ -514,11 +496,13 @@ const queryNftAndOrderParams = async (
 ) => {
   const { page, limit } = generalParams;
 
-  const nftFilters = buildNftQueryFilters(nftParams);
+  const nftFilters = await buildNftQueryFilters(nftParams);
   const orderFilters = buildOrderQueryFilters(orderParams, generalParams);
 
   const [nfts, orders] = await Promise.all([
-    TokenModel.find(nftFilters).lean(),
+    TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
+      collation: { locale: "en", strength: 2 },
+    }),
     OrderModel.find(orderFilters).lean(),
   ]);
 
@@ -670,13 +654,15 @@ const queryMixedParams = async (
 ) => {
   const { page, limit } = generalParams;
 
-  const nftFilters = buildNftQueryFilters(nftParams);
+  const nftFilters = await buildNftQueryFilters(nftParams);
   const ownerQuery = buildOwnerQuery(ownerParams, nftParams.tokenType);
   const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
 
   console.time("query-time");
   const [nfts, owners, orders] = await Promise.all([
-    TokenModel.find(nftFilters).lean(),
+    TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
+      collation: { locale: "en", strength: 2 },
+    }),
     ownerQuery,
     OrderModel.find(orderFilters).lean(),
   ]);

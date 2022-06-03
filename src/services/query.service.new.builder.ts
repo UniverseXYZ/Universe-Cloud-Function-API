@@ -164,18 +164,43 @@ export const getNFTLookup = () => ({
 //   },
 // ];
 
-export const buildNftQueryFilters = async (nftParams: INFTParams) => {
+export const buildNftQueryFilters = async (
+  nftParams: INFTParams,
+  owners: any[] = []
+) => {
   const { contractAddress, tokenIds, searchQuery, tokenType, traits } =
     nftParams;
   const filters = [] as any;
+  const searchFilters = [] as any;
 
   if (contractAddress) {
-    filters.push({ contractAddress });
+    if (!owners.length) {
+      filters.push({ contractAddress });
+    } else {
+      const filteredOwners: any[] = owners.filter(
+        (o: any) =>
+          o.contractAddress.toLowerCase() === contractAddress.toLowerCase()
+      );
+
+      if (!filteredOwners.length) {
+        return [];
+      }
+      owners = filteredOwners;
+    }
   }
 
   if (searchQuery) {
-    filters.push({
-      "metadata.name": { $regex: new RegExp(searchQuery, "i") },
+    searchFilters.push({
+      $search: {
+        index: "metadata.name",
+        text: {
+          query: searchQuery,
+          // {} uses default config
+          // https://www.mongodb.com/docs/atlas/atlas-search/text/#fuzzy-examples
+          fuzzy: {},
+          path: "metadata.name",
+        },
+      },
     });
   }
 
@@ -206,9 +231,41 @@ export const buildNftQueryFilters = async (nftParams: INFTParams) => {
     filters.push({ tokenType });
   }
 
-  const finalFilters = { $and: filters };
+  const nftFilters = [];
+  // Assemble final order of filters
 
-  return finalFilters;
+  if (searchFilters.length) {
+    nftFilters.push(...searchFilters);
+  }
+
+  if (filters.length && owners.length) {
+    nftFilters.push({
+      $match: {
+        $and: [
+          ...filters,
+          {
+            $or: owners,
+          },
+        ],
+      },
+    });
+  } else if (filters.length) {
+    nftFilters.push({ $match: { $and: filters } });
+  } else if (owners.length) {
+    nftFilters.push({ $match: { $or: owners } });
+  }
+
+  if (searchFilters.length) {
+    nftFilters.push({
+      $addFields: {
+        searchScore: { $meta: "searchScore" },
+      },
+    });
+  }
+
+  console.log("NFT FILTERS:");
+  console.log(nftFilters);
+  return nftFilters;
 };
 
 export const buildOrderQueryFilters = async (
@@ -410,31 +467,40 @@ export const buildOwnerQuery = (
 
   switch (tokenType) {
     case "ERC721":
-      return NFTTokenOwnerModel.aggregate([
-        { $match: finalFilters },
-        ...limitFilters,
-        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-      ]);
+      return NFTTokenOwnerModel.aggregate(
+        [
+          { $match: finalFilters },
+          ...limitFilters,
+          { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+        ],
+        { collation: { locale: "en", strength: 2 } }
+      );
     case "ERC1155":
-      return ERC1155NFTTokenOwnerModel.aggregate([
-        { $match: finalFilters },
-        ...limitFilters,
-        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-      ]);
+      return ERC1155NFTTokenOwnerModel.aggregate(
+        [
+          { $match: finalFilters },
+          ...limitFilters,
+          { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+        ],
+        { collation: { locale: "en", strength: 2 } }
+      );
     default:
-      return NFTTokenOwnerModel.aggregate([
-        {
-          $unionWith: {
-            coll: "nft-erc1155-token-owners",
-            pipeline: [
-              { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
-            ],
+      return NFTTokenOwnerModel.aggregate(
+        [
+          {
+            $unionWith: {
+              coll: "nft-erc1155-token-owners",
+              pipeline: [
+                { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
+              ],
+            },
           },
-        },
-        { $match: finalFilters },
-        ...limitFilters,
-        { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-      ]);
+          { $match: finalFilters },
+          ...limitFilters,
+          { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
+        ],
+        { collation: { locale: "en", strength: 2 } }
+      );
   }
 };
 
