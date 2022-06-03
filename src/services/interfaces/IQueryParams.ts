@@ -1,6 +1,6 @@
 // TODO:: Describe what TokenType could be
 export interface INFTParams {
-  tokenAddress: string;
+  contractAddress: string;
   tokenType: string;
   searchQuery: string;
   tokenIds: string;
@@ -15,7 +15,7 @@ export interface IOrderParams {
   maxPrice: string;
   sortBy: string;
   hasOffers: boolean;
-  collection: string;
+  tokenAddress: string;
 }
 
 export interface IOwnerParams {

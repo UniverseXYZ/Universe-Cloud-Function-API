@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, utils } from "ethers";
 import {
   INFTParams,
   IOrderParams,
@@ -166,11 +166,12 @@ export const getNFTLookup = () => ({
 // ];
 
 export const buildNftQueryFilters = async (nftParams: INFTParams) => {
-  const { tokenAddress, tokenIds, searchQuery, tokenType, traits } = nftParams;
+  const { contractAddress, tokenIds, searchQuery, tokenType, traits } =
+    nftParams;
   const filters = [] as any;
 
-  if (tokenAddress) {
-    filters.push({ contractAddress: tokenAddress });
+  if (contractAddress) {
+    filters.push({ contractAddress });
   }
 
   if (searchQuery) {
@@ -180,11 +181,14 @@ export const buildNftQueryFilters = async (nftParams: INFTParams) => {
   }
 
   // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
-  const hasTraitParams = tokenAddress && Object.keys(traits).length > 0;
+  const hasTraitParams = contractAddress && Object.keys(traits).length > 0;
 
   // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
   if (hasTraitParams) {
-    const ids = await getTokenIdsByCollectionAttributes(tokenAddress, traits);
+    const ids = await getTokenIdsByCollectionAttributes(
+      contractAddress,
+      traits
+    );
 
     if (ids && ids.length) {
       filters.push({
@@ -226,7 +230,7 @@ export const buildOrderQueryFilters = async (
     side,
     assetClass,
     beforeTimestamp,
-    collection,
+    tokenAddress,
   } = orderParams;
 
   //assuming that, when querying orders, certain filtering should exist by default
@@ -277,18 +281,16 @@ export const buildOrderQueryFilters = async (
     });
   }
 
-  if (collection) {
+  if (tokenAddress) {
     const sideToFilter = side && OrderSide.BUY === side ? "take" : "make";
-    if (collection === ethers.constants.AddressZero) {
+    if (tokenAddress === ethers.constants.AddressZero) {
       filters.push({
         [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
       });
     } else {
-      // REGEX SEARCH IS NOT PERFORMANT
-      // DOCUMENTDB DOESNT SUPPORT COLLATION INDICES
-      // query.collection address MUST BE UPPERCASE CONTRACT ADDRESS
+      const checkSumAddress = utils.getAddress(tokenAddress);
       filters.push({
-        [`${sideToFilter}.assetType.contract`]: collection,
+        [`${sideToFilter}.assetType.contract`]: checkSumAddress,
       });
     }
   }

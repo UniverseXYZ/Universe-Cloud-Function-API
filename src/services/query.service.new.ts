@@ -1,11 +1,4 @@
-import {
-  OrderModel,
-  OrderSide,
-  OrderStatus,
-  TokenModel,
-  NFTTokenOwnerModel,
-  NFTCollectionModel,
-} from "../models";
+import { OrderModel, OrderSide, OrderStatus, TokenModel } from "../models";
 
 import {
   IGeneralParams,
@@ -43,7 +36,7 @@ type FetchParams = {
   tokenIds: string;
   // New checkbox
   beforeTimestamp: number;
-  collection: string;
+  contractAddress: string;
   minPrice: string;
   maxPrice: string;
   sortBy: string;
@@ -67,17 +60,18 @@ export const fetchNftsNew = async (params: FetchParams) => {
     assetClass,
     tokenIds,
     beforeTimestamp,
-    collection,
+    contractAddress,
     minPrice,
     maxPrice,
     sortBy,
     hasOffers,
+    buyNow,
     ...traits
   } = params;
 
   const queryParams: IQueryParams = {
     nftParams: {
-      tokenAddress,
+      contractAddress,
       tokenIds,
       searchQuery,
       tokenType,
@@ -91,7 +85,7 @@ export const fetchNftsNew = async (params: FetchParams) => {
       side,
       assetClass,
       beforeTimestamp,
-      collection,
+      tokenAddress,
     },
     ownerParams: {
       ownerAddress,
@@ -101,7 +95,7 @@ export const fetchNftsNew = async (params: FetchParams) => {
   };
 
   const hasNftParams = !!(
-    queryParams.nftParams.tokenAddress ||
+    queryParams.nftParams.contractAddress ||
     queryParams.nftParams.tokenType ||
     queryParams.nftParams.searchQuery ||
     queryParams.nftParams.tokenIds ||
@@ -114,7 +108,7 @@ export const fetchNftsNew = async (params: FetchParams) => {
     queryParams.orderParams.minPrice ||
     queryParams.orderParams.maxPrice ||
     queryParams.orderParams.beforeTimestamp ||
-    queryParams.orderParams.collection ||
+    queryParams.orderParams.tokenAddress ||
     queryParams.orderParams.sortBy || // Include SortBy so it can kick the function without any other params, as can be used in the BrowseMarketplace Page
     queryParams.orderParams.hasOffers
   );
