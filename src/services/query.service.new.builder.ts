@@ -193,13 +193,24 @@ export const buildNftQueryFilters = async (
     searchFilters.push({
       $search: {
         index: "metadata.name",
-        text: {
-          query: searchQuery,
-          // {} uses default config
-          // https://www.mongodb.com/docs/atlas/atlas-search/text/#fuzzy-examples
-          fuzzy: {},
+        // text: {
+        //   query: searchQuery,
+        //   path: "metadata.name",
+        // },
+        regex: {
+          query: `.*${searchQuery}*.`,
           path: "metadata.name",
+          allowAnalyzedField: true,
         },
+        // phrase: {
+        //   path: "metadata.name",
+        //   query: searchQuery,
+        //   slop: 5,
+        // },
+        // autocomplete: {
+        //   query: searchQuery,
+        //   path: "metadata.name",
+        // },
       },
     });
   }
@@ -468,20 +479,12 @@ export const buildOwnerQuery = (
   switch (tokenType) {
     case "ERC721":
       return NFTTokenOwnerModel.aggregate(
-        [
-          { $match: finalFilters },
-          ...limitFilters,
-          { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-        ],
+        [{ $match: finalFilters }, ...limitFilters],
         { collation: { locale: "en", strength: 2 } }
       );
     case "ERC1155":
       return ERC1155NFTTokenOwnerModel.aggregate(
-        [
-          { $match: finalFilters },
-          ...limitFilters,
-          { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
-        ],
+        [{ $match: finalFilters }, ...limitFilters],
         { collation: { locale: "en", strength: 2 } }
       );
     default:
@@ -490,14 +493,11 @@ export const buildOwnerQuery = (
           {
             $unionWith: {
               coll: "nft-erc1155-token-owners",
-              pipeline: [
-                { $project: { contractAddress: 1, tokenId: 1, address: 1 } },
-              ],
+              pipeline: [],
             },
           },
           { $match: finalFilters },
           ...limitFilters,
-          { $project: { contractAddress: 1, tokenId: 1, _id: 0 } },
         ],
         { collation: { locale: "en", strength: 2 } }
       );
@@ -565,5 +565,44 @@ export const getTokenIdsByCollectionAttributes = async (
     console.error(
       `Error while trying to get Collection attributes for, ${contractAddress} for traits ${traits}`
     );
+  }
+};
+
+export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
+  const query = {
+    $or: tokens.map((token) => ({
+      contractAddress: token.contractAddress,
+      tokenId: token.tokenId,
+    })),
+  };
+
+  switch (tokenType) {
+    case "ERC721":
+      return NFTTokenOwnerModel.aggregate(
+        [{ $match: query }]
+        //   {
+        //   collation: { locale: "en", strength: 2 },
+        // }
+      );
+    case "ERC1155":
+      return ERC1155NFTTokenOwnerModel.aggregate(
+        [{ $match: query }]
+        //    {
+        //   collation: { locale: "en", strength: 2 },
+        // }
+      );
+    default:
+      return NFTTokenOwnerModel.aggregate(
+        [
+          {
+            $unionWith: {
+              coll: "nft-erc1155-token-owners",
+              pipeline: [],
+            },
+          },
+          { $match: query },
+        ]
+        // { collation: { locale: "en", strength: 2 } }
+      );
   }
 };

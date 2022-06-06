@@ -21,7 +21,9 @@ import {
   buildGeneralParams,
   getNFTLookup,
   getOrdersLookup,
+  getOwnersByTokens,
 } from "./query.service.new.builder";
+import { ethers } from "ethers";
 
 type FetchParams = {
   ownerAddress: string;
@@ -219,12 +221,41 @@ const queryOnlyNftParams = async (
     { collation: { locale: "en", strength: 2 } }
   );
 
+  if (!data.length) {
+    return {
+      page: page,
+      size: limit,
+      nfts: [],
+    };
+  }
+  const owners = await getOwnersByTokens(data, nftParams.tokenType);
+
+  const finalData = data.map((nft) => {
+    const ownersInfo = owners.filter(
+      (owner) =>
+        owner.contractAddress === nft.contractAddress &&
+        owner.tokenId === nft.tokenId
+    );
+
+    const ownerAddresses = ownersInfo.map((owner) => ({
+      owner: owner.address,
+      value: owner.value
+        ? owner.value.toString()
+        : ethers.BigNumber.from(owner.value).toString(),
+    }));
+
+    return {
+      ...nft,
+      owners: ownerAddresses,
+    };
+  });
+
   console.timeEnd("query-time");
 
   return {
     page: page,
     size: limit,
-    nfts: data,
+    nfts: finalData,
   };
 };
 
@@ -337,10 +368,32 @@ const queryOnlyOrderParams = async (
 
   console.timeEnd("query-time");
 
+  const owners = await getOwnersByTokens(data);
+
+  const finalData = data.map((nft) => {
+    const ownersInfo = owners.filter(
+      (owner) =>
+        owner.contractAddress === nft.contractAddress &&
+        owner.tokenId === nft.tokenId
+    );
+
+    const ownerAddresses = ownersInfo.map((owner) => ({
+      owner: owner.address,
+      value: owner.value
+        ? owner.value.toString()
+        : ethers.BigNumber.from(owner.value).toString(),
+    }));
+
+    return {
+      ...nft,
+      owners: ownerAddresses,
+    };
+  });
+
   return {
     page: page,
     size: limit,
-    nfts: data,
+    nfts: finalData,
   };
 };
 
@@ -359,11 +412,11 @@ const queryOnlyOwnerParams = async (
   );
 
   console.time("query-time");
-  const tokenFilters = await ownerQuery;
+  const owners = await ownerQuery;
 
   console.timeEnd("query-time");
 
-  if (!tokenFilters.length) {
+  if (!owners.length) {
     return {
       page: page,
       size: limit,
@@ -375,19 +428,51 @@ const queryOnlyOwnerParams = async (
 
   const data = await TokenModel.aggregate(
     [
-      { $match: { $and: [{ $or: tokenFilters }] } },
+      {
+        $match: {
+          $and: [
+            {
+              $or: owners.map((owner) => ({
+                tokenId: owner.tokenId,
+                contractAddress: owner.contractAddress,
+              })),
+            },
+          ],
+        },
+      },
       { $skip: generalParams.skippedItems },
       { $limit: Number(limit) },
       getOrdersLookup(),
     ],
     { collation: { locale: "en", strength: 2 } }
   );
+
   console.timeEnd("query-time2");
+
+  const finalData = data.map((nft) => {
+    const ownersInfo = owners.filter(
+      (owner) =>
+        owner.contractAddress === nft.contractAddress &&
+        owner.tokenId === nft.tokenId
+    );
+
+    const ownerAddresses = ownersInfo.map((owner) => ({
+      owner: owner.address,
+      value: owner.value
+        ? owner.value.toString()
+        : ethers.BigNumber.from(owner.value).toString(),
+    }));
+
+    return {
+      ...nft,
+      owners: ownerAddresses,
+    };
+  });
 
   return {
     page: page,
     size: limit,
-    nfts: data,
+    nfts: finalData,
   };
 };
 
@@ -404,7 +489,13 @@ const queryNftAndOwnerParams = async (
   const owners = await ownerQuery;
   console.timeEnd("owner-query-time");
 
-  const nftFilters = await buildNftQueryFilters(nftParams, owners);
+  const nftFilters = await buildNftQueryFilters(
+    nftParams,
+    owners.map((owner) => ({
+      contractAddress: owner.contractAddress,
+      tokenId: owner.tokenId,
+    }))
+  );
   // Apply Pagination
   console.time("nft-query-time");
   const nfts = await TokenModel.aggregate(
@@ -432,15 +523,22 @@ const queryNftAndOwnerParams = async (
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i];
 
-    const owner = owners.find(
+    const nftOwners = owners.filter(
       (owner) =>
         owner.tokenId === nft.tokenId &&
         owner.contractAddress.toLowerCase() ===
           nft.contractAddress.toLowerCase()
     );
 
-    if (owner) {
-      filtered.push(nft);
+    if (nftOwners.length) {
+      const ownerAddresses = nftOwners.map((owner) => ({
+        owner: owner.address,
+        value: owner.value
+          ? owner.value.toString()
+          : ethers.BigNumber.from(owner.value).toString(),
+      }));
+
+      filtered.push({ ...nft, owners: ownerAddresses });
       if (filtered.length === generalParams.skippedItems + limit) {
         break;
       }
@@ -476,7 +574,7 @@ const queryNftAndOwnerParams = async (
   const finalNfts = paginated.map((nft) => ({
     ...nft,
     orders:
-      orders.find(
+      orders.filter(
         (order) =>
           order.make.assetType.tokenId === nft.tokenId &&
           order.make.assetType.contract.toLowerCase() ===
@@ -521,13 +619,13 @@ const queryNftAndOrderParams = async (
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i];
 
-    const nftOrders = orders.find(
+    const nftOrders = orders.filter(
       (order) =>
         order.make.assetType.tokenId === nft.tokenId &&
         order.make.assetType.contract?.toLowerCase() ===
           nft.contractAddress.toLowerCase()
     );
-    if (nftOrders) {
+    if (nftOrders && nftOrders.length) {
       nft.orders = nftOrders;
       filtered.push(nft);
       if (filtered.length === generalParams.skippedItems + limit) {
@@ -583,14 +681,14 @@ const queryOrderAndOwnerParams = async (
   for (let i = 0; i < owners.length; i++) {
     const owner = owners[i];
 
-    const order = orders.find(
+    const tokenOrders = orders.filter(
       (order) =>
         order.make.assetType.tokenId === owner.tokenId &&
         order.make.assetType?.contract === owner.contractAddress.toLowerCase()
     );
 
-    if (owner) {
-      owner.order === order;
+    if (tokenOrders && tokenOrders.lenth) {
+      // owner.order === order;
       filtered.push(owner);
 
       if (filtered.length === generalParams.skippedItems + limit) {
@@ -627,15 +725,31 @@ const queryOrderAndOwnerParams = async (
     };
   }
 
-  const finalNfts = nfts.map((nft) => ({
-    ...nft,
-    orders:
-      orders.find(
-        (order) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType?.contract === nft.contractAddress.toLowerCase()
-      ) || [],
-  }));
+  const finalNfts = nfts.map((nft) => {
+    const ownersInfo = owners.filter(
+      (owner) =>
+        owner.contractAddress === nft.contractAddress &&
+        owner.tokenId === nft.tokenId
+    );
+
+    const ownerAddresses = ownersInfo.map((owner) => ({
+      owner: owner.address,
+      value: owner.value
+        ? owner.value.toString()
+        : ethers.BigNumber.from(owner.value).toString(),
+    }));
+
+    return {
+      ...nft,
+      orders:
+        orders.filter(
+          (order) =>
+            order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType?.contract === nft.contractAddress.toLowerCase()
+        ) || [],
+      owners: ownerAddresses,
+    };
+  });
 
   return {
     page: page,
@@ -679,21 +793,30 @@ const queryMixedParams = async (
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i];
 
-    const owner = owners.find(
+    const ownersInfo = owners.filter(
       (owner) =>
         owner.tokenId === nft.tokenId &&
         owner.contractAddress.toLowerCase() ===
           nft.contractAddress.toLowerCase()
     );
 
-    const nftOrders = orders.find(
+    const nftOrders = orders.filter(
       (order) =>
         order.make.assetType.tokenId === nft.tokenId &&
         order.make.assetType.contract === nft.contractAddress.toLowerCase()
     );
 
-    if (owner && nftOrders) {
+    if (ownersInfo && nftOrders && ownersInfo.length && nftOrders.length) {
+      const ownerAddresses = ownersInfo.map((owner) => ({
+        owner: owner.address,
+        value: owner.value
+          ? owner.value.toString()
+          : ethers.BigNumber.from(owner.value).toString(),
+      }));
+
       nft.orders = nftOrders;
+      nft.owners = ownerAddresses;
+
       filtered.push(nft);
       if (filtered.length === generalParams.skippedItems + limit) {
         break;
