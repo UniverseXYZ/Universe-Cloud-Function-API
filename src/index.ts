@@ -14,11 +14,14 @@ const getClient = async () => {
     return console.error("Missing MONGODB Connection String !");
   }
 
-  if (client instanceof Promise) {
-    console.log("MONGODB CLIENT RECONNECTED!");
-  } else if (client) {
-    client = await client;
+  if (client && mongoose.connection.readyState === 1) {
     console.log("MONGODB CLIENT ALREADY CONNECTED!");
+  } else if (
+    client instanceof Promise ||
+    mongoose.connection.readyState === 2
+  ) {
+    client = await client;
+    console.log("MONGODB CLIENT RECONNECTED!");
   } else {
     try {
       client = await mongoose.connect(DB_URL, {
@@ -51,9 +54,9 @@ export async function queryNfts(req: Request, res: Response) {
 
     console.timeEnd("service-execution-time");
 
-    if (process.env.NODE_ENV === "production") {
-      client.disconnect();
-    }
+    // if (process.env.NODE_ENV === "production") {
+    //   client.disconnect();
+    // }
   } catch (err) {
     console.log(err);
     res.status(500);

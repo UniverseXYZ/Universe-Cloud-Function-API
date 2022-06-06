@@ -435,7 +435,8 @@ const queryNftAndOwnerParams = async (
     const owner = owners.find(
       (owner) =>
         owner.tokenId === nft.tokenId &&
-        owner.contractAddress === nft.contractAddress
+        owner.contractAddress.toLowerCase() ===
+          nft.contractAddress.toLowerCase()
     );
 
     if (owner) {
@@ -478,7 +479,8 @@ const queryNftAndOwnerParams = async (
       orders.find(
         (order) =>
           order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract === nft.contractAddress.toLowerCase()
+          order.make.assetType.contract.toLowerCase() ===
+            nft.contractAddress.toLowerCase()
       ) || [],
   }));
 
@@ -497,7 +499,7 @@ const queryNftAndOrderParams = async (
   const { page, limit } = generalParams;
 
   const nftFilters = await buildNftQueryFilters(nftParams);
-  const orderFilters = buildOrderQueryFilters(orderParams, generalParams);
+  const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
 
   const [nfts, orders] = await Promise.all([
     TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
@@ -519,14 +521,12 @@ const queryNftAndOrderParams = async (
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i];
 
-    const nftOrders = orders
-      .find(
-        (order) =>
-          order.make.tokenId === nft.tokenId &&
-          order.make.contract?.toLowerCase() === nft.contractAddress
-      )
-      .lean();
-
+    const nftOrders = orders.find(
+      (order) =>
+        order.make.assetType.tokenId === nft.tokenId &&
+        order.make.assetType.contract?.toLowerCase() ===
+          nft.contractAddress.toLowerCase()
+    );
     if (nftOrders) {
       nft.orders = nftOrders;
       filtered.push(nft);
@@ -563,11 +563,13 @@ const queryOrderAndOwnerParams = async (
   const orderFilters = await buildOrderQueryFilters(orderParams, generalParams);
   const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
 
+  console.time("query-time");
   const [orders, owners] = await Promise.all([
-    TokenModel.find(orderFilters).lean(),
+    OrderModel.find(orderFilters).lean(),
     ownerQuery,
   ]);
 
+  console.timeEnd("query-time");
   if (!orders.length || !owners.length) {
     return {
       page: page,
@@ -581,13 +583,11 @@ const queryOrderAndOwnerParams = async (
   for (let i = 0; i < owners.length; i++) {
     const owner = owners[i];
 
-    const order = orders
-      .find(
-        (owner) =>
-          owner.make.assetType.tokenId === owner.tokenId &&
-          owner.make.assetType?.contract === owner.contractAddress
-      )
-      .lean();
+    const order = orders.find(
+      (order) =>
+        order.make.assetType.tokenId === owner.tokenId &&
+        order.make.assetType?.contract === owner.contractAddress.toLowerCase()
+    );
 
     if (owner) {
       owner.order === order;
@@ -612,10 +612,10 @@ const queryOrderAndOwnerParams = async (
   //  Populate order
   const nftsQuery = paginated.map((nft) => ({
     tokenId: nft.tokenId,
-    contract: nft.contract,
+    contractAddress: nft.contractAddress,
   }));
 
-  const nfts = await OrderModel.find({
+  const nfts = await TokenModel.find({
     $and: [{ $or: nftsQuery }],
   }).lean();
 
@@ -630,13 +630,11 @@ const queryOrderAndOwnerParams = async (
   const finalNfts = nfts.map((nft) => ({
     ...nft,
     orders:
-      orders
-        .find(
-          (order) =>
-            order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType.contract === nft.contractAddress.toLowerCase()
-        )
-        .lean() || [],
+      orders.find(
+        (order) =>
+          order.make.assetType.tokenId === nft.tokenId &&
+          order.make.assetType?.contract === nft.contractAddress.toLowerCase()
+      ) || [],
   }));
 
   return {
@@ -684,7 +682,8 @@ const queryMixedParams = async (
     const owner = owners.find(
       (owner) =>
         owner.tokenId === nft.tokenId &&
-        owner.contractAddress === nft.contractAddress
+        owner.contractAddress.toLowerCase() ===
+          nft.contractAddress.toLowerCase()
     );
 
     const nftOrders = orders.find(
