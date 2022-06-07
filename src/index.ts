@@ -1,59 +1,32 @@
 import { Request, Response } from "express";
-import { fetchNftsNew } from "./services/nft/nft.service";
+import { fetchNfts } from "./services/nft/nft.service";
 import config from "./config";
+import { getDBClient } from "./database";
 
-const mongoose = require("mongoose");
-
-var client: any;
-
-const getClient = async () => {
-  if (!config.db_url) {
-    return console.error("Missing MONGODB Connection String !");
-  }
-
-  if (client && mongoose.connection.readyState === 1) {
-    console.log("MONGODB CLIENT ALREADY CONNECTED!");
-  } else if (
-    client instanceof Promise ||
-    mongoose.connection.readyState === 2
-  ) {
-    client = await client;
-    console.log("MONGODB CLIENT RECONNECTED!");
-  } else {
-    try {
-      client = await mongoose.connect(config.db_url, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-
-      console.log("MONGODB CLIENT CONNECTED!");
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  return client;
-};
-
+/** This is the entry point of the Cloud Function.
+ * The name of the function shouldn't change because it also changes
+ * the endpoint of the deployed Cloud Function
+ */
 export async function queryNfts(req: Request, res: Response) {
   res.set("Access-Control-Allow-Origin", "*");
 
   try {
     console.time("service-execution-time");
     console.time("db-connection-time");
-    const client = await getClient();
+    const client = await getDBClient();
     console.timeEnd("db-connection-time");
     console.log(req.query);
-    const result = await fetchNftsNew(req.query);
+    const result = await fetchNfts(req.query);
 
     res.status(200);
     res.send(result);
 
     console.timeEnd("service-execution-time");
 
-    // if (config.node_env === "production") {
-    //   client.disconnect();
-    // }
+    if (config.node_env === "production") {
+      client.disconnect();
+      console.log("Disconnected from DB");
+    }
   } catch (err) {
     console.log(err);
     res.status(500);
@@ -61,6 +34,10 @@ export async function queryNfts(req: Request, res: Response) {
   }
 }
 
+/**  In order to allow for an easier development and debugging experience
+we spin up an express server with a single endpoint
+mimicking the behaviour of the cloud function endpoint
+*/
 if (config.node_env !== "production") {
   const express = require("express");
   const app = express();

@@ -1,13 +1,17 @@
 // TODO:: Describe what TokenType could be
-export interface INFTParams {
+export enum TokenType {
+  ERC721,
+  ERC1155,
+}
+export interface INFTParameters {
   contractAddress: string;
-  tokenType: string;
+  tokenType: TokenType;
   searchQuery: string;
   tokenIds: string;
   traits: any;
 }
 
-export interface IOrderParams {
+export interface IOrderParameters {
   side: number;
   assetClass: string;
   beforeTimestamp: number;
@@ -18,24 +22,24 @@ export interface IOrderParams {
   tokenAddress: string;
 }
 
-export interface IOwnerParams {
+export interface IOwnerParameters {
   ownerAddress: string;
 }
 
-export interface IGeneralParams {
+export interface IGeneralParameters {
   page: number;
   limit: number;
   skippedItems: number;
 }
 
-export interface IQueryParams {
-  nftParams: INFTParams;
-  orderParams: IOrderParams;
-  ownerParams: IOwnerParams;
-  generalParams: IGeneralParams;
+export interface IQueryParameters {
+  nftParams: INFTParameters;
+  orderParams: IOrderParameters;
+  ownerParams: IOwnerParameters;
+  generalParams: IGeneralParameters;
 }
 
-export interface FetchParams {
+export interface IExecutionParameters {
   ownerAddress: string;
   tokenAddress: string;
   tokenType: string;

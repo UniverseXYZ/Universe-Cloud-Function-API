@@ -1,11 +1,11 @@
 import { ethers, utils } from "ethers";
 import {
-  INFTParams,
-  IOrderParams,
-  IGeneralParams,
-  IOwnerParams,
+  INFTParameters,
+  IOrderParameters,
+  IGeneralParameters,
+  IOwnerParameters,
 } from "../../interfaces";
-import { Utils } from "../../utils/index";
+import { TOKENS, Utils } from "../../utils/index";
 
 import {
   AssetClass,
@@ -17,8 +17,14 @@ import {
 
 import { constants } from "../../constants";
 import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../../models";
-import { TOKENS, TOKEN_DECIMALS } from "../../utils/tokens";
-import { getPrices } from "../token-prices/token-price.service";
+import { fetchTokenPrices } from "../token-prices/token-price.service";
+
+export enum SortOrderOptionsEnum {
+  EndingSoon = 1,
+  HighestPrice = 2,
+  LowestPrice = 3,
+  RecentlyListed = 4,
+}
 
 // Lookup to join the document representing the owner of the nft from nft-token-owners
 export const getNFTOwnersLookup = () => ({
@@ -162,7 +168,7 @@ export const getNFTLookup = () => ({
 // ];
 
 export const buildNftQueryFilters = async (
-  nftParams: INFTParams,
+  nftParams: INFTParameters,
   owners: any[] = []
 ) => {
   const { contractAddress, tokenIds, searchQuery, tokenType, traits } =
@@ -277,8 +283,8 @@ export const buildNftQueryFilters = async (
 };
 
 export const buildOrderQueryFilters = async (
-  orderParams: IOrderParams,
-  generalParams: IGeneralParams
+  orderParams: IOrderParameters,
+  generalParams: IGeneralParameters
 ) => {
   const { page, limit } = generalParams;
 
@@ -452,7 +458,7 @@ export const buildOrderQueryFilters = async (
 };
 
 export const buildOwnerQuery = (
-  ownerParams: IOwnerParams,
+  ownerParams: IOwnerParameters,
   tokenType: string,
   skip = 0,
   limit = 0
@@ -501,7 +507,10 @@ export const buildOwnerQuery = (
   }
 };
 
-export const buildGeneralParams = (page: any, limit: any): IGeneralParams => {
+export const buildGeneralParams = (
+  page: number,
+  limit: number
+): IGeneralParameters => {
   const generalParams = {
     page: Number(page) > 0 ? Math.floor(Number(page)) : 1,
     limit:
@@ -604,13 +613,6 @@ export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
   }
 };
 
-export enum SortOrderOptionsEnum {
-  EndingSoon = 1,
-  HighestPrice = 2,
-  LowestPrice = 3,
-  RecentlyListed = 4,
-}
-
 export const addEndSortingAggregation = () => {
   // We want to show orders with offers in ascending order but also show offers without offers at the end
   return [
@@ -642,7 +644,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
     { value: xyzPrice },
     { value: daiPrice },
     { value: wethPrice },
-  ] = await getPrices();
+  ] = await fetchTokenPrices();
 
   console.log(`ETH Price: ${ethPrice}`);
   console.log(`USDC Price: ${usdcPrice}`);
@@ -664,7 +666,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                   then: {
                     $divide: [
                       { $toDecimal: "$order.make.value" },
-                      Math.pow(10, TOKEN_DECIMALS[TOKENS.ETH]) * ethPrice,
+                      Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.ETH]) * ethPrice,
                     ],
                   },
                 },
@@ -675,7 +677,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                   then: {
                     $divide: [
                       { $toDecimal: "$order.make.value" },
-                      Math.pow(10, TOKEN_DECIMALS[TOKENS.DAI]) * daiPrice,
+                      Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.DAI]) * daiPrice,
                     ],
                   },
                 },
@@ -686,7 +688,8 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                   then: {
                     $divide: [
                       { $toDecimal: "$order.make.value" },
-                      Math.pow(10, TOKEN_DECIMALS[TOKENS.WETH]) * wethPrice,
+                      Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.WETH]) *
+                        wethPrice,
                     ],
                   },
                 },
@@ -697,7 +700,8 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                   then: {
                     $divide: [
                       { $toDecimal: "$order.make.value" },
-                      Math.pow(10, TOKEN_DECIMALS[TOKENS.USDC]) * usdcPrice,
+                      Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.USDC]) *
+                        usdcPrice,
                     ],
                   },
                 },
@@ -708,7 +712,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                   then: {
                     $divide: [
                       { $toDecimal: "$order.make.value" },
-                      Math.pow(10, TOKEN_DECIMALS[TOKENS.XYZ]) * xyzPrice,
+                      Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.XYZ]) * xyzPrice,
                     ],
                   },
                 },
@@ -735,7 +739,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                       {
                         $divide: [
                           { $toDecimal: "$order.take.value" },
-                          { $pow: [10, TOKEN_DECIMALS[TOKENS.ETH]] },
+                          { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.ETH]] },
                         ],
                       },
                       ethPrice,
@@ -751,7 +755,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                       {
                         $divide: [
                           { $toDecimal: "$order.take.value" },
-                          { $pow: [10, TOKEN_DECIMALS[TOKENS.DAI]] },
+                          { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.DAI]] },
                         ],
                       },
                       daiPrice,
@@ -767,7 +771,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                       {
                         $divide: [
                           { $toDecimal: "$order.take.value" },
-                          { $pow: [10, TOKEN_DECIMALS[TOKENS.WETH]] },
+                          { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.WETH]] },
                         ],
                       },
                       wethPrice,
@@ -783,7 +787,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                       {
                         $divide: [
                           { $toDecimal: "$order.take.value" },
-                          { $pow: [10, TOKEN_DECIMALS[TOKENS.USDC]] },
+                          { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.USDC]] },
                         ],
                       },
                       usdcPrice,
@@ -799,7 +803,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                       {
                         $divide: [
                           { $toDecimal: "$order.take.value" },
-                          { $pow: [10, TOKEN_DECIMALS[TOKENS.XYZ]] },
+                          { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.XYZ]] },
                         ],
                       },
                       xyzPrice,
