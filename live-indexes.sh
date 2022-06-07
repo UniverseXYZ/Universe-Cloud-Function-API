@@ -1,10 +1,10 @@
 // Database Indexes:
 // Guidelines:
 // 1. Field must be selective enough (https://stackoverflow.com/a/62268015/11808182)
-// 2. General order of fields for compound indexex  (https://stackoverflow.com/a/62281956/11808182)
-// 2.1. fields that have direct match like $eq
-// 2.2. fields you sort on
-// 2.3. fields with ranged queries: $in, $lt, $or etc
+// 2. General order of fields for compound indexex (ESR Rule)  (https://stackoverflow.com/a/62281956/11808182)
+// 2.1. fields that have direct match like $eq (E)
+// 2.2. fields you sort on (S)
+// 2.3. fields with ranged queries: $in, $lt, $or etc (R)
 // 2.4  fields from 2.1, 2.2, 2.3 are put in most selective order
 //      ie. tokenId is first as it's more selective than contract
 // 3. !! Only one multikey field is allowed per index (https://www.mongodb.com/docs/manual/core/index-multikey/#compound-multikey-indexes)

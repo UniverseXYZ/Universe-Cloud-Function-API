@@ -1,18 +1,19 @@
-import { OrderModel, OrderSide, OrderStatus, TokenModel } from "../models";
+import { OrderModel, OrderSide, OrderStatus, TokenModel } from "../../models";
 
 import {
+  FetchParams,
   IGeneralParams,
   INFTParams,
   IOrderParams,
   IOwnerParams,
   IQueryParams,
-} from "./interfaces/IQueryParams";
+} from "../../interfaces";
 
 import {
   hasNftParamsOnly,
   hasOrderParamsOnly,
   hasOwnerParamsOnly,
-} from "./query.service.new.helpers";
+} from "./nft.service.helpers";
 
 import {
   buildNftQueryFilters,
@@ -22,31 +23,8 @@ import {
   getNFTLookup,
   getOrdersLookup,
   getOwnersByTokens,
-} from "./query.service.new.builder";
+} from "./nft.service.builder";
 import { ethers } from "ethers";
-
-type FetchParams = {
-  ownerAddress: string;
-  tokenAddress: string;
-  tokenType: string;
-  searchQuery: string;
-  page: number;
-  limit: number;
-  side: number;
-  // NFT Type
-  assetClass: string;
-  tokenIds: string;
-  // New checkbox
-  beforeTimestamp: number;
-  contractAddress: string;
-  minPrice: string;
-  maxPrice: string;
-  sortBy: string;
-  // Has offers checkbox
-  hasOffers: boolean;
-  //Buy Now checkbox
-  buyNow: boolean;
-};
 
 // TODO:: Write down the minimum required params for the Cloud function to be able to return a result without timing out from the DB
 // TODO:: Upon retrieving orders, find return the Last & Best offers info
@@ -258,49 +236,6 @@ const queryOnlyNftParams = async (
     nfts: finalData,
   };
 };
-
-// @Deprecated
-// const queryOnlyOrderParams = async (
-//   orderParams: IOrderParams,
-//   generalParams: IGeneralParams
-// ) => {
-//   const { page, limit } = generalParams;
-
-//   const { finalFilters, sort } = await buildOrderFilters(
-//     orderParams,
-//     generalParams
-//   );
-
-//   const dbQuery = [{ $match: finalFilters }];
-
-//   console.log("FILTERS:");
-//   console.log(finalFilters);
-
-//   console.log("Querying...");
-//   console.time("query-time");
-
-//   const data = await
-//     OrderModel.aggregate(
-//       [
-//         ...dbQuery,
-//         // ...sortingAggregation,
-//         { $skip: generalParams.skippedItems },
-//         { $limit: Number(limit) },
-//         getNFTLookup(),
-//         { $sort: sort },
-//       ],
-//       { collation: { locale: "en", strength: 2 } }
-//     )
-//   console.log(data);
-
-//   console.timeEnd("query-time");
-
-//   return {
-//     page: page,
-//     size: limit,
-//     nfts: data,
-//   };
-// };
 
 const queryOnlyOrderParams = async (
   orderParams: IOrderParams,

@@ -34,3 +34,26 @@ export interface IQueryParams {
   ownerParams: IOwnerParams;
   generalParams: IGeneralParams;
 }
+
+export interface FetchParams {
+  ownerAddress: string;
+  tokenAddress: string;
+  tokenType: string;
+  searchQuery: string;
+  page: number;
+  limit: number;
+  side: number;
+  // NFT Type
+  assetClass: string;
+  tokenIds: string;
+  // New checkbox
+  beforeTimestamp: number;
+  contractAddress: string;
+  minPrice: string;
+  maxPrice: string;
+  sortBy: string;
+  // Has offers checkbox
+  hasOffers: boolean;
+  //Buy Now checkbox
+  buyNow: boolean;
+}

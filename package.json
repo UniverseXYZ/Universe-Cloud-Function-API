@@ -22,7 +22,6 @@
     "@types/mocha": "^2.2.46",
     "@types/moment": "^2.13.0",
     "@types/node": "^17.0.25",
-    "@types/node-fetch": "^2.6.1",
     "chai": "^4.1.2",
     "copyfiles": "^1.2.0",
     "mocha": "^4.1.0",
@@ -34,8 +33,6 @@
     "dotenv": "^16.0.0",
     "ethers": "^5.6.4",
     "mongoose": "^6.2.10",
-    "node-fetch": "2.6.1",
-    "run-s": "^0.0.0",
-    "web3": "^1.7.3"
+    "run-s": "^0.0.0"
   }
 }

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import { fetchNfts } from "./services/query.service";
-import { fetchNftsNew } from "./services/query.service.new";
+import { fetchNftsNew } from "./services/nft/nft.service";
 
 const mongoose = require("mongoose");
 

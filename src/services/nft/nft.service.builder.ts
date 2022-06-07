@@ -4,8 +4,8 @@ import {
   IOrderParams,
   IGeneralParams,
   IOwnerParams,
-} from "./interfaces/IQueryParams";
-import { Utils } from "../utils/index";
+} from "../../interfaces";
+import { Utils } from "../../utils/index";
 
 import {
   AssetClass,
@@ -13,15 +13,12 @@ import {
   OrderSide,
   OrderStatus,
   NFTCollectionAttributesModel,
-} from "../models";
+} from "../../models";
 
-import {
-  addEndSortingAggregation,
-  addPriceSortingAggregation,
-  SortOrderOptionsEnum,
-} from "./query.service";
-import { constants } from "../constants";
-import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../models";
+import { constants } from "../../constants";
+import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../../models";
+import { TOKENS, TOKEN_DECIMALS } from "../../utils/tokens";
+import { getPrices } from "../token-prices/token-price.service";
 
 // Lookup to join the document representing the owner of the nft from nft-token-owners
 export const getNFTOwnersLookup = () => ({
@@ -604,5 +601,217 @@ export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
         ]
         // { collation: { locale: "en", strength: 2 } }
       );
+  }
+};
+
+export enum SortOrderOptionsEnum {
+  EndingSoon = 1,
+  HighestPrice = 2,
+  LowestPrice = 3,
+  RecentlyListed = 4,
+}
+
+export const addEndSortingAggregation = () => {
+  // We want to show orders with offers in ascending order but also show offers without offers at the end
+  return [
+    {
+      $addFields: {
+        orderSort: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $eq: ["$end", 0],
+                },
+                // Workaround which is safe to use until year 2255
+                then: Number.MAX_SAFE_INTEGER,
+              },
+            ],
+            default: "$end",
+          },
+        },
+      },
+    },
+  ];
+};
+
+export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
+  const [
+    { value: ethPrice },
+    { value: usdcPrice },
+    { value: xyzPrice },
+    { value: daiPrice },
+    { value: wethPrice },
+  ] = await getPrices();
+
+  console.log(`ETH Price: ${ethPrice}`);
+  console.log(`USDC Price: ${usdcPrice}`);
+  console.log(`XYZ Price: ${xyzPrice}`);
+  console.log(`DAI Price: ${daiPrice}`);
+  console.log(`WETH Price: ${wethPrice}`);
+
+  if (orderSide === OrderSide.BUY) {
+    return [
+      {
+        $addFields: {
+          usd_value: {
+            $switch: {
+              branches: [
+                {
+                  case: {
+                    $eq: ["$order.make.assetType.assetClass", AssetClass.ETH],
+                  },
+                  then: {
+                    $divide: [
+                      { $toDecimal: "$order.make.value" },
+                      Math.pow(10, TOKEN_DECIMALS[TOKENS.ETH]) * ethPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.make.assetType.contract", daiPrice],
+                  },
+                  then: {
+                    $divide: [
+                      { $toDecimal: "$order.make.value" },
+                      Math.pow(10, TOKEN_DECIMALS[TOKENS.DAI]) * daiPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.make.assetType.contract", wethPrice],
+                  },
+                  then: {
+                    $divide: [
+                      { $toDecimal: "$order.make.value" },
+                      Math.pow(10, TOKEN_DECIMALS[TOKENS.WETH]) * wethPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.make.assetType.contract", usdcPrice],
+                  },
+                  then: {
+                    $divide: [
+                      { $toDecimal: "$order.make.value" },
+                      Math.pow(10, TOKEN_DECIMALS[TOKENS.USDC]) * usdcPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.make.assetType.contract", xyzPrice],
+                  },
+                  then: {
+                    $divide: [
+                      { $toDecimal: "$order.make.value" },
+                      Math.pow(10, TOKEN_DECIMALS[TOKENS.XYZ]) * xyzPrice,
+                    ],
+                  },
+                },
+              ],
+              default: 0,
+            },
+          },
+        },
+      },
+    ];
+  } else {
+    return [
+      {
+        $addFields: {
+          usd_value: {
+            $switch: {
+              branches: [
+                {
+                  case: {
+                    $eq: ["$order.take.assetType.assetClass", AssetClass.ETH],
+                  },
+                  then: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $toDecimal: "$order.take.value" },
+                          { $pow: [10, TOKEN_DECIMALS[TOKENS.ETH]] },
+                        ],
+                      },
+                      ethPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.take.assetType.contract", daiPrice],
+                  },
+                  then: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $toDecimal: "$order.take.value" },
+                          { $pow: [10, TOKEN_DECIMALS[TOKENS.DAI]] },
+                        ],
+                      },
+                      daiPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.take.assetType.contract", wethPrice],
+                  },
+                  then: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $toDecimal: "$order.take.value" },
+                          { $pow: [10, TOKEN_DECIMALS[TOKENS.WETH]] },
+                        ],
+                      },
+                      wethPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.take.assetType.contract", usdcPrice],
+                  },
+                  then: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $toDecimal: "$order.take.value" },
+                          { $pow: [10, TOKEN_DECIMALS[TOKENS.USDC]] },
+                        ],
+                      },
+                      usdcPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$order.take.assetType.contract", xyzPrice],
+                  },
+                  then: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $toDecimal: "$order.take.value" },
+                          { $pow: [10, TOKEN_DECIMALS[TOKENS.XYZ]] },
+                        ],
+                      },
+                      xyzPrice,
+                    ],
+                  },
+                },
+              ],
+              default: 0,
+            },
+          },
+        },
+      },
+    ];
   }
 };
