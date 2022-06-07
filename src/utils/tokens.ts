@@ -1,4 +1,5 @@
 import { constants } from "ethers";
+import config from "../config";
 
 export enum TOKENS {
   ETH = "ethereum",
@@ -30,5 +31,5 @@ export const TOKEN_DECIMALS: { [key in TOKENS]: number } = {
   [TOKENS.DAI]: 18,
   [TOKENS.XYZ]: 18,
   //USDC Rinkeby Token has 18 decimals, mainnet has 6
-  [TOKENS.USDC]: process.env.ETHEREUM_CHAIN_ID === "1" ? 6 : 18,
+  [TOKENS.USDC]: config.chain_id === "1" ? 6 : 18,
 };

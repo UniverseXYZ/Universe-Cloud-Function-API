@@ -1,8 +1,5 @@
-import { TokenPriceModel } from "../../models/tokenPrice";
-interface IPrice {
-  coin: string;
-  value: number;
-}
+import { IPrice } from "../../interfaces";
+import { TokenPriceModel } from "../../models";
 
 export const getPrices = async () => {
   // We trust that there will always be info about the prices in the DB

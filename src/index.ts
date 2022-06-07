@@ -1,15 +1,13 @@
 import { Request, Response } from "express";
 import { fetchNftsNew } from "./services/nft/nft.service";
+import config from "./config";
 
 const mongoose = require("mongoose");
-
-require("dotenv").config();
 
 var client: any;
 
 const getClient = async () => {
-  const DB_URL = process.env.DB_URL;
-  if (!DB_URL) {
+  if (!config.db_url) {
     return console.error("Missing MONGODB Connection String !");
   }
 
@@ -23,7 +21,7 @@ const getClient = async () => {
     console.log("MONGODB CLIENT RECONNECTED!");
   } else {
     try {
-      client = await mongoose.connect(DB_URL, {
+      client = await mongoose.connect(config.db_url, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
@@ -53,7 +51,7 @@ export async function queryNfts(req: Request, res: Response) {
 
     console.timeEnd("service-execution-time");
 
-    // if (process.env.NODE_ENV === "production") {
+    // if (config.node_env === "production") {
     //   client.disconnect();
     // }
   } catch (err) {
@@ -63,7 +61,7 @@ export async function queryNfts(req: Request, res: Response) {
   }
 }
 
-if (process.env.NODE_ENV !== "production") {
+if (config.node_env !== "production") {
   const express = require("express");
   const app = express();
   const port = 3000;
