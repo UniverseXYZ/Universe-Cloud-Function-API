@@ -82,18 +82,21 @@ export class NftOwnerStrategy implements IStrategy {
             nft.contractAddress.toLowerCase()
       );
 
-      if (nftOwners.length) {
-        const ownerAddresses = nftOwners.map((owner) => ({
-          owner: owner.address,
-          value: owner.value
-            ? owner.value.toString()
-            : ethers.BigNumber.from(owner.value).toString(),
-        }));
+      if (!nftOwners.length) {
+        continue;
+      }
 
-        filtered.push({ ...nft, owners: ownerAddresses });
-        if (filtered.length === generalParams.skippedItems + limit) {
-          break;
-        }
+      const ownerAddresses = nftOwners.map((owner) => ({
+        owner: owner.address,
+        value: owner.value
+          ? owner.value.toString()
+          : ethers.BigNumber.from(owner.value).toString(),
+      }));
+
+      filtered.push({ ...nft, owners: ownerAddresses });
+
+      if (filtered.length === generalParams.skippedItems + limit) {
+        break;
       }
     }
 

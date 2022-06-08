@@ -8,11 +8,18 @@ import { TokenPriceModel } from "../../models";
  */
 export const fetchTokenPrices = async () => {
   // We trust that there will always be info about the prices in the DB
+  //TODO: Make ordering from DB consistent
   const prices = await TokenPriceModel.find({});
   const pricesData: IPrice[] = prices.map((price) => ({
     coin: price.name,
     value: price.usd,
   }));
 
-  return pricesData;
+  return [
+    pricesData.find((price) => price.coin == "ethereum"),
+    pricesData.find((price) => price.coin == "weth"),
+    pricesData.find((price) => price.coin == "dai"),
+    pricesData.find((price) => price.coin == "usd-coin"),
+    pricesData.find((price) => price.coin == "universe-xyz"),
+  ];
 };

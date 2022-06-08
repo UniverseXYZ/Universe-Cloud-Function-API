@@ -29,12 +29,8 @@ export class OrderStrategy implements IStrategy {
 
     const { page, limit } = generalParams;
 
-    const { finalFilters, sort } = await buildOrderQueryFilters(
-      orderParams,
-      generalParams
-    );
-
-    const dbQuery = [{ $match: finalFilters }];
+    const { finalFilters, sort, sortingAggregation } =
+      await buildOrderQueryFilters(orderParams, generalParams);
 
     console.log("FILTERS:");
     console.log(finalFilters);
@@ -44,8 +40,8 @@ export class OrderStrategy implements IStrategy {
 
     const data = await OrderModel.aggregate(
       [
-        ...dbQuery,
-        // ...sortingAggregation,
+        { $match: finalFilters },
+        ...sortingAggregation,
         { $sort: sort },
         {
           $group: {

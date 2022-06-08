@@ -39,10 +39,8 @@ export class NftOwnerOrderStrategy implements IStrategy {
       ownerParams,
       nftParams.tokenType.toString()
     );
-    const orderFilters = await buildOrderQueryFilters(
-      orderParams,
-      generalParams
-    );
+    const { finalFilters, sortingAggregation, sort } =
+      await buildOrderQueryFilters(orderParams, generalParams);
 
     console.time("query-time");
     const [nfts, owners, orders] = await Promise.all([
@@ -50,7 +48,11 @@ export class NftOwnerOrderStrategy implements IStrategy {
         collation: { locale: "en", strength: 2 },
       }),
       ownerQuery,
-      OrderModel.find(orderFilters).lean(),
+      OrderModel.aggregate([
+        { $match: finalFilters },
+        ...sortingAggregation,
+        { $sort: sort },
+      ]),
     ]);
     console.timeEnd("query-time");
 
@@ -64,8 +66,18 @@ export class NftOwnerOrderStrategy implements IStrategy {
 
     // Apply Pagination
     const filtered = [];
-    for (let i = 0; i < nfts.length; i++) {
-      const nft = nfts[i];
+    for (let i = 0; i < orders.length; i++) {
+      const order = orders[i];
+
+      const nft = nfts.find(
+        (nft) =>
+          order.make.assetType.tokenId === nft.tokenId &&
+          order.make.assetType.contract === nft.contractAddress.toLowerCase()
+      );
+
+      if (!nft) {
+        continue;
+      }
 
       const ownersInfo = owners.filter(
         (owner) =>
@@ -74,27 +86,30 @@ export class NftOwnerOrderStrategy implements IStrategy {
             nft.contractAddress.toLowerCase()
       );
 
+      if (!ownersInfo.length) {
+        continue;
+      }
+
+      // ERC1155 may have more than one active listing
       const nftOrders = orders.filter(
-        (order) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract === nft.contractAddress.toLowerCase()
+        (o) =>
+          o.make.assetType.contract === order.make.assetType.contract &&
+          o.make.assetType.tokenId === order.make.assetType.tokenId
       );
 
-      if (ownersInfo && nftOrders && ownersInfo.length && nftOrders.length) {
-        const ownerAddresses = ownersInfo.map((owner) => ({
-          owner: owner.address,
-          value: owner.value
-            ? owner.value.toString()
-            : ethers.BigNumber.from(owner.value).toString(),
-        }));
+      const ownerAddresses = ownersInfo.map((owner) => ({
+        owner: owner.address,
+        value: owner.value
+          ? owner.value.toString()
+          : ethers.BigNumber.from(owner.value).toString(),
+      }));
 
-        nft.orders = nftOrders;
-        nft.owners = ownerAddresses;
+      nft.orders = nftOrders;
+      nft.owners = ownerAddresses;
 
-        filtered.push(nft);
-        if (filtered.length === generalParams.skippedItems + limit) {
-          break;
-        }
+      filtered.push(nft);
+      if (filtered.length === generalParams.skippedItems + limit) {
+        break;
       }
     }
 

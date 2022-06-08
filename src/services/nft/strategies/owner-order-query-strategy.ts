@@ -32,15 +32,18 @@ export class OwnerOrderStrategy implements IStrategy {
 
     const { page, limit } = generalParams;
 
-    const orderFilters = await buildOrderQueryFilters(
-      orderParams,
-      generalParams
-    );
+    const { finalFilters, sortingAggregation, sort } =
+      await buildOrderQueryFilters(orderParams, generalParams);
+
     const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
 
     console.time("query-time");
     const [orders, owners] = await Promise.all([
-      OrderModel.find(orderFilters).lean(),
+      OrderModel.aggregate([
+        { $match: finalFilters },
+        ...sortingAggregation,
+        { $sort: sort },
+      ]),
       ownerQuery,
     ]);
 
@@ -54,23 +57,26 @@ export class OwnerOrderStrategy implements IStrategy {
     }
 
     // Apply Pagination
+    // We have to iterate over orders in case sortBy is applied. Othwise the sort order won't be persisted
     const filtered = [];
-    for (let i = 0; i < owners.length; i++) {
-      const owner = owners[i];
+    for (let i = 0; i < orders.length; i++) {
+      const order = orders[i];
 
-      const tokenOrders = orders.filter(
-        (order) =>
+      const owner = owners.find(
+        (owner) =>
           order.make.assetType.tokenId === owner.tokenId &&
-          order.make.assetType?.contract === owner.contractAddress.toLowerCase()
+          order.make.assetType.contract?.toLowerCase() ===
+            owner.contractAddress.toLowerCase()
       );
 
-      if (tokenOrders && tokenOrders.length) {
-        // owner.order === order;
-        filtered.push(owner);
+      if (!owner) {
+        continue;
+      }
 
-        if (filtered.length === generalParams.skippedItems + limit) {
-          break;
-        }
+      filtered.push(owner);
+
+      if (filtered.length === generalParams.skippedItems + limit) {
+        break;
       }
     }
 
@@ -85,9 +91,9 @@ export class OwnerOrderStrategy implements IStrategy {
     const paginated = filtered.slice(generalParams.skippedItems);
 
     //  Populate order
-    const nftsQuery = paginated.map((nft) => ({
-      tokenId: nft.tokenId,
-      contractAddress: nft.contractAddress,
+    const nftsQuery = paginated.map((owner) => ({
+      tokenId: owner.tokenId,
+      contractAddress: owner.contractAddress,
     }));
 
     const nfts = await TokenModel.find({
@@ -118,13 +124,12 @@ export class OwnerOrderStrategy implements IStrategy {
 
       return {
         ...nft,
-        orders:
-          orders.filter(
-            (order) =>
-              order.make.assetType.tokenId === nft.tokenId &&
-              order.make.assetType?.contract ===
-                nft.contractAddress.toLowerCase()
-          ) || [],
+        // ERC1155 may have more than one active listing
+        orders: orders.filter(
+          (order) =>
+            order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType?.contract === nft.contractAddress.toLowerCase()
+        ),
         owners: ownerAddresses,
       };
     });
