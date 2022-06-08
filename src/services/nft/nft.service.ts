@@ -51,32 +51,30 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     buyNow,
     ...traits
   } = params;
-  if (tokenType && !Object.values(TokenType).includes(tokenType)) {
-    throw new Error("Invalid token type");
-  }
 
   const queryParams: IQueryParameters = {
     nftParams: {
       contractAddress,
       tokenIds,
       searchQuery,
-      tokenType: TokenType[tokenType],
+      tokenType: TokenType[tokenType] || "",
       traits,
     },
     orderParams: {
       minPrice,
       maxPrice,
-      sortBy,
-      hasOffers,
-      side,
+      sortBy: Number(sortBy),
+      hasOffers: !!hasOffers,
+      buyNow: !!buyNow,
+      side: Number(side),
       assetClass,
-      beforeTimestamp,
+      beforeTimestamp: Number(beforeTimestamp),
       tokenAddress,
     },
     ownerParams: {
       ownerAddress,
     },
-    generalParams: buildGeneralParams(page, limit),
+    generalParams: buildGeneralParams(Number(page), Number(limit)),
   };
 
   const hasNftParams = !!(
@@ -97,6 +95,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     queryParams.orderParams.sortBy ||
     queryParams.orderParams.hasOffers
   );
+  // || queryParams.orderParams.buyNow
 
   const hasOwnerParams = !!queryParams.ownerParams.ownerAddress;
 

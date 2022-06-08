@@ -423,7 +423,7 @@ export const buildOrderQueryFilters = async (
 
   let sort = {} as any;
   let sortingAggregation = [] as any;
-  switch (Number(sortBy)) {
+  switch (sortBy) {
     case SortOrderOptionsEnum.EndingSoon:
       sortingAggregation = addEndSortingAggregation();
       sort.orderSort = 1;

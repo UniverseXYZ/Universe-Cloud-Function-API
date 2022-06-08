@@ -17,9 +17,10 @@ export interface IOrderParameters {
   beforeTimestamp: number;
   minPrice: string;
   maxPrice: string;
-  sortBy: string;
+  sortBy: number;
   hasOffers: boolean;
   tokenAddress: string;
+  buyNow: boolean;
 }
 
 export interface IOwnerParameters {
@@ -44,20 +45,20 @@ export interface IExecutionParameters {
   tokenAddress: string;
   tokenType: string;
   searchQuery: string;
-  page: number;
-  limit: number;
-  side: number;
+  page: string;
+  limit: string;
+  side: string;
   // NFT Type
   assetClass: string;
   tokenIds: string;
   // New checkbox
-  beforeTimestamp: number;
+  beforeTimestamp: string;
   contractAddress: string;
   minPrice: string;
   maxPrice: string;
   sortBy: string;
   // Has offers checkbox
-  hasOffers: boolean;
+  hasOffers: string;
   //Buy Now checkbox
-  buyNow: boolean;
+  buyNow: string;
 }

@@ -1,5 +1,5 @@
 import { IQueryParameters, IStrategy } from "../../../interfaces";
-
+import { ApiError, ERROR_MESSAGES } from "../../../errors";
 // The context defines the interface of interest to clients.
 export class StrategyContext {
   // The context maintains a reference to one of the strategy
@@ -20,7 +20,7 @@ export class StrategyContext {
   // algorithm on its own.
   public executeStrategy(parameters: IQueryParameters) {
     if (!this.strategy) {
-      throw new Error("Execution strategy isn't set");
+      throw new ApiError(400, ERROR_MESSAGES.STRATEGY_NOT_SET);
     }
 
     return this.strategy.execute(parameters);

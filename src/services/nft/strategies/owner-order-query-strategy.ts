@@ -64,7 +64,7 @@ export class OwnerOrderStrategy implements IStrategy {
           order.make.assetType?.contract === owner.contractAddress.toLowerCase()
       );
 
-      if (tokenOrders && tokenOrders.lenth) {
+      if (tokenOrders && tokenOrders.length) {
         // owner.order === order;
         filtered.push(owner);
 

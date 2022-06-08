@@ -88,7 +88,13 @@ export class OrderStrategy implements IStrategy {
     );
 
     console.timeEnd("query-time");
-
+    if (!data.length) {
+      return {
+        page: page,
+        size: limit,
+        nfts: [],
+      };
+    }
     const owners = await getOwnersByTokens(data);
 
     const finalData = data.map((nft) => {
