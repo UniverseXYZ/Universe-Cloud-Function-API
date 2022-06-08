@@ -40,10 +40,17 @@ export async function queryNfts(req: Request, res: Response) {
     }
   } catch (err) {
     console.log(err);
-    res.status(err.statusCode || 500).send({
-      status: err.statusCode || 500,
-      message: err.message || ERROR_MESSAGES.UNEXPECTED_ERROR,
-    });
+    if (err.statusCode) {
+      res.status(err.statusCode).send({
+        statusCode: err.statusCode,
+        message: err.message || ERROR_MESSAGES.UNEXPECTED_ERROR,
+      });
+    } else {
+      res.status(500).send({
+        statusCode: 500,
+        message: ERROR_MESSAGES.UNEXPECTED_ERROR,
+      });
+    }
   }
 }
 

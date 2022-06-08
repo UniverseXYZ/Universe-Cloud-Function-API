@@ -584,19 +584,13 @@ export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
 
   switch (tokenType) {
     case "ERC721":
-      return NFTTokenOwnerModel.aggregate(
-        [{ $match: query }]
-        //   {
-        //   collation: { locale: "en", strength: 2 },
-        // }
-      );
+      return NFTTokenOwnerModel.aggregate([{ $match: query }], {
+        collation: { locale: "en", strength: 2 },
+      });
     case "ERC1155":
-      return ERC1155NFTTokenOwnerModel.aggregate(
-        [{ $match: query }]
-        //    {
-        //   collation: { locale: "en", strength: 2 },
-        // }
-      );
+      return ERC1155NFTTokenOwnerModel.aggregate([{ $match: query }], {
+        collation: { locale: "en", strength: 2 },
+      });
     default:
       return NFTTokenOwnerModel.aggregate(
         [
@@ -607,8 +601,8 @@ export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
             },
           },
           { $match: query },
-        ]
-        // { collation: { locale: "en", strength: 2 } }
+        ],
+        { collation: { locale: "en", strength: 2 } }
       );
   }
 };
