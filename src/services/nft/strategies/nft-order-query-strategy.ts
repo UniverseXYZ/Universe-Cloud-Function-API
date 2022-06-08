@@ -32,6 +32,13 @@ export class NftOrderStrategy implements IStrategy {
     const { page, limit } = generalParams;
 
     const nftFilters = await buildNftQueryFilters(nftParams);
+    if (!nftFilters.length) {
+      return {
+        page: page,
+        size: limit,
+        nfts: [],
+      };
+    }
     //TODO: Try to transfer filters like contractAddress, ownerAddress... to narrow down order search
     const { finalFilters, sortingAggregation, sort } =
       await buildOrderQueryFilters(orderParams, generalParams);

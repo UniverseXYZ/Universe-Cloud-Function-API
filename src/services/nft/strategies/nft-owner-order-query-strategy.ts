@@ -35,6 +35,15 @@ export class NftOwnerOrderStrategy implements IStrategy {
     const { page, limit } = generalParams;
 
     const nftFilters = await buildNftQueryFilters(nftParams);
+
+    if (!nftFilters.length) {
+      return {
+        page: page,
+        size: limit,
+        nfts: [],
+      };
+    }
+
     const ownerQuery = buildOwnerQuery(
       ownerParams,
       nftParams.tokenType.toString()

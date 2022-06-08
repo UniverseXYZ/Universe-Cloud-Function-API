@@ -7,10 +7,7 @@ import {
 } from "../../../interfaces";
 import { OrderModel, TokenModel } from "../../../models";
 import {
-  buildNftQueryFilters,
   buildOrderQueryFilters,
-  getNFTLookup,
-  getOrdersLookup,
   getOwnersByTokens,
 } from "../nft.service.builder";
 

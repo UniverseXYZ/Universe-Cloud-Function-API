@@ -18,6 +18,7 @@ import {
 import { constants } from "../../constants";
 import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../../models";
 import { fetchTokenPrices } from "../token-prices/token-price.service";
+import { ApiError } from "../../errors";
 
 export enum SortOrderOptionsEnum {
   EndingSoon = 1,
@@ -218,21 +219,19 @@ export const buildNftQueryFilters = async (
     });
   }
 
-  // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
-  const hasTraitParams = contractAddress && Object.keys(traits).length > 0;
-
   // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
-  if (hasTraitParams) {
+  if (contractAddress && Object.keys(traits).length > 0) {
     const ids = await getTokenIdsByCollectionAttributes(
       contractAddress,
       traits
     );
-
-    if (ids && ids.length) {
-      filters.push({
-        tokenId: { $in: ids },
-      });
+    if (!ids || !ids.length) {
+      return [];
     }
+
+    filters.push({
+      tokenId: { $in: ids },
+    });
   } else if (tokenIds) {
     const tokenIdsSplit = tokenIds.replace(/\s/g, "").split(",");
 
@@ -465,7 +464,6 @@ export const buildOwnerQuery = (
 ) => {
   const filters = [] as any;
   const limitFilters = [] as any;
-  // TODO: Add validation when request is received to validate ERC721 or ERC1155 strings
   filters.push({
     address: ownerParams.ownerAddress,
   });
@@ -535,11 +533,10 @@ export const getTokenIdsByCollectionAttributes = async (
   const allTraitsArray = [];
 
   // construct fields for the database query
-  for (const trait in traits) {
-    traits[trait].split(",").forEach((type) => {
-      const field = `$attributes.${trait.trim()}.${type.trim()}`;
-      allTraitsArray.push(field);
-    });
+  for (const attributeKVP of traits.split(",")) {
+    const [attribute, trait] = attributeKVP.split(":");
+    const field = `$attributes.${attribute.trim()}.${trait.trim()}`;
+    allTraitsArray.push(field);
   }
 
   const filter = {

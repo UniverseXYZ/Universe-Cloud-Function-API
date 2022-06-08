@@ -48,6 +48,15 @@ export class NftOwnerStrategy implements IStrategy {
         tokenId: owner.tokenId,
       }))
     );
+
+    if (!nftFilters.length) {
+      return {
+        page: page,
+        size: limit,
+        nfts: [],
+      };
+    }
+
     // Apply Pagination
     console.time("nft-query-time");
     const nfts = await TokenModel.aggregate(

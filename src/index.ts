@@ -6,6 +6,7 @@ import {
   ERROR_MESSAGES,
   ValidationError,
   PositiveNumberValidationError,
+  ApiError,
 } from "./errors";
 import { IExecutionParameters, TokenType } from "./interfaces";
 import { AssetClass, OrderSide } from "./models";
@@ -90,6 +91,7 @@ const validateParameters = (params: IExecutionParameters) => {
     sortBy,
     tokenAddress,
     tokenIds,
+    traits,
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
@@ -167,6 +169,16 @@ const validateParameters = (params: IExecutionParameters) => {
         throw new PositiveNumberValidationError("tokenIds");
       }
     });
+  }
+
+  // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
+  const hasValidTraitParams = contractAddress && Object.keys(traits).length > 0;
+
+  if (!hasValidTraitParams) {
+    throw new ApiError(
+      401,
+      "Please provide contract address in order to filter by traits"
+    );
   }
 };
 

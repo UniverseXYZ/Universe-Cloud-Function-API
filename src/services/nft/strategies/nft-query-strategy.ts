@@ -29,6 +29,14 @@ export class NftStrategy implements IStrategy {
 
     const nftFilters = await buildNftQueryFilters(nftParams);
 
+    if (!nftFilters.length) {
+      return {
+        page: page,
+        size: limit,
+        nfts: [],
+      };
+    }
+
     console.log("Querying...");
     console.time("query-time");
 

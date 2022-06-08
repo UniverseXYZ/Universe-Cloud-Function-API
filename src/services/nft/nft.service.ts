@@ -49,7 +49,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     sortBy,
     hasOffers,
     buyNow,
-    ...traits
+    traits,
   } = params;
 
   const queryParams: IQueryParameters = {

@@ -8,7 +8,7 @@ export interface INFTParameters {
   tokenType: TokenType;
   searchQuery: string;
   tokenIds: string;
-  traits: any;
+  traits: string;
 }
 
 export interface IOrderParameters {
@@ -61,4 +61,5 @@ export interface IExecutionParameters {
   hasOffers: string;
   //Buy Now checkbox
   buyNow: string;
+  traits: string;
 }
