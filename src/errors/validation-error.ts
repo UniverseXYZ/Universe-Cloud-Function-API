@@ -5,7 +5,7 @@ export class ValidationError extends BaseError {
   propertyName: string;
 
   constructor(parameterName: string) {
-    super(401, ERROR_MESSAGES.INVALID_PARAMETER(parameterName));
+    super(400, ERROR_MESSAGES.INVALID_PARAMETER(parameterName));
 
     this.propertyName = parameterName;
   }

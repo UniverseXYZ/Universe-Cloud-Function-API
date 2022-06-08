@@ -176,7 +176,7 @@ const validateParameters = (params: IExecutionParameters) => {
 
   if (!hasValidTraitParams) {
     throw new ApiError(
-      401,
+      400,
       "Please provide contract address in order to filter by traits"
     );
   }

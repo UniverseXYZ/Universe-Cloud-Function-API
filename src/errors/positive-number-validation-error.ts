@@ -5,7 +5,7 @@ export class PositiveNumberValidationError extends BaseError {
   propertyName: string;
 
   constructor(parameterName: string) {
-    super(401, ERROR_MESSAGES.POSTIVE_INTEGER(parameterName));
+    super(400, ERROR_MESSAGES.POSTIVE_INTEGER(parameterName));
 
     this.propertyName = parameterName;
   }
