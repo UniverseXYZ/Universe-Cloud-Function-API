@@ -156,6 +156,8 @@ Deployment command is in `gcf.sh`.
 - Node 16.14.2
 - Mocha+Chai
 - Ethers.js
+- Mongoose
+- MongoDB 5.0.8
 
 ## TODO
 

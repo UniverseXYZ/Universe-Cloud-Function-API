@@ -6,13 +6,11 @@ import {
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from "../../../interfaces";
-import { TokenModel, OrderModel } from "../../../models";
-import {
-  buildNftQueryFilters,
-  buildOwnerQuery,
-  buildOrderQueryFilters,
-} from "../nft.service.builder";
+} from "../interfaces";
+import { TokenModel, OrderModel } from "../models";
+import { buildNftQueryFilters } from "../services/nfts/builders";
+import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
+import { buildOwnerQuery } from "../services/owners/owners.service";
 
 export class NftOwnerOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {

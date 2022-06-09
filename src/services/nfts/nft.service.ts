@@ -8,9 +8,9 @@ import {
   hasNftParamsOnly,
   hasOrderParamsOnly,
   hasOwnerParamsOnly,
-} from "./nft.service.helpers";
+} from "./helpers/nft.helpers";
 
-import { buildGeneralParams } from "./nft.service.builder";
+import { buildGeneralParams } from "./builders";
 
 import {
   NftOrderStrategy,
@@ -21,7 +21,7 @@ import {
   OwnerOrderStrategy,
   OwnerStrategy,
   StrategyContext,
-} from "./strategies";
+} from "../../strategies";
 import { NFTTokenOwnerModel } from "../../models";
 
 // TODO:: Write down the minimum required params for the Cloud function

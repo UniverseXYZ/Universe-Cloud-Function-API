@@ -1,21 +1,15 @@
 import { Request, Response } from "express";
-import { countNfts, fetchNfts } from "./services/nft/nft.service";
+import { countNfts, fetchNfts } from "./services/nfts/nft.service";
 import config from "./config";
 import { getDBClient } from "./database";
+import { ERROR_MESSAGES, HTTP_STATUS_CODES } from "./errors";
 import {
-  ERROR_MESSAGES,
-  ValidationError,
-  PositiveNumberValidationError,
-  ApiError,
-} from "./errors";
-import { IExecutionParameters, TokenType } from "./interfaces";
-import { NFTAssetClasses, OrderSide } from "./models";
-import { ethers } from "ethers";
+  CloudActions,
+  validateCountParameters,
+  validateNftParameters,
+  validateRequiredParameters,
+} from "./validations";
 
-export enum CloudActions {
-  QUERY = "query",
-  COUNT = "count",
-}
 /** This is the entry point of the Cloud Function.
  * The name of the function shouldn't change because it also changes
  * the endpoint of the deployed Cloud Function
@@ -68,8 +62,8 @@ export async function nfts(req: Request, res: Response) {
         message: err.message || ERROR_MESSAGES.UNEXPECTED_ERROR,
       });
     } else {
-      res.status(500).send({
-        statusCode: 500,
+      res.status(HTTP_STATUS_CODES.UNEXPECTED_ERROR).send({
+        statusCode: HTTP_STATUS_CODES.UNEXPECTED_ERROR,
         message: ERROR_MESSAGES.UNEXPECTED_ERROR,
       });
     }
@@ -93,158 +87,3 @@ if (config.node_env !== "production") {
     console.log(`Local function is listening on port ${port}`);
   });
 }
-
-const validateRequiredParameters = (params: IExecutionParameters) => {
-  const { action } = params;
-  if (action !== CloudActions.COUNT && action !== CloudActions.QUERY) {
-    throw new ValidationError(action);
-  }
-};
-
-const validateNftParameters = (params: IExecutionParameters) => {
-  const {
-    tokenType,
-    assetClass,
-    beforeTimestamp,
-    buyNow,
-    contractAddress,
-    hasOffers,
-    limit,
-    minPrice,
-    maxPrice,
-    ownerAddress,
-    page,
-    searchQuery,
-    side,
-    sortBy,
-    tokenAddress,
-    tokenIds,
-    traits,
-  } = params;
-
-  if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
-    throw new PositiveNumberValidationError("beforeTimestamp");
-  }
-
-  if (limit && !isValidPositiveIntParam(limit)) {
-    throw new PositiveNumberValidationError("limit");
-  }
-
-  if (maxPrice && !isValidPositiveIntParam(maxPrice)) {
-    throw new PositiveNumberValidationError("maxPrice");
-  }
-
-  if (minPrice && !isValidPositiveIntParam(maxPrice)) {
-    throw new PositiveNumberValidationError("minPrice");
-  }
-
-  if (page && !isValidPositiveIntParam(page)) {
-    throw new PositiveNumberValidationError("page");
-  }
-
-  if (sortBy && !isValidPositiveIntParam(sortBy)) {
-    throw new ValidationError("sortBy");
-  }
-
-  if (ownerAddress && !isValidContractAddress(ownerAddress)) {
-    throw new ValidationError("ownerAddress");
-  }
-
-  if (contractAddress && !isValidContractAddress(contractAddress)) {
-    throw new ValidationError("contractAddress");
-  }
-
-  if (tokenAddress && !isValidContractAddress(tokenAddress)) {
-    throw new ValidationError("tokenAddress");
-  }
-
-  //TODO: Think of validation about this
-  if (searchQuery && false) {
-    throw new ValidationError("page");
-  }
-
-  if (
-    side &&
-    Number(side) !== OrderSide.SELL &&
-    Number(side) !== OrderSide.BUY
-  ) {
-    throw new ValidationError("side");
-  }
-
-  if (tokenType && !Object.values(TokenType).includes(tokenType)) {
-    throw new ValidationError("tokenType");
-  }
-
-  if (
-    assetClass &&
-    !Object.values(NFTAssetClasses).includes(assetClass as NFTAssetClasses)
-  ) {
-    throw new ValidationError("assetClass");
-  }
-
-  // if (buyNow && buyNow !== "true") {
-  //   throw new ValidationError("buyNow");
-  // }
-
-  if (hasOffers && hasOffers !== "true") {
-    throw new ValidationError("hasOffers");
-  }
-
-  if (tokenIds) {
-    const ids = tokenIds.split(",");
-    ids.forEach((id) => {
-      if (!isValidPositiveIntParam(id)) {
-        throw new PositiveNumberValidationError("tokenIds");
-      }
-    });
-  }
-
-  // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
-  const hasinvalidTraitParams =
-    !!traits && !!Object.keys(traits).length && !contractAddress;
-
-  if (hasinvalidTraitParams) {
-    throw new ApiError(
-      400,
-      "Please provide contract address in order to filter by traits"
-    );
-  }
-};
-
-const validateCountParameters = (params: IExecutionParameters) => {
-  const { ownerAddress, contractAddress } = params;
-
-  if (!ownerAddress && !contractAddress) {
-    throw new ApiError(
-      400,
-      `ownerAddress or contractAddress parameter is required`
-    );
-  }
-
-  if (ownerAddress && contractAddress) {
-    throw new ApiError(
-      400,
-      `Combination of ownerAddress and contractAddress parameters isn't allowed`
-    );
-  }
-
-  if (ownerAddress && !isValidContractAddress(ownerAddress)) {
-    throw new ValidationError("ownerAddress");
-  }
-
-  if (contractAddress && !isValidContractAddress(contractAddress)) {
-    throw new ValidationError("contractAddress");
-  }
-};
-
-const isValidPositiveIntParam = (parameter: string) => {
-  return !(
-    isNaN(Number(parameter)) ||
-    !Number.isInteger(Number(parameter)) ||
-    Number(parameter) <= 0
-  );
-};
-
-const isValidContractAddress = (parameter: string) => {
-  return ethers.utils.isAddress(parameter);
-};

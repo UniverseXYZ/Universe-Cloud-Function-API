@@ -4,14 +4,12 @@ import {
   IOrderParameters,
   IQueryParameters,
   IStrategy,
-} from "../../../interfaces";
-import { TokenModel, OrderModel } from "../../../models";
-import { Utils } from "../../../utils";
-import {
-  buildNftQueryFilters,
-  buildOrderQueryFilters,
-  SortOrderOptionsEnum,
-} from "../nft.service.builder";
+} from "../interfaces";
+import { TokenModel, OrderModel } from "../models";
+
+import { buildNftQueryFilters } from "../services/nfts/builders";
+
+import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
 
 export class NftOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {

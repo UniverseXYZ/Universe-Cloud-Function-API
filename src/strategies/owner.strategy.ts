@@ -4,9 +4,10 @@ import {
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from "../../../interfaces";
-import { TokenModel } from "../../../models";
-import { buildOwnerQuery, getOrdersLookup } from "../nft.service.builder";
+} from "../interfaces";
+import { TokenModel } from "../models";
+import { getOrdersLookup } from "../services/orders/lookups/order.lookup";
+import { buildOwnerQuery } from "../services/owners/owners.service";
 
 export class OwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {

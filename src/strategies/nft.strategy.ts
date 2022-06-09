@@ -4,13 +4,11 @@ import {
   INFTParameters,
   IQueryParameters,
   IStrategy,
-} from "../../../interfaces";
-import { TokenModel } from "../../../models";
-import {
-  buildNftQueryFilters,
-  getOrdersLookup,
-  getOwnersByTokens,
-} from "../nft.service.builder";
+} from "../interfaces";
+import { TokenModel } from "../models";
+import { buildNftQueryFilters } from "../services/nfts/builders";
+import { getOrdersLookup } from "../services/orders/lookups/order.lookup";
+import { getOwnersByTokens } from "../services/owners/owners.service";
 
 export class NftStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {

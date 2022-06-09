@@ -7,3 +7,8 @@ export const ERROR_MESSAGES = {
   POSTIVE_INTEGER: (parameter: string) =>
     `Parameter must be a positive integer '${parameter}'`,
 };
+
+export enum HTTP_STATUS_CODES {
+  UNEXPECTED_ERROR = 500,
+  BAD_REQUEST = 400,
+}

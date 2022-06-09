@@ -1,4 +1,3 @@
-// TODO:: Describe what TokenType could be
 export enum TokenType {
   ERC721,
   ERC1155,
