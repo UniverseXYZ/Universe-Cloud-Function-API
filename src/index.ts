@@ -1,85 +1,250 @@
 import { Request, Response } from "express";
-import { fetchNfts } from "./services/query.service";
-import { fetchNftsNew } from "./services/query.service.new";
+import { countNfts, fetchNfts } from "./services/nft/nft.service";
+import config from "./config";
+import { getDBClient } from "./database";
+import {
+  ERROR_MESSAGES,
+  ValidationError,
+  PositiveNumberValidationError,
+  ApiError,
+} from "./errors";
+import { IExecutionParameters, TokenType } from "./interfaces";
+import { NFTAssetClasses, OrderSide } from "./models";
+import { ethers } from "ethers";
 
-const mongoose = require("mongoose");
+export enum CloudActions {
+  QUERY = "query",
+  COUNT = "count",
+}
+/** This is the entry point of the Cloud Function.
+ * The name of the function shouldn't change because it also changes
+ * the endpoint of the deployed Cloud Function
+ */
+export async function nfts(req: Request, res: Response) {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Content-Type", "application/json");
 
-require("dotenv").config();
-
-var client: any;
-
-const getClient = async () => {
-  const url = process.env.DB_URL;
-  if (client instanceof Promise) {
-    console.log("MONGODB CLIENT RECONNECTED!");
-  } else if (client) {
-    client = await client;
-    console.log("MONGODB CLIENT ALREADY CONNECTED!");
-  } else {
-    try {
-      client = await mongoose.connect(url, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-
-      console.log("MONGODB CLIENT CONNECTED!");
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  return client;
-};
-
-export async function queryNfts(req: Request, res: Response) {
   try {
+    validateRequiredParameters(req.query);
+
+    switch (req.query.action) {
+      case CloudActions.QUERY:
+        validateNftParameters(req.query);
+        break;
+      case CloudActions.COUNT:
+        validateCountParameters(req.query);
+        break;
+    }
+
     console.time("service-execution-time");
     console.time("db-connection-time");
-    const client = await getClient();
+    const client = await getDBClient();
     console.timeEnd("db-connection-time");
     console.log(req.query);
-    const result = await fetchNftsNew(
-      req.query.ownerAddress,
-      req.query.tokenAddress,
-      req.query.tokenType,
-      req.query.searchQuery,
-      req.query.page,
-      req.query.limit,
-      req.query.side,
-      req.query.assetClass,
-      req.query.tokenIds,
-      req.query.beforeTimestamp,
-      req.query.collection,
-      req.query.minPrice,
-      req.query.maxPrice,
-      req.query.sortBy,
-      req.query.hasOffers
-    );
 
-    res.status(200);
-    res.send(result);
+    let result = null;
+    switch (req.query.action) {
+      case CloudActions.QUERY:
+        result = await fetchNfts(req.query);
+        break;
+      case CloudActions.COUNT:
+        result = await countNfts(req.query);
+        break;
+    }
+
+    res.status(200).send(result);
 
     console.timeEnd("service-execution-time");
 
-    // TODO: Close connection to DB
-    // client.disconnect();
+    if (config.node_env === "production") {
+      client.disconnect();
+      console.log("Disconnected from DB");
+    }
   } catch (err) {
     console.log(err);
-    res.status(500);
-    res.send(err);
+    if (err.statusCode) {
+      res.status(err.statusCode).send({
+        statusCode: err.statusCode,
+        message: err.message || ERROR_MESSAGES.UNEXPECTED_ERROR,
+      });
+    } else {
+      res.status(500).send({
+        statusCode: 500,
+        message: ERROR_MESSAGES.UNEXPECTED_ERROR,
+      });
+    }
   }
 }
 
-if (process.env.NODE_ENV !== "production") {
+/**  In order to allow for an easier development and debugging experience
+we spin up an express server with a single endpoint
+mimicking the behaviour of the cloud function endpoint
+*/
+if (config.node_env !== "production") {
   const express = require("express");
   const app = express();
   const port = 3000;
 
-  app.get("/nftquery", (req, res) => {
-    queryNfts(req, res);
+  app.get("/nfts", (req, res) => {
+    nfts(req, res);
   });
 
   app.listen(port, () => {
     console.log(`Local function is listening on port ${port}`);
   });
 }
+
+const validateRequiredParameters = (params: IExecutionParameters) => {
+  const { action } = params;
+  if (action !== CloudActions.COUNT && action !== CloudActions.QUERY) {
+    throw new ValidationError(action);
+  }
+};
+
+const validateNftParameters = (params: IExecutionParameters) => {
+  const {
+    tokenType,
+    assetClass,
+    beforeTimestamp,
+    buyNow,
+    contractAddress,
+    hasOffers,
+    limit,
+    minPrice,
+    maxPrice,
+    ownerAddress,
+    page,
+    searchQuery,
+    side,
+    sortBy,
+    tokenAddress,
+    tokenIds,
+    traits,
+  } = params;
+
+  if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
+    throw new PositiveNumberValidationError("beforeTimestamp");
+  }
+
+  if (limit && !isValidPositiveIntParam(limit)) {
+    throw new PositiveNumberValidationError("limit");
+  }
+
+  if (maxPrice && !isValidPositiveIntParam(maxPrice)) {
+    throw new PositiveNumberValidationError("maxPrice");
+  }
+
+  if (minPrice && !isValidPositiveIntParam(maxPrice)) {
+    throw new PositiveNumberValidationError("minPrice");
+  }
+
+  if (page && !isValidPositiveIntParam(page)) {
+    throw new PositiveNumberValidationError("page");
+  }
+
+  if (sortBy && !isValidPositiveIntParam(sortBy)) {
+    throw new ValidationError("sortBy");
+  }
+
+  if (ownerAddress && !isValidContractAddress(ownerAddress)) {
+    throw new ValidationError("ownerAddress");
+  }
+
+  if (contractAddress && !isValidContractAddress(contractAddress)) {
+    throw new ValidationError("contractAddress");
+  }
+
+  if (tokenAddress && !isValidContractAddress(tokenAddress)) {
+    throw new ValidationError("tokenAddress");
+  }
+
+  //TODO: Think of validation about this
+  if (searchQuery && false) {
+    throw new ValidationError("page");
+  }
+
+  if (
+    side &&
+    Number(side) !== OrderSide.SELL &&
+    Number(side) !== OrderSide.BUY
+  ) {
+    throw new ValidationError("side");
+  }
+
+  if (tokenType && !Object.values(TokenType).includes(tokenType)) {
+    throw new ValidationError("tokenType");
+  }
+
+  if (
+    assetClass &&
+    !Object.values(NFTAssetClasses).includes(assetClass as NFTAssetClasses)
+  ) {
+    throw new ValidationError("assetClass");
+  }
+
+  // if (buyNow && buyNow !== "true") {
+  //   throw new ValidationError("buyNow");
+  // }
+
+  if (hasOffers && hasOffers !== "true") {
+    throw new ValidationError("hasOffers");
+  }
+
+  if (tokenIds) {
+    const ids = tokenIds.split(",");
+    ids.forEach((id) => {
+      if (!isValidPositiveIntParam(id)) {
+        throw new PositiveNumberValidationError("tokenIds");
+      }
+    });
+  }
+
+  // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
+  const hasinvalidTraitParams =
+    !!traits && !!Object.keys(traits).length && !contractAddress;
+
+  if (hasinvalidTraitParams) {
+    throw new ApiError(
+      400,
+      "Please provide contract address in order to filter by traits"
+    );
+  }
+};
+
+const validateCountParameters = (params: IExecutionParameters) => {
+  const { ownerAddress, contractAddress } = params;
+
+  if (!ownerAddress && !contractAddress) {
+    throw new ApiError(
+      400,
+      `ownerAddress or contractAddress parameter is required`
+    );
+  }
+
+  if (ownerAddress && contractAddress) {
+    throw new ApiError(
+      400,
+      `Combination of ownerAddress and contractAddress parameters isn't allowed`
+    );
+  }
+
+  if (ownerAddress && !isValidContractAddress(ownerAddress)) {
+    throw new ValidationError("ownerAddress");
+  }
+
+  if (contractAddress && !isValidContractAddress(contractAddress)) {
+    throw new ValidationError("contractAddress");
+  }
+};
+
+const isValidPositiveIntParam = (parameter: string) => {
+  return !(
+    isNaN(Number(parameter)) ||
+    !Number.isInteger(Number(parameter)) ||
+    Number(parameter) <= 0
+  );
+};
+
+const isValidContractAddress = (parameter: string) => {
+  return ethers.utils.isAddress(parameter);
+};

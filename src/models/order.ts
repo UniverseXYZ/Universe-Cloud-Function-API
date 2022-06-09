@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
 
+export enum NFTAssetClasses {
+  ERC721 = "ERC721",
+  ERC1155 = "ERC1155",
+  ERC721_BUNDLE = "ERC721_BUNDLE",
+}
+
 export enum AssetClass {
   ETH = "ETH",
   USDC = "USDC",
