@@ -22,6 +22,7 @@ import {
   OwnerStrategy,
   StrategyContext,
 } from "./strategies";
+import { NFTTokenOwnerModel } from "../../models";
 
 // TODO:: Write down the minimum required params for the Cloud function
 // to be able to return a result without timing out from the DB
@@ -148,4 +149,27 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     strategy.setStrategy(new NftOwnerOrderStrategy());
   }
   return strategy.executeStrategy(queryParams);
+};
+
+export const countNfts = async (params: IExecutionParameters) => {
+  const { ownerAddress } = params;
+
+  const result = await NFTTokenOwnerModel.aggregate(
+    [
+      {
+        $unionWith: {
+          coll: "nft-erc1155-token-owners",
+          pipeline: [],
+        },
+      },
+      { $match: { address: ownerAddress } },
+      { $group: { _id: null, count: { $sum: 1 } } },
+    ],
+    { collation: { locale: "en", strength: 2 } }
+  );
+
+  const count = result[0].count;
+  console.log(count);
+
+  return { count };
 };

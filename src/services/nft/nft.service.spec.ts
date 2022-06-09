@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Request, Response } from "express";
 
-import { queryNfts } from "../../index";
+import { nfts } from "../../index";
 
 describe("Hello function", () => {
   it("returns hello world", () => {
@@ -16,6 +16,6 @@ describe("Hello function", () => {
       },
     } as Response;
 
-    expect(queryNfts(req, res)).to.eql("hello, world, the answer is 42");
+    expect(nfts(req, res)).to.eql("hello, world, the answer is 42");
   });
 });

@@ -62,4 +62,5 @@ export interface IExecutionParameters {
   //Buy Now checkbox
   buyNow: string;
   traits: string;
+  action: string;
 }

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { fetchNfts } from "./services/nft/nft.service";
+import { countNfts, fetchNfts } from "./services/nft/nft.service";
 import config from "./config";
 import { getDBClient } from "./database";
 import {
@@ -12,26 +12,47 @@ import { IExecutionParameters, TokenType } from "./interfaces";
 import { AssetClass, OrderSide } from "./models";
 import { ethers } from "ethers";
 
+export enum CloudActions {
+  QUERY = "query",
+  COUNT = "count",
+}
 /** This is the entry point of the Cloud Function.
  * The name of the function shouldn't change because it also changes
  * the endpoint of the deployed Cloud Function
  */
-export async function queryNfts(req: Request, res: Response) {
+export async function nfts(req: Request, res: Response) {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Content-Type", "application/json");
 
   try {
-    validateParameters(req.query);
+    validateRequiredParameters(req.query);
+
+    switch (req.query.action) {
+      case CloudActions.QUERY:
+        validateNftParameters(req.query);
+        break;
+      case CloudActions.COUNT:
+        validateCountParameters(req.query);
+        break;
+    }
 
     console.time("service-execution-time");
     console.time("db-connection-time");
     const client = await getDBClient();
     console.timeEnd("db-connection-time");
     console.log(req.query);
-    const result = await fetchNfts(req.query);
 
-    res.status(200);
-    res.send(result);
+    let result = null;
+    switch (req.query.action) {
+      case CloudActions.QUERY:
+        result = await fetchNfts(req.query);
+        break;
+      case CloudActions.COUNT:
+        result = await countNfts(req.query);
+        break;
+    }
+
+    res.status(200).send(result);
 
     console.timeEnd("service-execution-time");
 
@@ -64,8 +85,8 @@ if (config.node_env !== "production") {
   const app = express();
   const port = 3000;
 
-  app.get("/queryNfts", (req, res) => {
-    queryNfts(req, res);
+  app.get("/nfts", (req, res) => {
+    nfts(req, res);
   });
 
   app.listen(port, () => {
@@ -73,7 +94,14 @@ if (config.node_env !== "production") {
   });
 }
 
-const validateParameters = (params: IExecutionParameters) => {
+const validateRequiredParameters = (params: IExecutionParameters) => {
+  const { action } = params;
+  if (action !== CloudActions.COUNT && action !== CloudActions.QUERY) {
+    throw new ValidationError(action);
+  }
+};
+
+const validateNftParameters = (params: IExecutionParameters) => {
   const {
     tokenType,
     assetClass,
@@ -92,6 +120,7 @@ const validateParameters = (params: IExecutionParameters) => {
     tokenAddress,
     tokenIds,
     traits,
+    action,
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
@@ -180,6 +209,18 @@ const validateParameters = (params: IExecutionParameters) => {
       400,
       "Please provide contract address in order to filter by traits"
     );
+  }
+};
+
+const validateCountParameters = (params: IExecutionParameters) => {
+  const { ownerAddress } = params;
+
+  if (!ownerAddress) {
+    throw new ApiError(400, `ownerAddress parameter is required`);
+  }
+
+  if (!isValidContractAddress(ownerAddress)) {
+    throw new ValidationError("ownerAddress");
   }
 };
 
