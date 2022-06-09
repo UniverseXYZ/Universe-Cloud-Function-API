@@ -120,7 +120,6 @@ const validateNftParameters = (params: IExecutionParameters) => {
     tokenAddress,
     tokenIds,
     traits,
-    action,
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
@@ -213,14 +212,28 @@ const validateNftParameters = (params: IExecutionParameters) => {
 };
 
 const validateCountParameters = (params: IExecutionParameters) => {
-  const { ownerAddress } = params;
+  const { ownerAddress, contractAddress } = params;
 
-  if (!ownerAddress) {
-    throw new ApiError(400, `ownerAddress parameter is required`);
+  if (!ownerAddress && !contractAddress) {
+    throw new ApiError(
+      400,
+      `ownerAddress or contractAddress parameter is required`
+    );
   }
 
-  if (!isValidContractAddress(ownerAddress)) {
+  if (ownerAddress && contractAddress) {
+    throw new ApiError(
+      400,
+      `Combination of ownerAddress and contractAddress parameters isn't allowed`
+    );
+  }
+
+  if (ownerAddress && !isValidContractAddress(ownerAddress)) {
     throw new ValidationError("ownerAddress");
+  }
+
+  if (contractAddress && !isValidContractAddress(contractAddress)) {
+    throw new ValidationError("contractAddress");
   }
 };
 

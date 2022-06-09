@@ -152,7 +152,17 @@ export const fetchNfts = async (params: IExecutionParameters) => {
 };
 
 export const countNfts = async (params: IExecutionParameters) => {
-  const { ownerAddress } = params;
+  const { ownerAddress, contractAddress } = params;
+
+  let filters = {} as any;
+  let collationOptions = {} as any;
+
+  if (ownerAddress) {
+    filters = { address: ownerAddress };
+    collationOptions = { collation: { locale: "en", strength: 2 } };
+  } else if (contractAddress) {
+    filters = { contractAddress };
+  }
 
   const result = await NFTTokenOwnerModel.aggregate(
     [
@@ -162,14 +172,17 @@ export const countNfts = async (params: IExecutionParameters) => {
           pipeline: [],
         },
       },
-      { $match: { address: ownerAddress } },
+      { $match: filters },
       { $group: { _id: null, count: { $sum: 1 } } },
     ],
-    { collation: { locale: "en", strength: 2 } }
+    collationOptions
   );
 
+  if (!result || !result.length) {
+    throw new Error("Unexpected count query result");
+  }
+
   const count = result[0].count;
-  console.log(count);
 
   return { count };
 };
