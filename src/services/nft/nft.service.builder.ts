@@ -220,7 +220,7 @@ export const buildNftQueryFilters = async (
   }
 
   // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
-  if (contractAddress && Object.keys(traits).length > 0) {
+  if (contractAddress && traits && Object.keys(traits).length > 0) {
     const ids = await getTokenIdsByCollectionAttributes(
       contractAddress,
       traits

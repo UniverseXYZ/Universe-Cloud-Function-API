@@ -90,7 +90,6 @@ export class OrderStrategy implements IStrategy {
       tokenId: order.make.assetType.tokenId,
       contractAddress: ethers.utils.getAddress(order.make.assetType.contract),
     }));
-    console.log(data.map((d) => d.usd_value.toString()));
 
     const [owners, nfts] = await Promise.all([
       getOwnersByTokens(tokens),

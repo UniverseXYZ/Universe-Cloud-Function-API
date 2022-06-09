@@ -82,7 +82,8 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     queryParams.nftParams.tokenType ||
     queryParams.nftParams.searchQuery ||
     queryParams.nftParams.tokenIds ||
-    Object.keys(queryParams.nftParams.traits).length
+    (queryParams.nftParams.traits &&
+      Object.keys(queryParams.nftParams.traits).length)
   );
 
   const hasOrderParams = !!(

@@ -172,9 +172,10 @@ const validateParameters = (params: IExecutionParameters) => {
   }
 
   // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
-  const hasValidTraitParams = contractAddress && Object.keys(traits).length > 0;
+  const hasinvalidTraitParams =
+    !!traits && !!Object.keys(traits).length && !contractAddress;
 
-  if (!hasValidTraitParams) {
+  if (hasinvalidTraitParams) {
     throw new ApiError(
       400,
       "Please provide contract address in order to filter by traits"
