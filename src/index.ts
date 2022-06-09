@@ -9,7 +9,7 @@ import {
   ApiError,
 } from "./errors";
 import { IExecutionParameters, TokenType } from "./interfaces";
-import { AssetClass, OrderSide } from "./models";
+import { NFTAssetClasses, OrderSide } from "./models";
 import { ethers } from "ethers";
 
 export enum CloudActions {
@@ -177,7 +177,7 @@ const validateNftParameters = (params: IExecutionParameters) => {
 
   if (
     assetClass &&
-    !Object.values(AssetClass).includes(assetClass as AssetClass)
+    !Object.values(NFTAssetClasses).includes(assetClass as NFTAssetClasses)
   ) {
     throw new ValidationError("assetClass");
   }

@@ -1,21 +1,120 @@
-# Class List Data Cloud Function Processor
+# Universe NFT Cloud Function API
 
-Kyle Cordes - http://kylecordes.com/
+## Purpose
 
-Oasis Digital - https://oasisdigital.com/
+The Cloud Function API allows anyone to query our NFT database using a set of query parameters.
 
-March 2017
+## Endpoints
 
-## Why?
+Endpoint: `/nfts`
 
-At Oasis Digital, we do nearly all of our Node work using TypeScript. We have
-found the TypeScript, and type systems in general, are very amenable to rapid
-and scalable application development.
+Because Cloud Functions basically are serverless single endpoint APIs, we use the `action` query parameter as an action router inside the Cloud Function.
+
+### Allowed actions:
+
+`query`: Queries NFT Database
+`count`: Queries collection or wallet NFT count
+
+### Allowed query parameters (Count Action):
+
+##### `ownerAddress`: Valid wallet address
+
+- Returns the number of NFT owned by the wallet address
+
+##### `contractAddress`: Valid contract address
+
+- Return the number of NFTs from the contract address
+
+### Allowed query parameters (Query Action):
+
+#### Pagination parameters:
+
+##### `page`: Valid positive integer
+
+##### `limit`: Valid positive integer
+
+### Owner parameters:
+
+##### `ownerAddress`: Valid contract address
+
+### NFT parameters
+
+##### `contractAddress`: Valid contract address
+
+##### `tokenType`: Allowed values: "ERC721", "ERC1155"
+
+##### `searchQuery`: Any valid text.
+
+- Uses Atlas Search Index.
+- Current configuration searches for a substring match inside `metadata.name`.
+- Can be changed to use autocomplete, fuzzy search or any other valid Atlas Search configuration.
+
+##### `tokenIds`: Any valid string
+
+- Format: `350,1280,4200`
+
+##### `traits`: Attribute-trait key value pairs separated by comma.
+
+- Format: `traits=background:red,skin:purple`
+- Case sensitive for both attribute and trait part of the query.
+
+#### Order parameters
+
+##### `assetClass`: Allowed values: "ERC721", "ERC1155", "ERC721_BUNDLE"
+
+##### `beforeTimestamp`: Valid UTC Timestamp in _seconds_ (Example: 1654761946)
+
+##### `buyNow`: Allowed values: "true"
+
+- Currently not supported as English and Dutch auctions are not impletemented yet.
+
+##### `hasOffers`: Allowed values: "true"
+
+##### `minPrice`: Valid positive integer
+
+##### `maxPrice`: Valid positive integer
+
+##### `side`: Allowed values: "0" or "1"
+
+- 0 - Buy Orders
+- 1 - Sell Orders
+
+##### `sortBy`: Allowed Values: "1", "2", "3", "4"
+
+- 1 - Ending Soon
+- 2 - Highest Price
+- 3 - Lowest Price
+- 4 - Recently Listed
+
+##### `tokenAddress`: Valid ERC20 Token contract address
+
+Currently supported tokens:
+
+- ETH
+- WETH
+- XYZ
+- DAI
+- USDC
+
+## Query Strategies
+
+NFTs, Owners and Order are stored in different collections inside the MongoDB Universe Database. Having a unified query strategy wasn't optimal in terms of speed and response time.
+
+That's why depending on the combination of NFT, Owner or Order parameters a specific query strategy is used in order to achieve optimal response time.
+
+#### Current strategies:
+
+- NFT Params
+- Owner Params
+- Order Params
+- NFT + Owner Params
+- NFT + Order Params
+- Owner + Order Params
+- NFT + Owner + Order Params
 
 ## Build, test, run, deploy
 
-I mostly use Yarn because it is faster; it usually does not matter that GCF uses
-NPM to install runtime dependencies.
+Yarn is preferred but it usually does not matter that GCF uses NPM to install runtime dependencies.
 
 Install dependencies (locally):
 
@@ -32,8 +131,13 @@ yarn test
 Run the function, locally:
 
 ```
-yarn run local
+yarn local:server
 ```
+
+You can also debug by running the VS Code debugger.
+`launch.json` is preconfigured
+
+Note: **Every time you make a change you need to restart the API for the changes to be applied**
 
 Deploy to Google cloud functions:
 
@@ -41,78 +145,33 @@ Deploy to Google cloud functions:
 yarn run deploy
 ```
 
-(However, take a look at the file `gcf.sh`, it is currently hardcoded to deploy
-this to my example GCF project. You'll need to adjust this to your own project.)
+Deployment command is in `gcf.sh`.
 
-To try it out on the web:
-
-https://us-central1-cloud-function-ts-example.cloudfunctions.net/hello
-
-(Is up and running as I published, but it might get deleted or changed over
-time. The purpose of this repo is to show how the TypeScript process can be
-wired together, not to actually publish a hello world forever.)
+**Note: Currently the deployment variables are hardcoded inside it.**
 
 ## Technology stack
 
-* TypeScript -> ES2015
-* Node 6.9 can run the ES2015, no need to compile to ES5.
-* Google Cloud Functions
-* Mocha+Chai
-
-## Other tools to consider
-
-If you don't have a high quality TypeScript IDE yet, consider Visual Studio
-Code.
-
-The above `yarn run local` is great for a quick test, but if you need to
-emulator locally more of the Google cloud environment, there is an emulator
-available:
-
-https://github.com/GoogleCloudPlatform/cloud-functions-emulator
+- Google Cloud Functions
+- TypeScript -> ES2017
+- Node 16.14.2
+- Mocha+Chai
+- Ethers.js
 
 ## TODO
 
-In this simple example, the development `package.json` is copied and included
-unchanged as the production `package.json`. In our commercial work, we typically
-have a more elaborate process to ship a simplified package file that doesn't
-contain any remains of the development machinery. The idea is to ship the least
-possible complexity to the deployment environment. For example, the simplified
-package file would completely omit devDepenencies - although the production
-mechanism should never install those, if they are emitted from the file then
-even a bug could never accidentally care about them.
+In the current state of the development `package.json` is copied and included
+unchanged as the production `package.json`. In our commercial work, we typically have a more elaborate process to ship a simplified package file that doesn't contain any remains of the development machinery. The idea is to ship the least possible complexity to the deployment environment. For example, the simplified package file would completely omit devDepenencies - although the production mechanism should never install those, if they are emitted from the file then even a bug could never accidentally care about them.
 
-The testing files are currently mixed in with the source code and shipped as
-part of the function. This is unnecessary, and of the files grew to be more
-numerous in a real project would use a slightly more complex configuration to
-keep them segregated.
+The testing files are currently mixed in with the source code and shipped as part of the function. This is unnecessary, and of the files grew to be more numerous in a real project would use a slightly more complex configuration to keep them segregated.
 
-If I recall right, the source of map files will not actually be used when an
-error occurs. Additional machinery is required to wire that up, and is
-worthwhile.
+If I recall right, the source of map files will not actually be used when an error occurs. Additional machinery is required to wire that up, and is worthwhile.
 
-This example does not show calling any Google Cloud services from inside the
-Cloud Function; most real Cloud Functions call such services. To get started on
-that, add dependencies on additional packages as described:
+This example does not show calling any Google Cloud services from inside the Cloud Function; most real Cloud Functions call such services. To get started on that, add dependencies on additional packages as described:
 
 https://www.npmjs.com/package/google-cloud
 
-Is better to not depend on the legacy wrapper "google-cloud" package, but
-rather on the newer, smaller scoped packages (for example,
-'@google-cloud/storage').
+Is better to not depend on the legacy wrapper "google-cloud" package, but rather on the newer, smaller scoped packages (for example, '@google-cloud/storage').
 
-## GCloud Settings
+## Credits
 
-The commandline tool stores state in ~/.config/, you can either perform various
-configuration commands like those below, although in this project I have used
-commandline flags to reduce the need for that.
-
-Please study the GCF documentation.
-
-DON't run these commands, they are here as a reference.
-
-```
-gcloud config configurations create my-function-whatever
-gcloud config configurations activate my-function-whatever
-gcloud config set core/account my.name@my.email.com
-gcloud config set core/project my-function-whatever-data-7732
-```
+Cloud Function template taken from https://github.com/OasisDigital/cloud-function-typescript-example
