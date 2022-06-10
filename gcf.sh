@@ -15,7 +15,7 @@ PROJ=polymorphmetadata
 # This region seems to work well for me, all the others are presumably about the same.
 REGION=us-central1
 
-FNAME=queryNfts
+FNAME=nfts
 gcloud beta functions deploy $FNAME --project $PROJ --trigger-http  --runtime nodejs16 --allow-unauthenticated --update-env-vars ETHEREUM_CHAIN_ID=4,NODE_ENV=production,DB_URL=mongodb+srv://universe-db-account:y7rYKn6Bw41PbB3E@universe-dev-cluster-at.lrbek.mongodb.net/dev-universe-datascraper?retryWrites=true&w=majority&ssl=true
 
 # Upon success, it will print the URL.
