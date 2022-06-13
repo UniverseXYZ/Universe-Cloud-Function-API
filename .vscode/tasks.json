@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  // Requires: npm install -g typescript
+  "command": "node_modules/.bin/tsc",
+  // Use this tsconfig
+  "args": ["-p", "."],
+  "problemMatcher": "$tsc",
+  "tasks": [
+    {
+      "label": "node_modules/.bin/tsc",
+      "type": "shell",
+      "command": "node_modules/.bin/tsc",
+      "args": ["-p", "."],
+      "problemMatcher": "$tsc",
+      "group": {
+        "_id": "build",
+        "isDefault": false
+      }
+    }
+  ]
+}

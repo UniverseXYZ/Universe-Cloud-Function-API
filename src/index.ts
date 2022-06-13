@@ -1,62 +1,89 @@
-const { ApolloServer } = require('apollo-server');
-import { typeDefs } from './graphql/schema';
-import { resolvers } from './graphql/resolvers';
+import { Request, Response } from "express";
+import { countNfts, fetchNfts } from "./services/nfts/nft.service";
+import config from "./config";
+import { getDBClient } from "./database";
+import { ERROR_MESSAGES, HTTP_STATUS_CODES } from "./errors";
+import {
+  CloudActions,
+  validateCountParameters,
+  validateNftParameters,
+  validateRequiredParameters,
+} from "./validations";
 
-// Populate Postgres utils
-import { createUsers, createProjects, createAssignments } from '../src/utils';
+/** This is the entry point of the Cloud Function.
+ * The name of the function shouldn't change because it also changes
+ * the endpoint of the deployed Cloud Function
+ */
+export async function nfts(req: Request, res: Response) {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Content-Type", "application/json");
 
-// Plugins
-// Dev usage only, make sure to remove it before deploying on prod
-import { ApolloServerPluginInlineTrace } from "apollo-server-core";
+  try {
+    validateRequiredParameters(req.query);
 
-// DBs
-import db from './models-postgres';
-import { connectDatascraperDB } from './models-mongo/index';
+    switch (req.query.action) {
+      case CloudActions.QUERY:
+        validateNftParameters(req.query);
+        break;
+      case CloudActions.COUNT:
+        validateCountParameters(req.query);
+        break;
+    }
 
-// APIs
-import UserAPI from './datasources/user';
-import ProjectsAPI from './datasources/project';
-import PriceAPI from './datasources/price';
-import TokensAPI from './datasources/token';
-import CollectionsAPI from './datasources/collection';
+    console.time("service-execution-time");
+    console.time("db-connection-time");
+    const client = await getDBClient();
+    console.timeEnd("db-connection-time");
+    console.log(req.query);
 
-// Models
-import TokenModel from './models-mongo/token';
-import CollectionModel from './models-mongo/collection';
+    let result = null;
+    switch (req.query.action) {
+      case CloudActions.QUERY:
+        result = await fetchNfts(req.query);
+        break;
+      case CloudActions.COUNT:
+        result = await countNfts(req.query);
+        break;
+    }
 
-// The data sources are getting passed to the resolvers into the context arg on each request
-const dataSources = () => ({
-    userAPI: new UserAPI({ store: db }),
-    projectsAPI: new ProjectsAPI({ store: db }),
-    priceAPI: new PriceAPI(),
-    tokenAPI: new TokensAPI({ store: TokenModel }),
-    collectionAPI: new CollectionsAPI({ store: CollectionModel }),
-});
+    res.status(200).send(result);
 
-const context = async ({ req }: { req: any }) => {
-  return null;
+    console.timeEnd("service-execution-time");
+
+    if (config.node_env === "production") {
+      client.disconnect();
+      console.log("Disconnected from DB");
+    }
+  } catch (err) {
+    console.log(err);
+    if (err.statusCode) {
+      res.status(err.statusCode).send({
+        statusCode: err.statusCode,
+        message: err.message || ERROR_MESSAGES.UNEXPECTED_ERROR,
+      });
+    } else {
+      res.status(HTTP_STATUS_CODES.UNEXPECTED_ERROR).send({
+        statusCode: HTTP_STATUS_CODES.UNEXPECTED_ERROR,
+        message: ERROR_MESSAGES.UNEXPECTED_ERROR,
+      });
+    }
+  }
 }
 
-// Creation of Local Postgres Test DB
-// createUsers();
-// createProjects();
-// createAssignments();
-// getUsers();
+/**  In order to allow for an easier development and debugging experience
+we spin up an express server with a single endpoint
+mimicking the behaviour of the cloud function endpoint
+*/
+if (config.node_env !== "production") {
+  const express = require("express");
+  const app = express();
+  const port = 3000;
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  dataSources,
-  context,
-  plugins: [ApolloServerPluginInlineTrace()],
-});
+  app.get("/nfts", (req, res) => {
+    nfts(req, res);
+  });
 
-
-db.sequelize.sync().then(() => {
-  // The `listen` method launches a web server.
-  connectDatascraperDB().then(() => {
-    server.listen().then(({ url } : {url: String}) => {
-      console.log(`🚀  Server ready at ${url}`);
-    });
-  })
-})
+  app.listen(port, () => {
+    console.log(`Local function is listening on port ${port}`);
+  });
+}
