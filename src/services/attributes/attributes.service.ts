@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { utils } from "ethers";
 import { NFTCollectionAttributesModel } from "../../models";
 
 /**
@@ -21,7 +21,7 @@ export const getTokenIdsByCollectionAttributes = async (
   }
 
   const filter = {
-    contractAddress: ethers.utils.getAddress(contractAddress),
+    contractAddress: utils.getAddress(contractAddress),
   };
 
   const tokenIds = await NFTCollectionAttributesModel.aggregate([

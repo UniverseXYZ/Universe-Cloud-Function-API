@@ -22,7 +22,8 @@ import {
   OwnerStrategy,
   StrategyContext,
 } from "../../strategies";
-import { NFTTokenOwnerModel } from "../../models";
+import { NFTTokenOwnerModel, TokenModel } from "../../models";
+import { utils } from "ethers";
 
 // TODO:: Write down the minimum required params for the Cloud function
 // to be able to return a result without timing out from the DB
@@ -55,7 +56,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
 
   const queryParams: IQueryParameters = {
     nftParams: {
-      contractAddress,
+      contractAddress: contractAddress ? utils.getAddress(contractAddress) : "",
       tokenIds,
       searchQuery,
       tokenType: TokenType[tokenType] || "",
@@ -156,33 +157,39 @@ export const countNfts = async (params: IExecutionParameters) => {
 
   let filters = {} as any;
   let collationOptions = {} as any;
+  let result = null;
 
   if (ownerAddress) {
     filters = { address: ownerAddress };
     collationOptions = { collation: { locale: "en", strength: 2 } };
+
+    result = await NFTTokenOwnerModel.aggregate(
+      [
+        {
+          $unionWith: {
+            coll: "nft-erc1155-token-owners",
+            pipeline: [],
+          },
+        },
+        { $match: filters },
+        { $group: { _id: null, count: { $sum: 1 } } },
+      ],
+      collationOptions
+    );
   } else if (contractAddress) {
-    filters = { contractAddress };
+    filters = { contractAddress: utils.getAddress(contractAddress) };
+
+    result = await TokenModel.aggregate(
+      [{ $match: filters }, { $group: { _id: null, count: { $sum: 1 } } }],
+      collationOptions
+    );
   }
 
-  const result = await NFTTokenOwnerModel.aggregate(
-    [
-      {
-        $unionWith: {
-          coll: "nft-erc1155-token-owners",
-          pipeline: [],
-        },
-      },
-      { $match: filters },
-      { $group: { _id: null, count: { $sum: 1 } } },
-    ],
-    collationOptions
-  );
-
-  if (!result || !result.length) {
+  if (!result || isNaN(result.length)) {
     throw new Error("Unexpected count query result");
   }
 
-  const count = result[0].count;
+  const count = result[0]?.count || 0;
 
   return { count };
 };

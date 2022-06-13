@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, utils } from "ethers";
 import {
   IGeneralParameters,
   IOrderParameters,
@@ -86,7 +86,7 @@ export class OrderStrategy implements IStrategy {
     }
     const tokens = data.map((order) => ({
       tokenId: order.make.assetType.tokenId,
-      contractAddress: ethers.utils.getAddress(order.make.assetType.contract),
+      contractAddress: utils.getAddress(order.make.assetType.contract),
     }));
 
     const [owners, nfts] = await Promise.all([
