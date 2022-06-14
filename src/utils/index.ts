@@ -17,6 +17,14 @@ export class Utils {
     return Math.floor(new Date().getTime() / 1000);
   }
 
+  public static findArrayIntersection(a, b) {
+    var t;
+    if (b.length > a.length) (t = b), (b = a), (a = t); // indexOf to loop over shorter
+    return a.filter(function (e) {
+      return b.indexOf(e) > -1;
+    });
+  }
+
   public static DEV_TOKEN_ADDRESSES: { [key in TOKENS]: string } = {
     [TOKENS.ETH]: constants.AddressZero,
     [TOKENS.WETH]: "0xc778417e063141139fce010982780140aa0cd5ab",

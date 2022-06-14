@@ -1,6 +1,7 @@
 import { IExecutionParameters, TokenType } from "../interfaces";
 import {
   ApiError,
+  ERROR_MESSAGES,
   HTTP_STATUS_CODES,
   PositiveNumberValidationError,
   ValidationError,
@@ -16,7 +17,7 @@ export enum CloudActions {
 export const validateRequiredParameters = (params: IExecutionParameters) => {
   const { action } = params;
   if (action !== CloudActions.COUNT && action !== CloudActions.QUERY) {
-    throw new ValidationError(action);
+    throw new ValidationError("action");
   }
 };
 
@@ -119,14 +120,28 @@ export const validateNftParameters = (params: IExecutionParameters) => {
   }
 
   // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
+  const attributePairs = (traits || "").split(",");
   const hasinvalidTraitParams =
-    !!traits && !!Object.keys(traits).length && !contractAddress;
+    !!traits && !!attributePairs.length && !contractAddress;
 
   if (hasinvalidTraitParams) {
     throw new ApiError(
       HTTP_STATUS_CODES.BAD_REQUEST,
-      "Please provide contract address in order to filter by traits"
+      ERROR_MESSAGES.ATTRIBUTE_CONTRACT_ADDRESS_REQUIRED
     );
+  }
+
+  if (contractAddress && traits && attributePairs.length > 0) {
+    for (const attributeKVP of attributePairs) {
+      let [attribute, trait] = attributeKVP.split(":");
+
+      if (!attribute || !attribute.trim() || !trait || !trait.trim()) {
+        throw new ApiError(
+          HTTP_STATUS_CODES.BAD_REQUEST,
+          ERROR_MESSAGES.INVALID_ATTRIBUTE_TRAIT_PAIR
+        );
+      }
+    }
   }
 };
 

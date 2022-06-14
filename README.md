@@ -55,7 +55,8 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 
 ##### `traits`: Attribute-trait key value pairs separated by comma.
 
-- Format: `traits=background:red,skin:purple`
+- Format: `traits=background:red,background:green,skin:purple`
+- In the query above the query will query all nfts with background either red or green AND purple skin
 - Case sensitive for both attribute and trait part of the query.
 
 #### Order parameters

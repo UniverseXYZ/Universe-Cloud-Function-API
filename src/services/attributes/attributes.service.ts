@@ -1,5 +1,7 @@
 import { utils } from "ethers";
+import { ApiError, ERROR_MESSAGES } from "../../errors";
 import { NFTCollectionAttributesModel } from "../../models";
+import { Utils } from "../../utils";
 
 /**
  * Fetched token ids matching the collection and trait query
@@ -11,41 +13,52 @@ export const getTokenIdsByCollectionAttributes = async (
   contractAddress: string,
   traits: any
 ) => {
+  console.time("trait-filter-time");
+  const allTraits = {};
   const allTraitsArray = [];
 
-  // construct fields for the database query
-  for (const attributeKVP of traits.split(",")) {
-    const [attribute, trait] = attributeKVP.split(":");
-    const field = `$attributes.${attribute.trim()}.${trait.trim()}`;
-    allTraitsArray.push(field);
-  }
-
-  const filter = {
+  console.time("filter-query-time");
+  const collAttributes = await NFTCollectionAttributesModel.findOne({
     contractAddress: utils.getAddress(contractAddress),
-  };
+  }).lean();
 
-  const tokenIds = await NFTCollectionAttributesModel.aggregate([
-    { $match: filter },
-    {
-      $project: {
-        tokens: {
-          $concatArrays: allTraitsArray,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        tokens: { $addToSet: "$tokens" },
-      },
-    },
-    { $unwind: "$tokens" },
-    { $unset: "_id" },
-  ]);
+  console.timeEnd("filter-query-time");
 
-  if (!tokenIds || !tokenIds.length) {
-    return [];
+  const splitTraits = traits.split(",");
+  for (const attributeKVP of splitTraits) {
+    let [attribute, trait] = attributeKVP.split(":");
+
+    attribute = attribute.trim();
+    trait = trait.trim();
+
+    try {
+      const tokenIds = collAttributes.attributes[attribute][trait];
+
+      if (!allTraits[attribute]) {
+        allTraits[attribute] = [];
+      }
+
+      allTraits[attribute].push(...tokenIds);
+    } catch (err) {
+      // Attribute or Trait doesn't exist --> return [] (empty result set)
+      return [];
+    }
   }
 
-  return tokenIds[0].tokens || [];
+  for (const attribute of Object.keys(allTraits)) {
+    allTraitsArray.push(allTraits[attribute]);
+  }
+
+  let finalTokenIds = allTraitsArray[0];
+  for (let i = 1; i < allTraitsArray.length; i++) {
+    const attribute = allTraitsArray[i];
+    finalTokenIds = Utils.findArrayIntersection(finalTokenIds, attribute);
+
+    if (!finalTokenIds.length) {
+      return [];
+    }
+  }
+
+  console.timeEnd("trait-filter-time");
+  return finalTokenIds;
 };
