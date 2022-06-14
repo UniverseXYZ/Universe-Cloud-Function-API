@@ -52,18 +52,12 @@ export class OwnerStrategy implements IStrategy {
       [
         {
           $match: {
-            $and: [
-              {
-                $or: owners.map((owner) => ({
-                  tokenId: owner.tokenId,
-                  contractAddress: owner.contractAddress,
-                })),
-              },
-            ],
+            $or: owners.map((owner) => ({
+              tokenId: owner.tokenId,
+              contractAddress: owner.contractAddress,
+            })),
           },
         },
-        { $skip: generalParams.skippedItems },
-        { $limit: Number(limit) },
         getOrdersLookup(),
       ],
       { collation: { locale: "en", strength: 2 } }

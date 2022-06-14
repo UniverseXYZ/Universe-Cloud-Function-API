@@ -13,13 +13,14 @@ export const buildOwnerQuery = (
     address: ownerParams.ownerAddress,
   });
 
-  if (limit) {
-    limitFilters.push({ $limit: limit });
-  }
   if (skip) {
     limitFilters.push({ $skip: skip });
   }
-
+  
+  if (limit) {
+    limitFilters.push({ $limit: limit });
+  }
+  
   const finalFilters = { $and: filters };
 
   switch (tokenType) {
