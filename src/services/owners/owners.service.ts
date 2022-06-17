@@ -1,5 +1,6 @@
 import { IOwnerParameters } from "../../interfaces";
 import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../../models";
+import { AssetClass } from '../../models';
 
 export const buildOwnerQuery = (
   ownerParams: IOwnerParameters,
@@ -24,12 +25,12 @@ export const buildOwnerQuery = (
   const finalFilters = { $and: filters };
 
   switch (tokenType) {
-    case "ERC721":
+    case AssetClass.ERC721:
       return NFTTokenOwnerModel.aggregate(
         [{ $match: finalFilters }, ...limitFilters],
         { collation: { locale: "en", strength: 2 } }
       );
-    case "ERC1155":
+    case AssetClass.ERC1155:
       return ERC1155NFTTokenOwnerModel.aggregate(
         [{ $match: finalFilters }, ...limitFilters],
         { collation: { locale: "en", strength: 2 } }
@@ -60,11 +61,11 @@ export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
   };
 
   switch (tokenType) {
-    case "ERC721":
+    case AssetClass.ERC721:
       return NFTTokenOwnerModel.aggregate([{ $match: query }], {
         collation: { locale: "en", strength: 2 },
       });
-    case "ERC1155":
+    case AssetClass.ERC1155:
       return ERC1155NFTTokenOwnerModel.aggregate([{ $match: query }], {
         collation: { locale: "en", strength: 2 },
       });
