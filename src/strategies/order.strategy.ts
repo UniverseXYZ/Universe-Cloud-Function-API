@@ -8,6 +8,8 @@ import {
 import { AssetClass, OrderModel, TokenModel } from "../models";
 import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
 import { getOwnersByTokens } from "../services/owners/owners.service";
+import { getNFTLookup } from '../services/nfts/lookups/nft.lookup';
+import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
 
 export class OrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -17,6 +19,15 @@ export class OrderStrategy implements IStrategy {
     );
   }
 
+  /**
+   * Returns an array (nested in the "nfts" property) with 3 types of elements:
+   * 1. erc721 token with nested "owners" and "orders" (should have 1 order for erc721);
+   * 2. erc1155 token with nested "owners" and "orders" (erc1155 can have multiple orders);
+   * 3. bundle order with nested "nfts".
+   * @param orderParams 
+   * @param generalParams 
+   * @returns {Object}
+   */
   private async queryOnlyOrderParams(
     orderParams: IOrderParameters,
     generalParams: IGeneralParameters
@@ -47,22 +58,22 @@ export class OrderStrategy implements IStrategy {
               contracts: "$make.assetType.contracts",
               tokenIds: "$make.assetType.tokenIds",
             },
-            // contractAddress: { $first: '$make.assetType.contract' },
-            // contractAddresses: { $first: '$make.assetType.contracts' },
-            // tokenId: { $first: '$make.assetType.tokenId' },
-            // tokenIds: { $first: '$make.assetType.tokenIds' },
-            // orderSort: { $first: '$orderSort' },
-            // usd_value: { $first: '$usd_value' },
-            // createdAt: { $first: '$createdAt' },
-            doc: { $first: "$$ROOT" },
+            contractAddress: { $first: '$make.assetType.contract' },
+            contractAddresses: { $first: '$make.assetType.contracts' },
+            tokenId: { $first: '$make.assetType.tokenId' },
+            tokenIds: { $first: '$make.assetType.tokenIds' },
+            orderSort: { $first: '$orderSort' },
+            usd_value: { $first: '$usd_value' },
+            createdAt: { $first: '$createdAt' },
+            // doc: { $first: "$$ROOT" },
           },
         },
-        { $replaceRoot: { newRoot: "$doc" } },
+        // { $replaceRoot: { newRoot: "$doc" } },
         { $sort: sort }, // this is the actual sorting!
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
         // getNFTLookup(),
-        // getOrdersLookup(),
+        getOrdersLookup(), // joining erc1155 and erc721 orders
         // {
         //   $project: {
         //     _id: 0,
@@ -97,19 +108,19 @@ export class OrderStrategy implements IStrategy {
     
     const tokens = [];
     data.forEach((order) => {
-      if (AssetClass.ERC721_BUNDLE === order.make.assetType.assetClass) {
-        for (let i = 0; i < order.make.assetType.contracts.length; i++) {
-          order.make.assetType.tokenIds[i].forEach((tokenId) => {
+      if (order.contractAddresses) {
+        for (let i = 0; i < order.contractAddresses.length; i++) {
+          order.tokenIds[i].forEach((tokenId) => {
             tokens.push({
               tokenId: tokenId,
-              contractAddress: utils.getAddress(order.make.assetType.contracts[i]),
+              contractAddress: utils.getAddress(order.contractAddresses[i]),
             });
           })
         }
       } else {
         tokens.push({
-          tokenId: order.make.assetType.tokenId,
-          contractAddress: utils.getAddress(order.make.assetType.contract),
+          tokenId: order.tokenId,
+          contractAddress: utils.getAddress(order.contractAddress),
         });
       }
     });
@@ -123,13 +134,13 @@ export class OrderStrategy implements IStrategy {
       // assuming that an order cannot be created if the token in question is
       // absent in the "nft-token" table. i.e. there's always an NFT for an existing order.
 
-      if (AssetClass.ERC721_BUNDLE === order.make.assetType.assetClass) {
+      if (order.contractAddresses) {
         // if it's a bundle, the returning array element will be the bundle with nfts
         const bundleNfts = [];
-        for (let i = 0; i < order.make.assetType.contracts.length; i++) {
-          order.make.assetType.tokenIds[i].forEach((tokenId) => {
+        for (let i = 0; i < order.contractAddresses.length; i++) {
+          order.tokenIds[i].forEach((tokenId) => {
             bundleNfts.push(nfts.find((nft) =>
-                nft.contractAddress.toLowerCase() === order.make.assetType.contracts[i] &&
+                nft.contractAddress.toLowerCase() === order.contractAddresses[i] &&
                 nft.tokenId === tokenId
             ));
           })
@@ -140,12 +151,12 @@ export class OrderStrategy implements IStrategy {
           nfts: bundleNfts,
         };
       } else {
-        // if it's not a bundle, the returning array element will be the nft with the 
-        // order (only the first one for erc1155) and owners.
+        // if it's not a bundle, the returning array element will be the nft with 
+        // orders (0i support erc1155) and owners.
         const nft = nfts.find(
           (nft) =>
-            nft.contractAddress.toLowerCase() === order.make.assetType.contract &&
-            nft.tokenId === order.make.assetType.tokenId
+            nft.contractAddress.toLowerCase() === order.contractAddress &&
+            nft.tokenId === order.tokenId
         );
   
         const ownersInfo = owners.filter(
@@ -164,7 +175,7 @@ export class OrderStrategy implements IStrategy {
         return {
           ...nft,
           owners: ownerAddresses,
-          orders: [order],
+          orders: order.orders,
         };
       }
     });
