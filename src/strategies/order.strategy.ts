@@ -152,7 +152,7 @@ export class OrderStrategy implements IStrategy {
         };
       } else {
         // if it's not a bundle, the returning array element will be the nft with 
-        // orders (0i support erc1155) and owners.
+        // orders (to support erc1155) and owners.
         const nft = nfts.find(
           (nft) =>
             nft.contractAddress.toLowerCase() === order.contractAddress &&
