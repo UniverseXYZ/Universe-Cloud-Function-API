@@ -5,9 +5,11 @@ import {
   IQueryParameters,
   IStrategy,
 } from "../interfaces";
-import { OrderModel, TokenModel } from "../models";
+import { AssetClass, OrderModel, TokenModel } from "../models";
 import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
 import { getOwnersByTokens } from "../services/owners/owners.service";
+import { getNFTLookup } from '../services/nfts/lookups/nft.lookup';
+import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
 
 export class OrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -17,6 +19,15 @@ export class OrderStrategy implements IStrategy {
     );
   }
 
+  /**
+   * Returns an array (nested in the "nfts" property) with 3 types of elements:
+   * 1. erc721 token with nested "owners" and "orders" (should have 1 order for erc721);
+   * 2. erc1155 token with nested "owners" and "orders" (erc1155 can have multiple orders);
+   * 3. bundle order with nested "nfts".
+   * @param orderParams 
+   * @param generalParams 
+   * @returns {Object}
+   */
   private async queryOnlyOrderParams(
     orderParams: IOrderParameters,
     generalParams: IGeneralParameters
@@ -38,21 +49,31 @@ export class OrderStrategy implements IStrategy {
       [
         { $match: finalFilters },
         ...sortingAggregation,
+        { $sort: sort }, // sort before grouping to properly group erc1155s!
         {
           $group: {
             _id: {
               contract: "$make.assetType.contract",
               tokenId: "$make.assetType.tokenId",
+              contracts: "$make.assetType.contracts",
+              tokenIds: "$make.assetType.tokenIds",
             },
-            doc: { $first: "$$ROOT" },
+            contractAddress: { $first: '$make.assetType.contract' },
+            contractAddresses: { $first: '$make.assetType.contracts' },
+            tokenId: { $first: '$make.assetType.tokenId' },
+            tokenIds: { $first: '$make.assetType.tokenIds' },
+            orderSort: { $first: '$orderSort' },
+            usd_value: { $first: '$usd_value' },
+            createdAt: { $first: '$createdAt' },
+            // doc: { $first: "$$ROOT" },
           },
         },
-        { $replaceRoot: { newRoot: "$doc" } },
-        { $sort: sort },
+        // { $replaceRoot: { newRoot: "$doc" } },
+        { $sort: sort }, // this is the actual sorting!
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
         // getNFTLookup(),
-        // getOrdersLookup(),
+        getOrdersLookup(), // joining erc1155 and erc721 orders
         // {
         //   $project: {
         //     _id: 0,
@@ -84,42 +105,79 @@ export class OrderStrategy implements IStrategy {
         nfts: [],
       };
     }
-    const tokens = data.map((order) => ({
-      tokenId: order.make.assetType.tokenId,
-      contractAddress: utils.getAddress(order.make.assetType.contract),
-    }));
+    
+    const tokens = [];
+    data.forEach((order) => {
+      if (order.contractAddresses) {
+        for (let i = 0; i < order.contractAddresses.length; i++) {
+          order.tokenIds[i].forEach((tokenId) => {
+            tokens.push({
+              tokenId: tokenId,
+              contractAddress: utils.getAddress(order.contractAddresses[i]),
+            });
+          })
+        }
+      } else {
+        tokens.push({
+          tokenId: order.tokenId,
+          contractAddress: utils.getAddress(order.contractAddress),
+        });
+      }
+    });
 
     const [owners, nfts] = await Promise.all([
       getOwnersByTokens(tokens),
       TokenModel.find({ $or: tokens }).lean(),
     ]);
+
     const finalData = data.map((order) => {
-      // assuming that an order cannot be created if the noten in question is
+      // assuming that an order cannot be created if the token in question is
       // absent in the "nft-token" table. i.e. there's always an NFT for an existing order.
-      const nft = nfts.find(
-        (nft) =>
-          nft.contractAddress.toLowerCase() === order.make.assetType.contract &&
-          nft.tokenId === order.make.assetType.tokenId
-      );
 
-      const ownersInfo = owners.filter(
-        (owner) =>
-          owner.contractAddress === nft.contractAddress &&
-          owner.tokenId === nft.tokenId
-      );
+      if (order.contractAddresses) {
+        // if it's a bundle, the returning array element will be the bundle with nfts
+        const bundleNfts = [];
+        for (let i = 0; i < order.contractAddresses.length; i++) {
+          order.tokenIds[i].forEach((tokenId) => {
+            bundleNfts.push(nfts.find((nft) =>
+                nft.contractAddress.toLowerCase() === order.contractAddresses[i] &&
+                nft.tokenId === tokenId
+            ));
+          })
+        }
 
-      const ownerAddresses = ownersInfo.map((owner) => ({
-        owner: owner.address,
-        value: owner.value
-          ? owner.value.toString()
-          : ethers.BigNumber.from(owner.value).toString(),
-      }));
-
-      return {
-        ...nft,
-        owners: ownerAddresses,
-        orders: [order],
-      };
+        return {
+          ...order,
+          nfts: bundleNfts,
+        };
+      } else {
+        // if it's not a bundle, the returning array element will be the nft with 
+        // orders (to support erc1155) and owners.
+        const nft = nfts.find(
+          (nft) =>
+            nft.contractAddress.toLowerCase() === order.contractAddress &&
+            nft.tokenId === order.tokenId
+        );
+  
+        const ownersInfo = owners.filter(
+          (owner) =>
+            owner.contractAddress === nft.contractAddress &&
+            owner.tokenId === nft.tokenId
+        );
+  
+        const ownerAddresses = ownersInfo.map((owner) => ({
+          owner: owner.address,
+          value: owner.value
+            ? owner.value.toString()
+            : ethers.BigNumber.from(owner.value).toString(),
+        }));
+  
+        return {
+          ...nft,
+          owners: ownerAddresses,
+          orders: order.orders,
+        };
+      }
     });
 
     return {
