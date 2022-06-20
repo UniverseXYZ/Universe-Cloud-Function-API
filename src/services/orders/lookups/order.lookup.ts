@@ -16,31 +16,6 @@ export const getOrdersLookup = () => {
           $match: {
             $expr: {
               $and: [
-                // Return only active in order to not bottleneck the query
-                // {
-                //   $or: [
-                //     {
-                //       $and: [
-                //         {
-                //           $eq: ["$make.assetType.tokenId", "$$tokenId"],
-                //         },
-                //         {
-                //           $eq: ["$make.assetType.contract", "$$contractAddress"],
-                //         },
-                //       ],
-                //     },
-                //     {
-                //       $and: [
-                //         {
-                //           $eq: ["$take.assetType.tokenId", "$$tokenId"],
-                //         },
-                //         {
-                //           $eq: ["$make.assetType.contract", "$$contractAddress"],
-                //         },
-                //       ],
-                //     },
-                //   ],
-                // },
                 {
                   $eq: ["$make.assetType.tokenId", "$$tokenId"],
                 },
