@@ -1,6 +1,5 @@
 import { IOwnerParameters } from "../../interfaces";
-import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel } from "../../models";
-import { AssetClass } from '../../models';
+import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel, AssetClass } from "../../models";
 
 export const buildOwnerQuery = (
   ownerParams: IOwnerParameters,

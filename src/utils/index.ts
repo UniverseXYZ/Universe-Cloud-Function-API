@@ -20,9 +20,12 @@ export class Utils {
   public static findArrayIntersection(a, b) {
     var t;
     if (b.length > a.length) (t = b), (b = a), (a = t); // indexOf to loop over shorter
-    return a.filter(function (e) {
+    let value = a.filter(function (e) {
       return b.indexOf(e) > -1;
     });
+    value = [...new Set(value)];
+
+    return value;
   }
 
   public static DEV_TOKEN_ADDRESSES: { [key in TOKENS]: string } = {

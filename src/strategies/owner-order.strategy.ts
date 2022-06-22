@@ -6,7 +6,7 @@ import {
   IQueryParameters,
   IStrategy,
 } from "../interfaces";
-import { OrderModel, TokenModel } from "../models";
+import { AssetClass, OrderModel, TokenModel } from "../models";
 import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
 import { buildOwnerQuery } from "../services/owners/owners.service";
 
@@ -60,12 +60,25 @@ export class OwnerOrderStrategy implements IStrategy {
     for (let i = 0; i < orders.length; i++) {
       const order = orders[i];
 
-      const owner = owners.find(
-        (owner) =>
-          order.make.assetType.tokenId === owner.tokenId &&
-          order.make.assetType.contract?.toLowerCase() ===
+      const owner = owners.find((owner) => {
+        if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+          // assuming that if an owner owns at least 1 nft in an active bundle,
+          // they own all other nfts in that bundle
+          const contractIndex = order.make.assetType.contracts.indexOf(
             owner.contractAddress.toLowerCase()
-      );
+          );
+          if (-1 !== contractIndex &&
+            order.make.assetType.tokenIds[contractIndex].includes(owner.tokenId)
+          ) {
+            return true;
+          }
+          return false;
+        } else {
+          return order.make.assetType.tokenId === owner.tokenId &&
+            order.make.assetType.contract?.toLowerCase() ===
+              owner.contractAddress.toLowerCase()
+        }
+      });
 
       if (!owner) {
         continue;
@@ -122,12 +135,23 @@ export class OwnerOrderStrategy implements IStrategy {
 
       return {
         ...nft,
-        // ERC1155 may have more than one active listing
-        orders: orders.filter(
-          (order) =>
-            order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType?.contract === nft.contractAddress.toLowerCase()
-        ),
+        orders: orders.filter((order) => {
+          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+            const contractIndex = order.make.assetType.contracts.indexOf(
+              nft.contractAddress.toLowerCase()
+            );
+            if (-1 !== contractIndex &&
+              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+            ) {
+              return true;
+            }
+            return false;
+          } else {
+            // ERC1155 may have more than one active listing
+            return order.make.assetType.tokenId === nft.tokenId &&
+              order.make.assetType?.contract === nft.contractAddress.toLowerCase()
+          }
+        }),
         owners: ownerAddresses,
       };
     });
