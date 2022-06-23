@@ -1,23 +1,23 @@
-import { IExecutionParameters, TokenType } from "../interfaces";
+import { IExecutionParameters, TokenType } from '../interfaces';
 import {
   ApiError,
   ERROR_MESSAGES,
   HTTP_STATUS_CODES,
   PositiveNumberValidationError,
   ValidationError,
-} from "../errors";
-import { ethers } from "ethers";
-import { OrderSide, NFTAssetClasses } from "../models";
+} from '../errors';
+import { ethers } from 'ethers';
+import { OrderSide, NFTAssetClasses } from '../models';
 
 export enum CloudActions {
-  QUERY = "query",
-  COUNT = "count",
+  QUERY = 'query',
+  COUNT = 'count',
 }
 
 export const validateRequiredParameters = (params: IExecutionParameters) => {
   const { action } = params;
   if (action !== CloudActions.COUNT && action !== CloudActions.QUERY) {
-    throw new ValidationError("action");
+    throw new ValidationError('action');
   }
 };
 
@@ -36,6 +36,7 @@ export const validateNftParameters = (params: IExecutionParameters) => {
     page,
     searchQuery,
     side,
+    maker,
     sortBy,
     tokenAddress,
     tokenIds,
@@ -43,44 +44,48 @@ export const validateNftParameters = (params: IExecutionParameters) => {
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
-    throw new PositiveNumberValidationError("beforeTimestamp");
+    throw new PositiveNumberValidationError('beforeTimestamp');
   }
 
   if (limit && !isValidPositiveIntParam(limit)) {
-    throw new PositiveNumberValidationError("limit");
+    throw new PositiveNumberValidationError('limit');
   }
 
   if (maxPrice && !isValidPositiveIntParam(maxPrice)) {
-    throw new PositiveNumberValidationError("maxPrice");
+    throw new PositiveNumberValidationError('maxPrice');
   }
 
   if (minPrice && !isValidPositiveIntParam(maxPrice)) {
-    throw new PositiveNumberValidationError("minPrice");
+    throw new PositiveNumberValidationError('minPrice');
   }
 
   if (page && !isValidPositiveIntParam(page)) {
-    throw new PositiveNumberValidationError("page");
+    throw new PositiveNumberValidationError('page');
   }
 
   if (sortBy && !isValidPositiveIntParam(sortBy)) {
-    throw new ValidationError("sortBy");
+    throw new ValidationError('sortBy');
   }
 
   if (ownerAddress && !isValidContractAddress(ownerAddress)) {
-    throw new ValidationError("ownerAddress");
+    throw new ValidationError('ownerAddress');
   }
 
   if (contractAddress && !isValidContractAddress(contractAddress)) {
-    throw new ValidationError("contractAddress");
+    throw new ValidationError('contractAddress');
   }
 
   if (tokenAddress && !isValidContractAddress(tokenAddress)) {
-    throw new ValidationError("tokenAddress");
+    throw new ValidationError('tokenAddress');
+  }
+
+  if (maker && !isValidContractAddress(maker)) {
+    throw new ValidationError('maker');
   }
 
   //TODO: Think of validation about this
   if (searchQuery && false) {
-    throw new ValidationError("page");
+    throw new ValidationError('page');
   }
 
   if (
@@ -88,57 +93,57 @@ export const validateNftParameters = (params: IExecutionParameters) => {
     Number(side) !== OrderSide.SELL &&
     Number(side) !== OrderSide.BUY
   ) {
-    throw new ValidationError("side");
+    throw new ValidationError('side');
   }
 
   if (tokenType && !Object.values(TokenType).includes(tokenType)) {
-    throw new ValidationError("tokenType");
+    throw new ValidationError('tokenType');
   }
 
   if (
     assetClass &&
     !Object.values(NFTAssetClasses).includes(assetClass as NFTAssetClasses)
   ) {
-    throw new ValidationError("assetClass");
+    throw new ValidationError('assetClass');
   }
 
   // if (buyNow && buyNow !== "true") {
   //   throw new ValidationError("buyNow");
   // }
 
-  if (hasOffers && hasOffers !== "true") {
-    throw new ValidationError("hasOffers");
+  if (hasOffers && hasOffers !== 'true') {
+    throw new ValidationError('hasOffers');
   }
 
   if (tokenIds) {
-    const ids = tokenIds.split(",");
+    const ids = tokenIds.split(',');
     ids.forEach((id) => {
       if (!isValidPositiveIntParam(id)) {
-        throw new PositiveNumberValidationError("tokenIds");
+        throw new PositiveNumberValidationError('tokenIds');
       }
     });
   }
 
   // In order to be able to perform a search in the collection-attributes table we need the contract address and traits
-  const attributePairs = (traits || "").split(",");
+  const attributePairs = (traits || '').split(',');
   const hasinvalidTraitParams =
     !!traits && !!attributePairs.length && !contractAddress;
 
   if (hasinvalidTraitParams) {
     throw new ApiError(
       HTTP_STATUS_CODES.BAD_REQUEST,
-      ERROR_MESSAGES.ATTRIBUTE_CONTRACT_ADDRESS_REQUIRED
+      ERROR_MESSAGES.ATTRIBUTE_CONTRACT_ADDRESS_REQUIRED,
     );
   }
 
   if (contractAddress && traits && attributePairs.length > 0) {
     for (const attributeKVP of attributePairs) {
-      let [attribute, trait] = attributeKVP.split(":");
+      const [attribute, trait] = attributeKVP.split(':');
 
       if (!attribute || !attribute.trim() || !trait || !trait.trim()) {
         throw new ApiError(
           HTTP_STATUS_CODES.BAD_REQUEST,
-          ERROR_MESSAGES.INVALID_ATTRIBUTE_TRAIT_PAIR
+          ERROR_MESSAGES.INVALID_ATTRIBUTE_TRAIT_PAIR,
         );
       }
     }
@@ -151,23 +156,23 @@ export const validateCountParameters = (params: IExecutionParameters) => {
   if (!ownerAddress && !contractAddress) {
     throw new ApiError(
       HTTP_STATUS_CODES.BAD_REQUEST,
-      `ownerAddress or contractAddress parameter is required`
+      `ownerAddress or contractAddress parameter is required`,
     );
   }
 
   if (ownerAddress && contractAddress) {
     throw new ApiError(
       HTTP_STATUS_CODES.BAD_REQUEST,
-      `Combination of ownerAddress and contractAddress parameters isn't allowed`
+      `Combination of ownerAddress and contractAddress parameters isn't allowed`,
     );
   }
 
   if (ownerAddress && !isValidContractAddress(ownerAddress)) {
-    throw new ValidationError("ownerAddress");
+    throw new ValidationError('ownerAddress');
   }
 
   if (contractAddress && !isValidContractAddress(contractAddress)) {
-    throw new ValidationError("contractAddress");
+    throw new ValidationError('contractAddress');
   }
 };
 

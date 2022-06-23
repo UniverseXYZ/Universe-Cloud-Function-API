@@ -80,6 +80,8 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 - 0 - Buy Orders
 - 1 - Sell Orders
 
+##### `maker`: Valid Ethereum wallet address
+
 ##### `sortBy`: Allowed Values: "1", "2", "3", "4"
 
 - 1 - Ending Soon

@@ -2,15 +2,15 @@ import {
   IExecutionParameters,
   IQueryParameters,
   TokenType,
-} from "../../interfaces";
+} from '../../interfaces';
 
 import {
   hasNftParamsOnly,
   hasOrderParamsOnly,
   hasOwnerParamsOnly,
-} from "./helpers/nft.helpers";
+} from './helpers/nft.helpers';
 
-import { buildGeneralParams } from "./builders";
+import { buildGeneralParams } from './builders';
 
 import {
   NftOrderStrategy,
@@ -21,9 +21,9 @@ import {
   OwnerOrderStrategy,
   OwnerStrategy,
   StrategyContext,
-} from "../../strategies";
-import { NFTTokenOwnerModel, TokenModel } from "../../models";
-import { utils } from "ethers";
+} from '../../strategies';
+import { NFTTokenOwnerModel, TokenModel } from '../../models';
+import { utils } from 'ethers';
 
 // TODO:: Write down the minimum required params for the Cloud function
 // to be able to return a result without timing out from the DB
@@ -42,6 +42,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     page,
     limit,
     side,
+    maker,
     assetClass,
     tokenIds,
     beforeTimestamp,
@@ -56,10 +57,10 @@ export const fetchNfts = async (params: IExecutionParameters) => {
 
   const queryParams: IQueryParameters = {
     nftParams: {
-      contractAddress: contractAddress ? utils.getAddress(contractAddress) : "",
+      contractAddress: contractAddress ? utils.getAddress(contractAddress) : '',
       tokenIds,
       searchQuery,
-      tokenType: TokenType[tokenType] || "",
+      tokenType: TokenType[tokenType] || '',
       traits,
     },
     orderParams: {
@@ -69,6 +70,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
       hasOffers: !!hasOffers,
       buyNow: !!buyNow,
       side: Number(side),
+      maker: maker ? utils.getAddress(maker) : '',
       assetClass,
       beforeTimestamp: Number(beforeTimestamp),
       tokenAddress,
@@ -90,6 +92,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
 
   const hasOrderParams = !!(
     queryParams.orderParams.side ||
+    queryParams.orderParams.maker ||
     queryParams.orderParams.assetClass ||
     queryParams.orderParams.minPrice ||
     queryParams.orderParams.maxPrice ||
@@ -105,19 +108,19 @@ export const fetchNfts = async (params: IExecutionParameters) => {
   const onlyNftsParams = hasNftParamsOnly(
     hasNftParams,
     hasOrderParams,
-    hasOwnerParams
+    hasOwnerParams,
   );
 
   const onlyOrderParams = hasOrderParamsOnly(
     hasNftParams,
     hasOrderParams,
-    hasOwnerParams
+    hasOwnerParams,
   );
 
   const onlyOwnerParams = hasOwnerParamsOnly(
     hasNftParams,
     hasOrderParams,
-    hasOwnerParams
+    hasOwnerParams,
   );
 
   const strategy = new StrategyContext();
@@ -161,32 +164,32 @@ export const countNfts = async (params: IExecutionParameters) => {
 
   if (ownerAddress) {
     filters = { address: ownerAddress };
-    collationOptions = { collation: { locale: "en", strength: 2 } };
+    collationOptions = { collation: { locale: 'en', strength: 2 } };
 
     result = await NFTTokenOwnerModel.aggregate(
       [
         {
           $unionWith: {
-            coll: "nft-erc1155-token-owners",
+            coll: 'nft-erc1155-token-owners',
             pipeline: [],
           },
         },
         { $match: filters },
         { $group: { _id: null, count: { $sum: 1 } } },
       ],
-      collationOptions
+      collationOptions,
     );
   } else if (contractAddress) {
     filters = { contractAddress: utils.getAddress(contractAddress) };
 
     result = await TokenModel.aggregate(
       [{ $match: filters }, { $group: { _id: null, count: { $sum: 1 } } }],
-      collationOptions
+      collationOptions,
     );
   }
 
   if (!result || isNaN(result.length)) {
-    throw new Error("Unexpected count query result");
+    throw new Error('Unexpected count query result');
   }
 
   const count = result[0]?.count || 0;

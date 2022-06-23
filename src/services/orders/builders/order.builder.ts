@@ -1,18 +1,18 @@
-import { ethers, utils } from "ethers";
-import { IOrderParameters, IGeneralParameters } from "../../../interfaces";
+import { ethers, utils } from 'ethers';
+import { IOrderParameters, IGeneralParameters } from '../../../interfaces';
 import {
   OrderSide,
   OrderStatus,
   AssetClass,
   OrderModel,
-} from "../../../models";
+} from '../../../models';
 
 import {
   addEndSortingAggregation,
   addPriceSortingAggregation,
-} from "../aggregations/order.aggregations";
+} from '../aggregations/order.aggregations';
 
-import { Utils } from "../../../utils";
+import { Utils } from '../../../utils';
 
 export enum SortOrderOptionsEnum {
   EndingSoon = 1,
@@ -23,7 +23,7 @@ export enum SortOrderOptionsEnum {
 
 export const buildOrderQueryFilters = async (
   orderParams: IOrderParameters,
-  generalParams: IGeneralParameters
+  generalParams: IGeneralParameters,
 ) => {
   const { page, limit } = generalParams;
 
@@ -37,6 +37,7 @@ export const buildOrderQueryFilters = async (
     sortBy,
     hasOffers,
     side,
+    maker,
     assetClass,
     beforeTimestamp,
     tokenAddress,
@@ -65,7 +66,7 @@ export const buildOrderQueryFilters = async (
 
     filters.push({
       $expr: {
-        $gte: [{ $toDecimal: "$take.value" }, parseFloat(weiPrice)],
+        $gte: [{ $toDecimal: '$take.value' }, parseFloat(weiPrice)],
       },
     });
   }
@@ -76,7 +77,7 @@ export const buildOrderQueryFilters = async (
     // TODO: If possible remove $expr because it can't use the mulitykey index
     filters.push({
       $expr: {
-        $lte: [{ $toDecimal: "$take.value" }, parseFloat(weiPrice)],
+        $lte: [{ $toDecimal: '$take.value' }, parseFloat(weiPrice)],
       },
     });
   }
@@ -91,7 +92,7 @@ export const buildOrderQueryFilters = async (
   }
 
   if (tokenAddress) {
-    const sideToFilter = side && OrderSide.BUY === side ? "take" : "make";
+    const sideToFilter = side && OrderSide.BUY === side ? 'take' : 'make';
     if (tokenAddress === ethers.constants.AddressZero) {
       filters.push({
         [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
@@ -100,18 +101,25 @@ export const buildOrderQueryFilters = async (
       const checkSumAddress = utils.getAddress(tokenAddress);
       filters.push({
         $or: [
-          { [`${sideToFilter}.assetType.contract`]: checkSumAddress.toLowerCase() },
+          {
+            [`${sideToFilter}.assetType.contract`]:
+              checkSumAddress.toLowerCase(),
+          },
           // passing array with single element to only get bundles with single contract!
-          { [`${sideToFilter}.assetType.contracts`]: [checkSumAddress.toLowerCase()] },
+          {
+            [`${sideToFilter}.assetType.contracts`]: [
+              checkSumAddress.toLowerCase(),
+            ],
+          },
         ],
       });
     }
   }
 
   if (assetClass) {
-    const assetClasses = assetClass.replace(/\s/g, "").split(",");
+    const assetClasses = assetClass.replace(/\s/g, '').split(',');
 
-    filters.push({ "make.assetType.assetClass": { $in: assetClasses } });
+    filters.push({ 'make.assetType.assetClass': { $in: assetClasses } });
   }
 
   if (!!hasOffers) {
@@ -137,12 +145,12 @@ export const buildOrderQueryFilters = async (
       const contract = offer.take.assetType.contract;
       if (tokenId && contract) {
         innerQuery.push({
-          "make.assetType.tokenId": tokenId,
-          "make.assetType.contract": contract.toLowerCase(),
+          'make.assetType.tokenId': tokenId,
+          'make.assetType.contract': contract.toLowerCase(),
         });
       }
     });
-    console.log("INNER QUERY:");
+    console.log('INNER QUERY:');
     console.log(innerQuery);
 
     // If query is empty --> there are no orders with offers
@@ -164,7 +172,13 @@ export const buildOrderQueryFilters = async (
     });
   }
 
-  let sort = {} as any;
+  if (maker) {
+    filters.push({
+      maker: maker.toLowerCase(),
+    });
+  }
+
+  const sort = {} as any;
   let sortingAggregation = [] as any;
   switch (sortBy) {
     case SortOrderOptionsEnum.EndingSoon:

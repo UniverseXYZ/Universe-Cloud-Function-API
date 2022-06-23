@@ -12,6 +12,7 @@ export interface INFTParameters {
 
 export interface IOrderParameters {
   side: number;
+  maker: string;
   assetClass: string;
   beforeTimestamp: number;
   minPrice: string;
@@ -47,6 +48,7 @@ export interface IExecutionParameters {
   page: string;
   limit: string;
   side: string;
+  maker: string;
   // NFT Type
   assetClass: string;
   tokenIds: string;
