@@ -1,21 +1,21 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 export enum NFTAssetClasses {
-  ERC721 = "ERC721",
-  ERC1155 = "ERC1155",
-  ERC721_BUNDLE = "ERC721_BUNDLE",
+  ERC721 = 'ERC721',
+  ERC1155 = 'ERC1155',
+  ERC721_BUNDLE = 'ERC721_BUNDLE',
 }
 
 export enum AssetClass {
-  ETH = "ETH",
-  USDC = "USDC",
-  XYZ = "XYZ",
-  DAI = "DAI",
-  WETH = "WETH",
-  ERC20 = "ERC20",
-  ERC721 = "ERC721",
-  ERC721_BUNDLE = "ERC721_BUNDLE",
-  ERC1155 = "ERC1155",
+  ETH = 'ETH',
+  USDC = 'USDC',
+  XYZ = 'XYZ',
+  DAI = 'DAI',
+  WETH = 'WETH',
+  ERC20 = 'ERC20',
+  ERC721 = 'ERC721',
+  ERC721_BUNDLE = 'ERC721_BUNDLE',
+  ERC1155 = 'ERC1155',
 }
 
 export enum OrderStatus {
@@ -82,4 +82,4 @@ export const OrderSchema = new mongoose.Schema({
   matchedTxHash: String,
 });
 
-export const OrderModel = mongoose.model("marketplace-orders", OrderSchema);
+export const OrderModel = mongoose.model('marketplace-orders', OrderSchema);

@@ -1,3 +1,3 @@
-export * from "./IQueryParams";
-export * from "./IPrice";
-export * from "./IStrategy";
+export * from './IQueryParams';
+export * from './IPrice';
+export * from './IStrategy';

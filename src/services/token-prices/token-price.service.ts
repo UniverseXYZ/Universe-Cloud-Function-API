@@ -1,5 +1,5 @@
-import { IPrice } from "../../interfaces";
-import { TokenPriceModel } from "../../models";
+import { IPrice } from '../../interfaces';
+import { TokenPriceModel } from '../../models';
 
 /**
  * Fetches all of the available token prices from the Universe Database.
@@ -15,10 +15,10 @@ export const fetchTokenPrices = async () => {
   }));
 
   return [
-    pricesData.find((price) => price.coin == "ethereum"),
-    pricesData.find((price) => price.coin == "weth"),
-    pricesData.find((price) => price.coin == "dai"),
-    pricesData.find((price) => price.coin == "usd-coin"),
-    pricesData.find((price) => price.coin == "universe-xyz"),
+    pricesData.find((price) => price.coin == 'ethereum'),
+    pricesData.find((price) => price.coin == 'weth'),
+    pricesData.find((price) => price.coin == 'dai'),
+    pricesData.find((price) => price.coin == 'usd-coin'),
+    pricesData.find((price) => price.coin == 'universe-xyz'),
   ];
 };

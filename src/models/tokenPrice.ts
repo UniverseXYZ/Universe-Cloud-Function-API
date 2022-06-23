@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 export const TokenPriceSchema = new mongoose.Schema({
   symbol: String,
@@ -6,4 +6,4 @@ export const TokenPriceSchema = new mongoose.Schema({
   name: String,
 });
 
-export const TokenPriceModel = mongoose.model("token-price", TokenPriceSchema);
+export const TokenPriceModel = mongoose.model('token-price', TokenPriceSchema);

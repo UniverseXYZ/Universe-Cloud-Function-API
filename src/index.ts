@@ -1,22 +1,22 @@
-import { Request, Response } from "express";
-import { countNfts, fetchNfts } from "./services/nfts/nft.service";
-import config from "./config";
-import { getDBClient } from "./database";
-import { ERROR_MESSAGES, HTTP_STATUS_CODES } from "./errors";
+import { Request, Response } from 'express';
+import { countNfts, fetchNfts } from './services/nfts/nft.service';
+import config from './config';
+import { getDBClient } from './database';
+import { ERROR_MESSAGES, HTTP_STATUS_CODES } from './errors';
 import {
   CloudActions,
   validateCountParameters,
   validateNftParameters,
   validateRequiredParameters,
-} from "./validations";
+} from './validations';
 
 /** This is the entry point of the Cloud Function.
  * The name of the function shouldn't change because it also changes
  * the endpoint of the deployed Cloud Function
  */
 export async function nfts(req: Request, res: Response) {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Content-Type", "application/json");
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Content-Type', 'application/json');
 
   try {
     validateRequiredParameters(req.query);
@@ -30,10 +30,10 @@ export async function nfts(req: Request, res: Response) {
         break;
     }
 
-    console.time("service-execution-time");
-    console.time("db-connection-time");
+    console.time('service-execution-time');
+    console.time('db-connection-time');
     const client = await getDBClient();
-    console.timeEnd("db-connection-time");
+    console.timeEnd('db-connection-time');
     console.log(req.query);
 
     let result = null;
@@ -48,11 +48,11 @@ export async function nfts(req: Request, res: Response) {
 
     res.status(200).send(result);
 
-    console.timeEnd("service-execution-time");
+    console.timeEnd('service-execution-time');
 
-    if (config.node_env === "production") {
+    if (config.node_env === 'production') {
       client.disconnect();
-      console.log("Disconnected from DB");
+      console.log('Disconnected from DB');
     }
   } catch (err) {
     console.log(err);
@@ -74,12 +74,12 @@ export async function nfts(req: Request, res: Response) {
 we spin up an express server with a single endpoint
 mimicking the behaviour of the cloud function endpoint
 */
-if (config.node_env !== "production") {
-  const express = require("express");
+if (config.node_env !== 'production') {
+  const express = require('express');
   const app = express();
   const port = 3000;
 
-  app.get("/nfts", (req, res) => {
+  app.get('/nfts', (req, res) => {
     nfts(req, res);
   });
 

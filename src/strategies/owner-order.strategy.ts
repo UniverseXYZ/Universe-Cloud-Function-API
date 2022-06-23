@@ -1,14 +1,14 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   IGeneralParameters,
   IOrderParameters,
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from "../interfaces";
-import { AssetClass, OrderModel, TokenModel } from "../models";
-import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
-import { buildOwnerQuery } from "../services/owners/owners.service";
+} from '../interfaces';
+import { AssetClass, OrderModel, TokenModel } from '../models';
+import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
+import { buildOwnerQuery } from '../services/owners/owners.service';
 
 export class OwnerOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -16,7 +16,7 @@ export class OwnerOrderStrategy implements IStrategy {
       parameters.orderParams,
       parameters.ownerParams,
       parameters.generalParams,
-      parameters.nftParams.tokenType.toString()
+      parameters.nftParams.tokenType.toString(),
     );
   }
 
@@ -24,9 +24,9 @@ export class OwnerOrderStrategy implements IStrategy {
     orderParams: IOrderParameters,
     ownerParams: IOwnerParameters,
     generalParams: IGeneralParameters,
-    tokenType: string
+    tokenType: string,
   ) {
-    console.log("Querying order and owner params");
+    console.log('Querying order and owner params');
 
     const { page, limit } = generalParams;
 
@@ -35,7 +35,7 @@ export class OwnerOrderStrategy implements IStrategy {
 
     const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
 
-    console.time("query-time");
+    console.time('query-time');
     const [orders, owners] = await Promise.all([
       OrderModel.aggregate([
         { $match: finalFilters },
@@ -45,7 +45,7 @@ export class OwnerOrderStrategy implements IStrategy {
       ownerQuery,
     ]);
 
-    console.timeEnd("query-time");
+    console.timeEnd('query-time');
     if (!orders.length || !owners.length) {
       return {
         page: page,
@@ -65,18 +65,21 @@ export class OwnerOrderStrategy implements IStrategy {
           // assuming that if an owner owns at least 1 nft in an active bundle,
           // they own all other nfts in that bundle
           const contractIndex = order.make.assetType.contracts.indexOf(
-            owner.contractAddress.toLowerCase()
+            owner.contractAddress.toLowerCase(),
           );
-          if (-1 !== contractIndex &&
+          if (
+            -1 !== contractIndex &&
             order.make.assetType.tokenIds[contractIndex].includes(owner.tokenId)
           ) {
             return true;
           }
           return false;
         } else {
-          return order.make.assetType.tokenId === owner.tokenId &&
+          return (
+            order.make.assetType.tokenId === owner.tokenId &&
             order.make.assetType.contract?.toLowerCase() ===
               owner.contractAddress.toLowerCase()
+          );
         }
       });
 
@@ -123,7 +126,7 @@ export class OwnerOrderStrategy implements IStrategy {
       const ownersInfo = owners.filter(
         (owner) =>
           owner.contractAddress === nft.contractAddress &&
-          owner.tokenId === nft.tokenId
+          owner.tokenId === nft.tokenId,
       );
 
       const ownerAddresses = ownersInfo.map((owner) => ({
@@ -138,9 +141,10 @@ export class OwnerOrderStrategy implements IStrategy {
         orders: orders.filter((order) => {
           if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
             const contractIndex = order.make.assetType.contracts.indexOf(
-              nft.contractAddress.toLowerCase()
+              nft.contractAddress.toLowerCase(),
             );
-            if (-1 !== contractIndex &&
+            if (
+              -1 !== contractIndex &&
               order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
             ) {
               return true;
@@ -148,8 +152,11 @@ export class OwnerOrderStrategy implements IStrategy {
             return false;
           } else {
             // ERC1155 may have more than one active listing
-            return order.make.assetType.tokenId === nft.tokenId &&
-              order.make.assetType?.contract === nft.contractAddress.toLowerCase()
+            return (
+              order.make.assetType.tokenId === nft.tokenId &&
+              order.make.assetType?.contract ===
+                nft.contractAddress.toLowerCase()
+            );
           }
         }),
         owners: ownerAddresses,

@@ -1,4 +1,4 @@
-import { OrderSide, OrderStatus } from "../../../models";
+import { OrderSide, OrderStatus } from '../../../models';
 import { Utils } from '../../../utils';
 
 /**
@@ -11,10 +11,10 @@ export const getOrdersLookup = () => {
   const utcTimestamp = Utils.getUtcTimestamp();
   return {
     $lookup: {
-      from: "marketplace-orders",
+      from: 'marketplace-orders',
       let: {
-        tokenId: "$tokenId",
-        contractAddress: { $toLower: "$contractAddress" },
+        tokenId: '$tokenId',
+        contractAddress: { $toLower: '$contractAddress' },
       },
       pipeline: [
         {
@@ -22,33 +22,30 @@ export const getOrdersLookup = () => {
             $expr: {
               $and: [
                 {
-                  $eq: ["$make.assetType.tokenId", "$$tokenId"],
+                  $eq: ['$make.assetType.tokenId', '$$tokenId'],
                 },
                 {
-                  $eq: ["$make.assetType.contract", "$$contractAddress"],
+                  $eq: ['$make.assetType.contract', '$$contractAddress'],
                 },
                 {
                   $or: [
                     {
-                      $eq: ["$status", OrderStatus.CREATED],
+                      $eq: ['$status', OrderStatus.CREATED],
                     },
                     {
-                      $eq: ["$status", OrderStatus.PARTIALFILLED],
+                      $eq: ['$status', OrderStatus.PARTIALFILLED],
                     },
                   ],
                 },
-                { $eq: ["$side", OrderSide.SELL] },
-                { 
+                { $eq: ['$side', OrderSide.SELL] },
+                {
                   $or: [
                     { $lt: ['$start', utcTimestamp] },
                     { $eq: ['$start', 0] },
                   ],
                 },
-                { 
-                  $or: [
-                    { $gt: ['$end', utcTimestamp] },
-                    { $eq: ['$end', 0] },
-                  ],
+                {
+                  $or: [{ $gt: ['$end', utcTimestamp] }, { $eq: ['$end', 0] }],
                 },
               ],
             },
@@ -58,7 +55,7 @@ export const getOrdersLookup = () => {
           $sort: { createdAt: -1 },
         },
       ],
-      as: "orders",
+      as: 'orders',
     },
-  }
+  };
 };

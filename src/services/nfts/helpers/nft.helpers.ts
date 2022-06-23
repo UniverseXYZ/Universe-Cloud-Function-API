@@ -1,7 +1,7 @@
 export const hasNftParamsOnly = (
   hasNftParams: boolean,
   hasOrderParams: boolean,
-  hasOwnerParams: boolean
+  hasOwnerParams: boolean,
 ) => {
   if (!hasNftParams) {
     return false;
@@ -17,7 +17,7 @@ export const hasNftParamsOnly = (
 export const hasOrderParamsOnly = (
   hasNftParams: boolean,
   hasOrderParams: boolean,
-  hasOwnerParams: boolean
+  hasOwnerParams: boolean,
 ) => {
   if (!hasOrderParams) {
     return false;
@@ -33,7 +33,7 @@ export const hasOrderParamsOnly = (
 export const hasOwnerParamsOnly = (
   hasNftParams: boolean,
   hasOrderParams: boolean,
-  hasOwnerParams: boolean
+  hasOwnerParams: boolean,
 ) => {
   if (!hasOwnerParams) {
     return false;

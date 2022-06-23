@@ -1,4 +1,10 @@
-import { AssetClass, OrderModel, OrderSide, OrderStatus, TokenModel } from '../../models';
+import {
+  AssetClass,
+  OrderModel,
+  OrderSide,
+  OrderStatus,
+  TokenModel,
+} from '../../models';
 import { Utils } from '../../utils';
 
 /**
@@ -9,18 +15,22 @@ import { Utils } from '../../utils';
  * @returns {Array}
  */
 export const getBundleOrdersByTokens = async (tokens) => {
-  let value = [];
-  
+  const value = [];
+
   if (!tokens.length) {
     return [];
   }
-  
+
   const utcTimestamp = Utils.getUtcTimestamp();
 
   const contractsTokensMap = {};
   tokens.forEach((token) => {
-    if (contractsTokensMap.hasOwnProperty(token.contractAddress.toLowerCase())) {
-      contractsTokensMap[token.contractAddress.toLowerCase()].push(token.tokenId);
+    if (
+      contractsTokensMap.hasOwnProperty(token.contractAddress.toLowerCase())
+    ) {
+      contractsTokensMap[token.contractAddress.toLowerCase()].push(
+        token.tokenId,
+      );
     } else {
       contractsTokensMap[token.contractAddress.toLowerCase()] = [token.tokenId];
     }
@@ -36,7 +46,7 @@ export const getBundleOrdersByTokens = async (tokens) => {
       {
         'make.assetType.contracts': {
           $in: Object.keys(contractsTokensMap),
-        }
+        },
       },
     ],
   });
@@ -48,10 +58,12 @@ export const getBundleOrdersByTokens = async (tokens) => {
     // console.log(bundleOrder.make.assetType.contracts)
     // console.log(bundleOrder.make.assetType.tokenIds)
     bundleOrder = JSON.parse(JSON.stringify(bundleOrder));
-        
+
     for (let i = 0; i < bundleOrder.make.assetType.contracts.length; i++) {
       if (
-        contractsTokensMap.hasOwnProperty(bundleOrder.make.assetType.contracts[i]) &&
+        contractsTokensMap.hasOwnProperty(
+          bundleOrder.make.assetType.contracts[i],
+        ) &&
         Utils.findArrayIntersection(
           contractsTokensMap[bundleOrder.make.assetType.contracts[i]],
           bundleOrder.make.assetType.tokenIds[i],
@@ -64,4 +76,4 @@ export const getBundleOrdersByTokens = async (tokens) => {
   });
 
   return value;
-}
+};

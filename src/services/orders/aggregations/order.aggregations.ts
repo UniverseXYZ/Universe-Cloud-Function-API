@@ -1,6 +1,6 @@
-import { OrderSide, AssetClass } from "../../../models";
-import { Utils, TOKENS } from "../../../utils";
-import { fetchTokenPrices } from "../../token-prices/token-price.service";
+import { OrderSide, AssetClass } from '../../../models';
+import { Utils, TOKENS } from '../../../utils';
+import { fetchTokenPrices } from '../../token-prices/token-price.service';
 
 export const addEndSortingAggregation = () => {
   // We want to show orders with offers in ascending order but also show offers without offers at the end
@@ -12,13 +12,13 @@ export const addEndSortingAggregation = () => {
             branches: [
               {
                 case: {
-                  $eq: ["$end", 0],
+                  $eq: ['$end', 0],
                 },
                 // Workaround which is safe to use until year 2255
                 then: Number.MAX_SAFE_INTEGER,
               },
             ],
-            default: "$end",
+            default: '$end',
           },
         },
       },
@@ -50,33 +50,33 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
               branches: [
                 {
                   case: {
-                    $eq: ["$make.assetType.assetClass", AssetClass.ETH],
+                    $eq: ['$make.assetType.assetClass', AssetClass.ETH],
                   },
                   then: {
                     $divide: [
-                      { $toDecimal: "$make.value" },
+                      { $toDecimal: '$make.value' },
                       Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.ETH]) * ethPrice,
                     ],
                   },
                 },
                 {
                   case: {
-                    $eq: ["$make.assetType.contract", daiPrice],
+                    $eq: ['$make.assetType.contract', daiPrice],
                   },
                   then: {
                     $divide: [
-                      { $toDecimal: "$make.value" },
+                      { $toDecimal: '$make.value' },
                       Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.DAI]) * daiPrice,
                     ],
                   },
                 },
                 {
                   case: {
-                    $eq: ["$make.assetType.contract", wethPrice],
+                    $eq: ['$make.assetType.contract', wethPrice],
                   },
                   then: {
                     $divide: [
-                      { $toDecimal: "$make.value" },
+                      { $toDecimal: '$make.value' },
                       Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.WETH]) *
                         wethPrice,
                     ],
@@ -84,11 +84,11 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ["$make.assetType.contract", usdcPrice],
+                    $eq: ['$make.assetType.contract', usdcPrice],
                   },
                   then: {
                     $divide: [
-                      { $toDecimal: "$make.value" },
+                      { $toDecimal: '$make.value' },
                       Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.USDC]) *
                         usdcPrice,
                     ],
@@ -96,11 +96,11 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ["$make.assetType.contract", xyzPrice],
+                    $eq: ['$make.assetType.contract', xyzPrice],
                   },
                   then: {
                     $divide: [
-                      { $toDecimal: "$make.value" },
+                      { $toDecimal: '$make.value' },
                       Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.XYZ]) * xyzPrice,
                     ],
                   },
@@ -121,13 +121,13 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
               branches: [
                 {
                   case: {
-                    $eq: ["$take.assetType.assetClass", AssetClass.ETH],
+                    $eq: ['$take.assetType.assetClass', AssetClass.ETH],
                   },
                   then: {
                     $multiply: [
                       {
                         $divide: [
-                          { $toDecimal: "$take.value" },
+                          { $toDecimal: '$take.value' },
                           { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.ETH]] },
                         ],
                       },
@@ -137,13 +137,13 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ["$take.assetType.contract", daiPrice],
+                    $eq: ['$take.assetType.contract', daiPrice],
                   },
                   then: {
                     $multiply: [
                       {
                         $divide: [
-                          { $toDecimal: "$take.value" },
+                          { $toDecimal: '$take.value' },
                           { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.DAI]] },
                         ],
                       },
@@ -153,13 +153,13 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ["$take.assetType.contract", wethPrice],
+                    $eq: ['$take.assetType.contract', wethPrice],
                   },
                   then: {
                     $multiply: [
                       {
                         $divide: [
-                          { $toDecimal: "$take.value" },
+                          { $toDecimal: '$take.value' },
                           { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.WETH]] },
                         ],
                       },
@@ -169,13 +169,13 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ["$take.assetType.contract", usdcPrice],
+                    $eq: ['$take.assetType.contract', usdcPrice],
                   },
                   then: {
                     $multiply: [
                       {
                         $divide: [
-                          { $toDecimal: "$take.value" },
+                          { $toDecimal: '$take.value' },
                           { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.USDC]] },
                         ],
                       },
@@ -185,13 +185,13 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ["$take.assetType.contract", xyzPrice],
+                    $eq: ['$take.assetType.contract', xyzPrice],
                   },
                   then: {
                     $multiply: [
                       {
                         $divide: [
-                          { $toDecimal: "$take.value" },
+                          { $toDecimal: '$take.value' },
                           { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.XYZ]] },
                         ],
                       },

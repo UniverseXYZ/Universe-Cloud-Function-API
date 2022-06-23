@@ -1,9 +1,9 @@
-import { INFTParameters } from "../../../interfaces";
-import { getTokenIdsByCollectionAttributes } from "../../attributes/attributes.service";
+import { INFTParameters } from '../../../interfaces';
+import { getTokenIdsByCollectionAttributes } from '../../attributes/attributes.service';
 
 export const buildNftQueryFilters = async (
   nftParams: INFTParameters,
-  owners: any[] = []
+  owners: any[] = [],
 ) => {
   const { contractAddress, tokenIds, searchQuery, tokenType, traits } =
     nftParams;
@@ -16,7 +16,7 @@ export const buildNftQueryFilters = async (
     } else {
       const filteredOwners: any[] = owners.filter(
         (o: any) =>
-          o.contractAddress.toLowerCase() === contractAddress.toLowerCase()
+          o.contractAddress.toLowerCase() === contractAddress.toLowerCase(),
       );
 
       if (!filteredOwners.length) {
@@ -29,14 +29,14 @@ export const buildNftQueryFilters = async (
   if (searchQuery) {
     searchFilters.push({
       $search: {
-        index: "metadata.name",
+        index: 'metadata.name',
         // text: {
         //   query: searchQuery,
         //   path: "metadata.name",
         // },
         regex: {
           query: `.*${searchQuery}*.`,
-          path: "metadata.name",
+          path: 'metadata.name',
           allowAnalyzedField: true,
         },
         // phrase: {
@@ -56,7 +56,7 @@ export const buildNftQueryFilters = async (
   if (contractAddress && traits && Object.keys(traits).length > 0) {
     const ids = await getTokenIdsByCollectionAttributes(
       contractAddress,
-      traits
+      traits,
     );
 
     if (!ids || !ids.length) {
@@ -67,7 +67,7 @@ export const buildNftQueryFilters = async (
       tokenId: { $in: ids },
     });
   } else if (tokenIds) {
-    const tokenIdsSplit = tokenIds.replace(/\s/g, "").split(",");
+    const tokenIdsSplit = tokenIds.replace(/\s/g, '').split(',');
 
     filters.push({
       tokenId: { $in: tokenIdsSplit },
@@ -105,12 +105,12 @@ export const buildNftQueryFilters = async (
   if (searchFilters.length) {
     nftFilters.push({
       $addFields: {
-        searchScore: { $meta: "searchScore" },
+        searchScore: { $meta: 'searchScore' },
       },
     });
   }
 
-  console.log("NFT FILTERS:");
+  console.log('NFT FILTERS:');
   console.log(nftFilters);
   return nftFilters;
 };

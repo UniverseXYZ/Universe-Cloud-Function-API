@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 export const NFTCollectionSchema = new mongoose.Schema({
   contractAddress: String,
@@ -17,6 +17,6 @@ export const NFTCollectionSchema = new mongoose.Schema({
 });
 
 export const NFTCollectionModel = mongoose.model(
-  "nft-collections",
-  NFTCollectionSchema
+  'nft-collections',
+  NFTCollectionSchema,
 );
