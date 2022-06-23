@@ -1,13 +1,13 @@
-import { ethers, utils } from "ethers";
+import { ethers, utils } from 'ethers';
 import {
   IGeneralParameters,
   IOrderParameters,
   IQueryParameters,
   IStrategy,
-} from "../interfaces";
-import { AssetClass, OrderModel, TokenModel } from "../models";
-import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
-import { getOwnersByTokens } from "../services/owners/owners.service";
+} from '../interfaces';
+import { AssetClass, OrderModel, TokenModel } from '../models';
+import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
+import { getOwnersByTokens } from '../services/owners/owners.service';
 import { getNFTLookup } from '../services/nfts/lookups/nft.lookup';
 import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
 
@@ -15,7 +15,7 @@ export class OrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
     return this.queryOnlyOrderParams(
       parameters.orderParams,
-      parameters.generalParams
+      parameters.generalParams,
     );
   }
 
@@ -24,26 +24,26 @@ export class OrderStrategy implements IStrategy {
    * 1. erc721 token with nested "owners" and "orders" (should have 1 order for erc721);
    * 2. erc1155 token with nested "owners" and "orders" (erc1155 can have multiple orders);
    * 3. bundle order with nested "nfts".
-   * @param orderParams 
-   * @param generalParams 
+   * @param orderParams
+   * @param generalParams
    * @returns {Object}
    */
   private async queryOnlyOrderParams(
     orderParams: IOrderParameters,
-    generalParams: IGeneralParameters
+    generalParams: IGeneralParameters,
   ) {
-    console.log("Querying only order params");
+    console.log('Querying only order params');
 
     const { page, limit } = generalParams;
 
     const { finalFilters, sort, sortingAggregation } =
       await buildOrderQueryFilters(orderParams, generalParams);
 
-    console.log("FILTERS:");
+    console.log('FILTERS:');
     console.log(finalFilters);
 
-    console.log("Querying...");
-    console.time("query-time");
+    console.log('Querying...');
+    console.time('query-time');
 
     const data = await OrderModel.aggregate(
       [
@@ -53,22 +53,37 @@ export class OrderStrategy implements IStrategy {
         {
           $group: {
             _id: {
-              contract: "$make.assetType.contract",
-              tokenId: "$make.assetType.tokenId",
-              contracts: "$make.assetType.contracts",
-              tokenIds: "$make.assetType.tokenIds",
+              contract: '$make.assetType.contract',
+              tokenId: '$make.assetType.tokenId',
+              contracts: '$make.assetType.contracts',
+              tokenIds: '$make.assetType.tokenIds',
             },
             contractAddress: { $first: '$make.assetType.contract' },
             contractAddresses: { $first: '$make.assetType.contracts' },
             tokenId: { $first: '$make.assetType.tokenId' },
             tokenIds: { $first: '$make.assetType.tokenIds' },
-            orderSort: { $first: '$orderSort' },
-            usd_value: { $first: '$usd_value' },
-            createdAt: { $first: '$createdAt' },
-            // doc: { $first: "$$ROOT" },
+            // orderSort: { $first: '$orderSort' },
+            // usd_value: { $first: '$usd_value' },
+            // createdAt: { $first: '$createdAt' },
+            doc: { $first: '$$ROOT' },
           },
         },
         // { $replaceRoot: { newRoot: "$doc" } },
+        {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: [
+                {
+                  contractAddress: '$contractAddress',
+                  contractAddresses: '$contractAddresses',
+                  tokenId: '$tokenId',
+                  tokenIds: '$tokenIds',
+                },
+                '$doc',
+              ],
+            },
+          },
+        },
         { $sort: sort }, // this is the actual sorting!
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
@@ -94,10 +109,10 @@ export class OrderStrategy implements IStrategy {
         //   },
         // },
       ],
-      { collation: { locale: "en", strength: 2 } }
+      { collation: { locale: 'en', strength: 2 } },
     );
 
-    console.timeEnd("query-time");
+    console.timeEnd('query-time');
     if (!data.length) {
       return {
         page: page,
@@ -105,7 +120,7 @@ export class OrderStrategy implements IStrategy {
         nfts: [],
       };
     }
-    
+
     const tokens = [];
     data.forEach((order) => {
       if (order.contractAddresses) {
@@ -115,7 +130,7 @@ export class OrderStrategy implements IStrategy {
               tokenId: tokenId,
               contractAddress: utils.getAddress(order.contractAddresses[i]),
             });
-          })
+          });
         }
       } else {
         tokens.push({
@@ -139,11 +154,14 @@ export class OrderStrategy implements IStrategy {
         const bundleNfts = [];
         for (let i = 0; i < order.contractAddresses.length; i++) {
           order.tokenIds[i].forEach((tokenId) => {
-            bundleNfts.push(nfts.find((nft) =>
-                nft.contractAddress.toLowerCase() === order.contractAddresses[i] &&
-                nft.tokenId === tokenId
-            ));
-          })
+            bundleNfts.push(
+              nfts.find(
+                (nft) =>
+                  nft.contractAddress.toLowerCase() ===
+                    order.contractAddresses[i] && nft.tokenId === tokenId,
+              ),
+            );
+          });
         }
 
         return {
@@ -151,27 +169,27 @@ export class OrderStrategy implements IStrategy {
           nfts: bundleNfts,
         };
       } else {
-        // if it's not a bundle, the returning array element will be the nft with 
+        // if it's not a bundle, the returning array element will be the nft with
         // orders (to support erc1155) and owners.
         const nft = nfts.find(
           (nft) =>
             nft.contractAddress.toLowerCase() === order.contractAddress &&
-            nft.tokenId === order.tokenId
+            nft.tokenId === order.tokenId,
         );
-  
+
         const ownersInfo = owners.filter(
           (owner) =>
             owner.contractAddress === nft.contractAddress &&
-            owner.tokenId === nft.tokenId
+            owner.tokenId === nft.tokenId,
         );
-  
+
         const ownerAddresses = ownersInfo.map((owner) => ({
           owner: owner.address,
           value: owner.value
             ? owner.value.toString()
             : ethers.BigNumber.from(owner.value).toString(),
         }));
-  
+
         return {
           ...nft,
           owners: ownerAddresses,
