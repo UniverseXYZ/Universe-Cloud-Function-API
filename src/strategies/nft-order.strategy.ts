@@ -5,7 +5,7 @@ import {
   IQueryParameters,
   IStrategy,
 } from "../interfaces";
-import { TokenModel, OrderModel } from "../models";
+import { TokenModel, OrderModel, AssetClass } from "../models";
 
 import { buildNftQueryFilters } from "../services/nfts/builders";
 
@@ -41,10 +41,12 @@ export class NftOrderStrategy implements IStrategy {
     const { finalFilters, sortingAggregation, sort } =
       await buildOrderQueryFilters(orderParams, generalParams);
 
-    const dbQuery = [];
-    console.log(...dbQuery);
     const [nfts, orders] = await Promise.all([
-      TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
+      TokenModel.aggregate([
+        ...nftFilters, 
+        { $sort: { searchScore: -1 } },
+      ], 
+      {
         collation: { locale: "en", strength: 2 },
       }),
       OrderModel.aggregate([
@@ -71,25 +73,39 @@ export class NftOrderStrategy implements IStrategy {
       for (let i = 0; i < orders.length; i++) {
         const order = orders[i];
 
-        const nft = nfts.find(
-          (nft) =>
-            order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType.contract?.toLowerCase() ===
-              nft.contractAddress.toLowerCase()
-        );
+        const nft = nfts.find((nft) => {
+          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+            const contractIndex = order.make.assetType.contracts.indexOf(
+              nft.contractAddress.toLowerCase(),
+            );
+            if (-1 !== contractIndex &&
+              order.make.assetType.tokenIds[contractIndex] &&
+              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+            ) {
+              return true;
+            }
+            return false;
+          } else {
+            return order.make.assetType.tokenId === nft.tokenId &&
+              order.make.assetType.contract === nft.contractAddress.toLowerCase()
+          }
+        });
 
         if (!nft) {
           continue;
         }
 
         // ERC1155 may have more than one active listing
-        const allOrders = orders.filter(
-          (o) =>
-            o.make.assetType.contract === order.make.assetType.contract &&
-            o.make.assetType.tokenId === order.make.assetType.tokenId
-        );
+        let nftOrders = [];
+        if (AssetClass.ERC721_BUNDLE != order.make.assetType.assetClass) {
+          nftOrders = orders.filter(
+            (o) =>
+              o.make.assetType.contract === order.make.assetType.contract &&
+              o.make.assetType.tokenId === order.make.assetType.tokenId
+          );
+        }
 
-        nft.orders = allOrders;
+        nft.orders = nftOrders;
         filtered.push(nft);
 
         if (filtered.length === generalParams.skippedItems + limit) {
@@ -100,12 +116,24 @@ export class NftOrderStrategy implements IStrategy {
       for (let i = 0; i < nfts.length; i++) {
         const nft = nfts[i];
 
-        const nftOrders = orders.filter(
-          (order) =>
-            order.make.assetType.tokenId === nft.tokenId &&
+        const nftOrders = orders.filter((order) => {
+          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+            const contractIndex = order.make.assetType.contracts.indexOf(
+              nft.contractAddress.toLowerCase(),
+            );
+            if (-1 !== contractIndex &&
+              order.make.assetType.tokenIds[contractIndex] &&
+              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+            ) {
+              return true;
+            }
+            return false;
+          } else {
+            return order.make.assetType.tokenId === nft.tokenId &&
             order.make.assetType.contract?.toLowerCase() ===
               nft.contractAddress.toLowerCase()
-        );
+          }
+        });
 
         if (!nftOrders.length) {
           continue;

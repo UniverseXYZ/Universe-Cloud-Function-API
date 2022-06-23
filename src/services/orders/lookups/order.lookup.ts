@@ -1,7 +1,12 @@
 import { OrderSide, OrderStatus } from "../../../models";
 import { Utils } from '../../../utils';
 
-// Lookup to join the document representing the active sell order of the nft from marketplace-orders
+/**
+ * Returns an object for $lookup aggregation step.
+ * It is meant to join documents representing the active sell order of the nft from marketplace-orders.
+ * NOTE: This lookup only joins orders that are not bundles (not AssetType.ERC721_BUNDLE).
+ * @returns {Object}
+ */
 export const getOrdersLookup = () => {
   const utcTimestamp = Utils.getUtcTimestamp();
   return {

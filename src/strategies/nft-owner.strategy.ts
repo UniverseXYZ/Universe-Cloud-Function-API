@@ -9,6 +9,8 @@ import {
 import { TokenModel, OrderModel, OrderStatus, OrderSide } from "../models";
 import { buildNftQueryFilters } from "../services/nfts/builders";
 import { buildOwnerQuery } from "../services/owners/owners.service";
+import { getBundleOrdersByTokens } from "../services/orders/orders.service";
+import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
 
 export class NftOwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -60,6 +62,7 @@ export class NftOwnerStrategy implements IStrategy {
         ...nftFilters,
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
+        getOrdersLookup(),
         { $sort: { searchScore: -1 } },
       ],
       { collation: { locale: "en", strength: 2 } }
@@ -115,32 +118,26 @@ export class NftOwnerStrategy implements IStrategy {
 
     const paginated = filtered.slice(generalParams.skippedItems);
 
-    //  Populate order
-    const orderQuery = paginated.map((nft) => ({
-      "make.assetType.tokenId": nft.tokenId,
-      "make.assetType.contract": nft.contractAddress.toLowerCase(),
-    }));
-    console.time("order-query-time");
+    // additionally looking up for bundle orders with found NFTs
+    console.time('bundle-order-query-time');
+    const bundleOrders = await getBundleOrdersByTokens(paginated);
+    console.timeEnd('bundle-order-query-time');
 
-    const orders = await OrderModel.find({
-      $and: [
-        { $or: orderQuery },
-        { $eq: ["$status", OrderStatus.CREATED] },
-        { $eq: ["$side", OrderSide.SELL] },
-      ],
+    const finalNfts = paginated.map((nft) => {
+      const orders = bundleOrders.filter((order) => {
+        const contractIndex = order.make.assetType.contracts.indexOf(nft.contractAddress.toLowerCase());
+        if (
+          -1 !== contractIndex &&
+          order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+        ) {
+          return true;
+        }
+        return false;
+      });     
+      nft.orders.push(...orders);
+
+      return nft;
     });
-    console.timeEnd("order-query-time");
-
-    const finalNfts = paginated.map((nft) => ({
-      ...nft,
-      orders:
-        orders.filter(
-          (order) =>
-            order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType.contract.toLowerCase() ===
-              nft.contractAddress.toLowerCase()
-        ) || [],
-    }));
 
     return {
       page: page,

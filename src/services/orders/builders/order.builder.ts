@@ -99,7 +99,11 @@ export const buildOrderQueryFilters = async (
     } else {
       const checkSumAddress = utils.getAddress(tokenAddress);
       filters.push({
-        [`${sideToFilter}.assetType.contract`]: checkSumAddress,
+        $or: [
+          { [`${sideToFilter}.assetType.contract`]: checkSumAddress.toLowerCase() },
+          // passing array with single element to only get bundles with single contract!
+          { [`${sideToFilter}.assetType.contracts`]: [checkSumAddress.toLowerCase()] },
+        ],
       });
     }
   }

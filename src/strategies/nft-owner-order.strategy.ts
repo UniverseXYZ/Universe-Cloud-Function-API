@@ -7,7 +7,7 @@ import {
   IQueryParameters,
   IStrategy,
 } from "../interfaces";
-import { TokenModel, OrderModel } from "../models";
+import { AssetClass, TokenModel, OrderModel } from "../models";
 import { buildNftQueryFilters } from "../services/nfts/builders";
 import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
 import { buildOwnerQuery } from "../services/owners/owners.service";
@@ -76,10 +76,24 @@ export class NftOwnerOrderStrategy implements IStrategy {
     for (let i = 0; i < orders.length; i++) {
       const order = orders[i];
 
-      const nft = nfts.find(
-        (nft) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract === nft.contractAddress.toLowerCase()
+      const nft = nfts.find((nft) => {
+        if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+          const contractIndex = order.make.assetType.contracts.indexOf(
+            nft.contractAddress.toLowerCase(),
+          );
+          if (-1 !== contractIndex &&
+            order.make.assetType.tokenIds[contractIndex] &&
+            order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+          ) {
+            return true;
+          }
+          return false;
+        } else {
+          return order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType.contract === nft.contractAddress.toLowerCase()
+        }
+      }
+          
       );
 
       if (!nft) {
@@ -98,11 +112,14 @@ export class NftOwnerOrderStrategy implements IStrategy {
       }
 
       // ERC1155 may have more than one active listing
-      const nftOrders = orders.filter(
-        (o) =>
-          o.make.assetType.contract === order.make.assetType.contract &&
-          o.make.assetType.tokenId === order.make.assetType.tokenId
-      );
+      let nftOrders = [];
+      if (AssetClass.ERC721_BUNDLE != order.make.assetType.assetClass) {
+        nftOrders = orders.filter(
+          (o) =>
+            o.make.assetType.contract === order.make.assetType.contract &&
+            o.make.assetType.tokenId === order.make.assetType.tokenId
+        );
+      }
 
       const ownerAddresses = ownersInfo.map((owner) => ({
         owner: owner.address,
