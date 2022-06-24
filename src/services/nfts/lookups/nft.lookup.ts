@@ -1,12 +1,12 @@
 export const getNFTLookup = () => ({
   $lookup: {
-    from: "nft-tokens",
+    from: 'nft-tokens',
     let: {
       // makeTokenId: "$make.assetType.tokenId",
-      makeTokenId: "$_id.tokenId",
+      makeTokenId: '$_id.tokenId',
       //TODO: WE NEED COLLATION INDEX HERE
       // makeContractAddress: "$make.assetType.contract",
-      makeContractAddress: "$_id.contract",
+      makeContractAddress: '$_id.contract',
     },
     pipeline: [
       {
@@ -14,10 +14,10 @@ export const getNFTLookup = () => ({
           $expr: {
             $and: [
               {
-                $eq: ["$tokenId", "$$makeTokenId"],
+                $eq: ['$tokenId', '$$makeTokenId'],
               },
               {
-                $eq: ["$contractAddress", "$$makeContractAddress"],
+                $eq: ['$contractAddress', '$$makeContractAddress'],
               },
             ],
           },
@@ -27,6 +27,6 @@ export const getNFTLookup = () => ({
         $limit: 1,
       },
     ],
-    as: "nft",
+    as: 'nft',
   },
 });

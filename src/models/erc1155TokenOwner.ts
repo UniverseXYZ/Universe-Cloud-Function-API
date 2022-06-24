@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 export const ERC1155NFTTokenOwnerSchema = new mongoose.Schema({
   contractAddress: String,
@@ -13,6 +13,6 @@ export const ERC1155NFTTokenOwnerSchema = new mongoose.Schema({
 });
 
 export const ERC1155NFTTokenOwnerModel = mongoose.model(
-  "nft-erc1155-token-owners",
-  ERC1155NFTTokenOwnerSchema
+  'nft-erc1155-token-owners',
+  ERC1155NFTTokenOwnerSchema,
 );

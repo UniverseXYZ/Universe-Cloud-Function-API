@@ -1,9 +1,9 @@
-import { constants } from "../../../constants";
-import { IGeneralParameters } from "../../../interfaces";
+import { constants } from '../../../constants';
+import { IGeneralParameters } from '../../../interfaces';
 
 export const buildGeneralParams = (
   page: number,
-  limit: number
+  limit: number,
 ): IGeneralParameters => {
   const generalParams = {
     page: Number(page) > 0 ? Math.floor(Number(page)) : 1,

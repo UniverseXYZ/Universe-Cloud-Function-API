@@ -1,43 +1,43 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   IGeneralParameters,
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from "../interfaces";
-import { TokenModel } from "../models";
-import { getOrdersLookup } from "../services/orders/lookups/order.lookup";
-import { buildOwnerQuery } from "../services/owners/owners.service";
-import { getBundleOrdersByTokens } from "../services/orders/orders.service";
+} from '../interfaces';
+import { TokenModel } from '../models';
+import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
+import { buildOwnerQuery } from '../services/owners/owners.service';
+import { getBundleOrdersByTokens } from '../services/orders/orders.service';
 
 export class OwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
     return this.queryOnlyOwnerParams(
       parameters.ownerParams,
       parameters.generalParams,
-      parameters.nftParams.tokenType.toString()
+      parameters.nftParams.tokenType.toString(),
     );
   }
 
   private async queryOnlyOwnerParams(
     ownerParams: IOwnerParameters,
     generalParams: IGeneralParameters,
-    tokenType: string
+    tokenType: string,
   ) {
-    console.log("Querying only owner params");
+    console.log('Querying only owner params');
     const { page, limit } = generalParams;
 
     const ownerQuery = buildOwnerQuery(
       ownerParams,
       tokenType,
       generalParams.skippedItems,
-      generalParams.limit
+      generalParams.limit,
     );
 
-    console.time("query-time");
+    console.time('query-time');
     const owners = await ownerQuery;
 
-    console.timeEnd("query-time");
+    console.timeEnd('query-time');
 
     if (!owners.length) {
       return {
@@ -47,7 +47,7 @@ export class OwnerStrategy implements IStrategy {
       };
     }
 
-    console.time("query-time2");
+    console.time('query-time2');
 
     const data = await TokenModel.aggregate(
       [
@@ -61,10 +61,10 @@ export class OwnerStrategy implements IStrategy {
         },
         getOrdersLookup(),
       ],
-      { collation: { locale: "en", strength: 2 } }
+      { collation: { locale: 'en', strength: 2 } },
     );
 
-    console.timeEnd("query-time2");
+    console.timeEnd('query-time2');
 
     // additionally looking up for bundle orders with found NFTs
     console.time('bundle-order-query-time');
@@ -75,7 +75,7 @@ export class OwnerStrategy implements IStrategy {
       const ownersInfo = owners.filter(
         (owner) =>
           owner.contractAddress === nft.contractAddress &&
-          owner.tokenId === nft.tokenId
+          owner.tokenId === nft.tokenId,
       );
 
       const ownerAddresses = ownersInfo.map((owner) => ({
@@ -86,7 +86,9 @@ export class OwnerStrategy implements IStrategy {
       }));
 
       const orders = bundleOrders.filter((order) => {
-        const contractIndex = order.make.assetType.contracts.indexOf(nft.contractAddress.toLowerCase());
+        const contractIndex = order.make.assetType.contracts.indexOf(
+          nft.contractAddress.toLowerCase(),
+        );
         if (
           -1 !== contractIndex &&
           order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
@@ -94,7 +96,7 @@ export class OwnerStrategy implements IStrategy {
           return true;
         }
         return false;
-      });     
+      });
       nft.orders.push(...orders);
 
       return {

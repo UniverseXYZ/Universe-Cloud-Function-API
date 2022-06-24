@@ -1,4 +1,4 @@
-import { IQueryParameters } from "./IQueryParams";
+import { IQueryParameters } from './IQueryParams';
 
 export interface IStrategy {
   execute(params: IQueryParameters);

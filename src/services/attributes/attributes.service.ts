@@ -1,7 +1,7 @@
-import { utils } from "ethers";
-import { ApiError, ERROR_MESSAGES } from "../../errors";
-import { NFTCollectionAttributesModel } from "../../models";
-import { Utils } from "../../utils";
+import { utils } from 'ethers';
+import { ApiError, ERROR_MESSAGES } from '../../errors';
+import { NFTCollectionAttributesModel } from '../../models';
+import { Utils } from '../../utils';
 
 /**
  * Fetched token ids matching the collection and trait query
@@ -11,22 +11,22 @@ import { Utils } from "../../utils";
  */
 export const getTokenIdsByCollectionAttributes = async (
   contractAddress: string,
-  traits: any
+  traits: any,
 ) => {
-  console.time("trait-filter-time");
+  console.time('trait-filter-time');
   const allTraits = {};
   const allTraitsArray = [];
 
-  console.time("filter-query-time");
+  console.time('filter-query-time');
   const collAttributes = await NFTCollectionAttributesModel.findOne({
     contractAddress: utils.getAddress(contractAddress),
   }).lean();
 
-  console.timeEnd("filter-query-time");
+  console.timeEnd('filter-query-time');
 
-  const splitTraits = traits.split(",");
+  const splitTraits = traits.split(',');
   for (const attributeKVP of splitTraits) {
-    let [attribute, trait] = attributeKVP.split(":");
+    let [attribute, trait] = attributeKVP.split(':');
 
     attribute = attribute.trim();
     trait = trait.trim();
@@ -59,6 +59,6 @@ export const getTokenIdsByCollectionAttributes = async (
     }
   }
 
-  console.timeEnd("trait-filter-time");
+  console.timeEnd('trait-filter-time');
   return finalTokenIds;
 };

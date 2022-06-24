@@ -1,11 +1,15 @@
-import { IOwnerParameters } from "../../interfaces";
-import { NFTTokenOwnerModel, ERC1155NFTTokenOwnerModel, AssetClass } from "../../models";
+import { IOwnerParameters } from '../../interfaces';
+import {
+  NFTTokenOwnerModel,
+  ERC1155NFTTokenOwnerModel,
+  AssetClass,
+} from '../../models';
 
 export const buildOwnerQuery = (
   ownerParams: IOwnerParameters,
   tokenType: string,
   skip = 0,
-  limit = 0
+  limit = 0,
 ) => {
   const filters = [] as any;
   const limitFilters = [] as any;
@@ -16,42 +20,42 @@ export const buildOwnerQuery = (
   if (skip) {
     limitFilters.push({ $skip: skip });
   }
-  
+
   if (limit) {
     limitFilters.push({ $limit: limit });
   }
-  
+
   const finalFilters = { $and: filters };
 
   switch (tokenType) {
     case AssetClass.ERC721:
       return NFTTokenOwnerModel.aggregate(
         [{ $match: finalFilters }, ...limitFilters],
-        { collation: { locale: "en", strength: 2 } }
+        { collation: { locale: 'en', strength: 2 } },
       );
     case AssetClass.ERC1155:
       return ERC1155NFTTokenOwnerModel.aggregate(
         [{ $match: finalFilters }, ...limitFilters],
-        { collation: { locale: "en", strength: 2 } }
+        { collation: { locale: 'en', strength: 2 } },
       );
     default:
       return NFTTokenOwnerModel.aggregate(
         [
           {
             $unionWith: {
-              coll: "nft-erc1155-token-owners",
+              coll: 'nft-erc1155-token-owners',
               pipeline: [],
             },
           },
           { $match: finalFilters },
           ...limitFilters,
         ],
-        { collation: { locale: "en", strength: 2 } }
+        { collation: { locale: 'en', strength: 2 } },
       );
   }
 };
 
-export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
+export const getOwnersByTokens = async (tokens, tokenType = '') => {
   const query = {
     $or: tokens.map((token) => ({
       contractAddress: token.contractAddress,
@@ -62,24 +66,24 @@ export const getOwnersByTokens = async (tokens, tokenType: string = "") => {
   switch (tokenType) {
     case AssetClass.ERC721:
       return NFTTokenOwnerModel.aggregate([{ $match: query }], {
-        collation: { locale: "en", strength: 2 },
+        collation: { locale: 'en', strength: 2 },
       });
     case AssetClass.ERC1155:
       return ERC1155NFTTokenOwnerModel.aggregate([{ $match: query }], {
-        collation: { locale: "en", strength: 2 },
+        collation: { locale: 'en', strength: 2 },
       });
     default:
       return NFTTokenOwnerModel.aggregate(
         [
           {
             $unionWith: {
-              coll: "nft-erc1155-token-owners",
+              coll: 'nft-erc1155-token-owners',
               pipeline: [],
             },
           },
           { $match: query },
         ],
-        { collation: { locale: "en", strength: 2 } }
+        { collation: { locale: 'en', strength: 2 } },
       );
   }
 };

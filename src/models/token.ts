@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 export const NFTTokenSchema = new mongoose.Schema({
   contractAddress: String,
@@ -16,4 +16,4 @@ export const NFTTokenSchema = new mongoose.Schema({
   source: String,
 });
 
-export const TokenModel = mongoose.model("nft-tokens", NFTTokenSchema);
+export const TokenModel = mongoose.model('nft-tokens', NFTTokenSchema);

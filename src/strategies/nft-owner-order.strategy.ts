@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   IGeneralParameters,
   INFTParameters,
@@ -6,11 +6,11 @@ import {
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from "../interfaces";
-import { AssetClass, TokenModel, OrderModel } from "../models";
-import { buildNftQueryFilters } from "../services/nfts/builders";
-import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
-import { buildOwnerQuery } from "../services/owners/owners.service";
+} from '../interfaces';
+import { AssetClass, TokenModel, OrderModel } from '../models';
+import { buildNftQueryFilters } from '../services/nfts/builders';
+import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
+import { buildOwnerQuery } from '../services/owners/owners.service';
 
 export class NftOwnerOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -18,7 +18,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
       parameters.nftParams,
       parameters.orderParams,
       parameters.ownerParams,
-      parameters.generalParams
+      parameters.generalParams,
     );
   }
 
@@ -26,9 +26,9 @@ export class NftOwnerOrderStrategy implements IStrategy {
     nftParams: INFTParameters,
     orderParams: IOrderParameters,
     ownerParams: IOwnerParameters,
-    generalParams: IGeneralParameters
+    generalParams: IGeneralParameters,
   ) {
-    console.log("Querying mixed params");
+    console.log('Querying mixed params');
 
     const { page, limit } = generalParams;
 
@@ -44,15 +44,15 @@ export class NftOwnerOrderStrategy implements IStrategy {
 
     const ownerQuery = buildOwnerQuery(
       ownerParams,
-      nftParams.tokenType.toString()
+      nftParams.tokenType.toString(),
     );
     const { finalFilters, sortingAggregation, sort } =
       await buildOrderQueryFilters(orderParams, generalParams);
 
-    console.time("query-time");
+    console.time('query-time');
     const [nfts, owners, orders] = await Promise.all([
       TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
-        collation: { locale: "en", strength: 2 },
+        collation: { locale: 'en', strength: 2 },
       }),
       ownerQuery,
       OrderModel.aggregate([
@@ -61,7 +61,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
         { $sort: sort },
       ]),
     ]);
-    console.timeEnd("query-time");
+    console.timeEnd('query-time');
 
     if (!nfts.length || !owners.length || !orders.length) {
       return {
@@ -81,7 +81,8 @@ export class NftOwnerOrderStrategy implements IStrategy {
           const contractIndex = order.make.assetType.contracts.indexOf(
             nft.contractAddress.toLowerCase(),
           );
-          if (-1 !== contractIndex &&
+          if (
+            -1 !== contractIndex &&
             order.make.assetType.tokenIds[contractIndex] &&
             order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
           ) {
@@ -89,12 +90,12 @@ export class NftOwnerOrderStrategy implements IStrategy {
           }
           return false;
         } else {
-          return order.make.assetType.tokenId === nft.tokenId &&
+          return (
+            order.make.assetType.tokenId === nft.tokenId &&
             order.make.assetType.contract === nft.contractAddress.toLowerCase()
+          );
         }
-      }
-          
-      );
+      });
 
       if (!nft) {
         continue;
@@ -104,7 +105,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
         (owner) =>
           owner.tokenId === nft.tokenId &&
           owner.contractAddress.toLowerCase() ===
-            nft.contractAddress.toLowerCase()
+            nft.contractAddress.toLowerCase(),
       );
 
       if (!ownersInfo.length) {
@@ -117,7 +118,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
         nftOrders = orders.filter(
           (o) =>
             o.make.assetType.contract === order.make.assetType.contract &&
-            o.make.assetType.tokenId === order.make.assetType.tokenId
+            o.make.assetType.tokenId === order.make.assetType.tokenId,
         );
       }
 

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 export const NFTTokenOwnerSchema = new mongoose.Schema({
   contractAddress: String,
@@ -13,6 +13,6 @@ export const NFTTokenOwnerSchema = new mongoose.Schema({
 });
 
 export const NFTTokenOwnerModel = mongoose.model(
-  "nft-token-owners",
-  NFTTokenOwnerSchema
+  'nft-token-owners',
+  NFTTokenOwnerSchema,
 );

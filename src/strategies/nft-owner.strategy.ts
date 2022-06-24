@@ -1,15 +1,15 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   IGeneralParameters,
   INFTParameters,
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from "../interfaces";
-import { TokenModel, OrderModel, OrderStatus, OrderSide } from "../models";
-import { buildNftQueryFilters } from "../services/nfts/builders";
-import { buildOwnerQuery } from "../services/owners/owners.service";
-import { getBundleOrdersByTokens } from "../services/orders/orders.service";
+} from '../interfaces';
+import { TokenModel, OrderModel, OrderStatus, OrderSide } from '../models';
+import { buildNftQueryFilters } from '../services/nfts/builders';
+import { buildOwnerQuery } from '../services/owners/owners.service';
+import { getBundleOrdersByTokens } from '../services/orders/orders.service';
 import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
 
 export class NftOwnerStrategy implements IStrategy {
@@ -17,34 +17,34 @@ export class NftOwnerStrategy implements IStrategy {
     return this.queryNftAndOwnerParams(
       parameters.nftParams,
       parameters.ownerParams,
-      parameters.generalParams
+      parameters.generalParams,
     );
   }
 
   private async queryNftAndOwnerParams(
     nftParams: INFTParameters,
     ownerParams: IOwnerParameters,
-    generalParams: IGeneralParameters
+    generalParams: IGeneralParameters,
   ) {
-    console.log("Querying nft and owner params");
+    console.log('Querying nft and owner params');
 
     const { page, limit } = generalParams;
 
     const ownerQuery = buildOwnerQuery(
       ownerParams,
-      nftParams.tokenType.toString()
+      nftParams.tokenType.toString(),
     );
 
-    console.time("owner-query-time");
+    console.time('owner-query-time');
     const owners = await ownerQuery;
-    console.timeEnd("owner-query-time");
+    console.timeEnd('owner-query-time');
 
     const nftFilters = await buildNftQueryFilters(
       nftParams,
       owners.map((owner) => ({
         contractAddress: owner.contractAddress,
         tokenId: owner.tokenId,
-      }))
+      })),
     );
 
     if (!nftFilters.length) {
@@ -56,7 +56,7 @@ export class NftOwnerStrategy implements IStrategy {
     }
 
     // Apply Pagination
-    console.time("nft-query-time");
+    console.time('nft-query-time');
     const nfts = await TokenModel.aggregate(
       [
         ...nftFilters,
@@ -65,10 +65,10 @@ export class NftOwnerStrategy implements IStrategy {
         getOrdersLookup(),
         { $sort: { searchScore: -1 } },
       ],
-      { collation: { locale: "en", strength: 2 } }
+      { collation: { locale: 'en', strength: 2 } },
     );
 
-    console.timeEnd("nft-query-time");
+    console.timeEnd('nft-query-time');
 
     const filtered = [];
 
@@ -87,7 +87,7 @@ export class NftOwnerStrategy implements IStrategy {
         (owner) =>
           owner.tokenId === nft.tokenId &&
           owner.contractAddress.toLowerCase() ===
-            nft.contractAddress.toLowerCase()
+            nft.contractAddress.toLowerCase(),
       );
 
       if (!nftOwners.length) {
@@ -125,7 +125,9 @@ export class NftOwnerStrategy implements IStrategy {
 
     const finalNfts = paginated.map((nft) => {
       const orders = bundleOrders.filter((order) => {
-        const contractIndex = order.make.assetType.contracts.indexOf(nft.contractAddress.toLowerCase());
+        const contractIndex = order.make.assetType.contracts.indexOf(
+          nft.contractAddress.toLowerCase(),
+        );
         if (
           -1 !== contractIndex &&
           order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
@@ -133,7 +135,7 @@ export class NftOwnerStrategy implements IStrategy {
           return true;
         }
         return false;
-      });     
+      });
       nft.orders.push(...orders);
 
       return nft;

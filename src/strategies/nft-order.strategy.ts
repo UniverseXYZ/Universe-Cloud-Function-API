@@ -4,28 +4,28 @@ import {
   IOrderParameters,
   IQueryParameters,
   IStrategy,
-} from "../interfaces";
-import { TokenModel, OrderModel, AssetClass } from "../models";
+} from '../interfaces';
+import { TokenModel, OrderModel, AssetClass } from '../models';
 
-import { buildNftQueryFilters } from "../services/nfts/builders";
+import { buildNftQueryFilters } from '../services/nfts/builders';
 
-import { buildOrderQueryFilters } from "../services/orders/builders/order.builder";
+import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
 
 export class NftOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
     return this.queryNftAndOrderParams(
       parameters.nftParams,
       parameters.orderParams,
-      parameters.generalParams
+      parameters.generalParams,
     );
   }
 
   private async queryNftAndOrderParams(
     nftParams: INFTParameters,
     orderParams: IOrderParameters,
-    generalParams: IGeneralParameters
+    generalParams: IGeneralParameters,
   ) {
-    console.log("Querying nft and order params");
+    console.log('Querying nft and order params');
 
     const { page, limit } = generalParams;
 
@@ -42,12 +42,8 @@ export class NftOrderStrategy implements IStrategy {
       await buildOrderQueryFilters(orderParams, generalParams);
 
     const [nfts, orders] = await Promise.all([
-      TokenModel.aggregate([
-        ...nftFilters, 
-        { $sort: { searchScore: -1 } },
-      ], 
-      {
-        collation: { locale: "en", strength: 2 },
+      TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
+        collation: { locale: 'en', strength: 2 },
       }),
       OrderModel.aggregate([
         { $match: finalFilters },
@@ -78,7 +74,8 @@ export class NftOrderStrategy implements IStrategy {
             const contractIndex = order.make.assetType.contracts.indexOf(
               nft.contractAddress.toLowerCase(),
             );
-            if (-1 !== contractIndex &&
+            if (
+              -1 !== contractIndex &&
               order.make.assetType.tokenIds[contractIndex] &&
               order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
             ) {
@@ -86,8 +83,11 @@ export class NftOrderStrategy implements IStrategy {
             }
             return false;
           } else {
-            return order.make.assetType.tokenId === nft.tokenId &&
-              order.make.assetType.contract === nft.contractAddress.toLowerCase()
+            return (
+              order.make.assetType.tokenId === nft.tokenId &&
+              order.make.assetType.contract ===
+                nft.contractAddress.toLowerCase()
+            );
           }
         });
 
@@ -101,7 +101,7 @@ export class NftOrderStrategy implements IStrategy {
           nftOrders = orders.filter(
             (o) =>
               o.make.assetType.contract === order.make.assetType.contract &&
-              o.make.assetType.tokenId === order.make.assetType.tokenId
+              o.make.assetType.tokenId === order.make.assetType.tokenId,
           );
         }
 
@@ -121,7 +121,8 @@ export class NftOrderStrategy implements IStrategy {
             const contractIndex = order.make.assetType.contracts.indexOf(
               nft.contractAddress.toLowerCase(),
             );
-            if (-1 !== contractIndex &&
+            if (
+              -1 !== contractIndex &&
               order.make.assetType.tokenIds[contractIndex] &&
               order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
             ) {
@@ -129,9 +130,11 @@ export class NftOrderStrategy implements IStrategy {
             }
             return false;
           } else {
-            return order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType.contract?.toLowerCase() ===
-              nft.contractAddress.toLowerCase()
+            return (
+              order.make.assetType.tokenId === nft.tokenId &&
+              order.make.assetType.contract?.toLowerCase() ===
+                nft.contractAddress.toLowerCase()
+            );
           }
         });
 
