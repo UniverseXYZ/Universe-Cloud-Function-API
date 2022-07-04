@@ -19,6 +19,7 @@ export enum SortOrderOptionsEnum {
   HighestPrice = 2,
   LowestPrice = 3,
   RecentlyListed = 4,
+  TokenId = 5,
 }
 
 export const buildOrderQueryFilters = async (
@@ -195,6 +196,9 @@ export const buildOrderQueryFilters = async (
       break;
     case SortOrderOptionsEnum.RecentlyListed:
       sort.createdAt = -1;
+      break;
+    case SortOrderOptionsEnum.TokenId:
+      sort.tokenId = 1;
       break;
     default:
       sort.createdAt = -1;

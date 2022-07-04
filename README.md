@@ -82,12 +82,13 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 
 ##### `maker`: Valid Ethereum wallet address
 
-##### `sortBy`: Allowed Values: "1", "2", "3", "4"
+##### `sortBy`: Allowed Values: "1", "2", "3", "4", "5"
 
 - 1 - Ending Soon
 - 2 - Highest Price
 - 3 - Lowest Price
 - 4 - Recently Listed
+- 5 - Token Id
 
 ##### `tokenAddress`: Valid ERC20 Token contract address
 

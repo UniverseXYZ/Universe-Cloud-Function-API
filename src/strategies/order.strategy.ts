@@ -109,7 +109,13 @@ export class OrderStrategy implements IStrategy {
         //   },
         // },
       ],
-      { collation: { locale: 'en', strength: 2 } },
+      {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      },
     );
 
     console.timeEnd('query-time');
