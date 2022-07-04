@@ -41,6 +41,13 @@ export class OwnerOrderStrategy implements IStrategy {
         { $match: finalFilters },
         ...sortingAggregation,
         { $sort: sort },
+        {
+          collation: {
+            locale: 'en',
+            strength: 2,
+            numericOrdering: true,
+          },
+        },
       ]),
       ownerQuery,
     ]);
