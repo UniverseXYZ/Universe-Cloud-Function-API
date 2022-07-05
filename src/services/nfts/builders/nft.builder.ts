@@ -1,11 +1,15 @@
 import { INFTParameters } from '../../../interfaces';
 import { getTokenIdsByCollectionAttributes } from '../../attributes/attributes.service';
 
+enum NftSortOrderOptionsEnum {
+  TokenId = 5,
+}
+
 export const buildNftQueryFilters = async (
   nftParams: INFTParameters,
   owners: any[] = [],
 ) => {
-  const { contractAddress, tokenIds, searchQuery, tokenType, traits } =
+  const { contractAddress, tokenIds, searchQuery, tokenType, traits, nftSort } =
     nftParams;
   const filters = [] as any;
   const searchFilters = [] as any;
@@ -20,7 +24,9 @@ export const buildNftQueryFilters = async (
       );
 
       if (!filteredOwners.length) {
-        return [];
+        return {
+          nftFilters: [],
+        };
       }
       owners = filteredOwners;
     }
@@ -60,7 +66,9 @@ export const buildNftQueryFilters = async (
     );
 
     if (!ids || !ids.length) {
-      return [];
+      return {
+        nftFilters: [],
+      };
     }
 
     filters.push({
@@ -78,7 +86,7 @@ export const buildNftQueryFilters = async (
     filters.push({ tokenType });
   }
 
-  const nftFilters = [];
+  const nftFilters = [] as any;
   // Assemble final order of filters
 
   if (searchFilters.length) {
@@ -110,7 +118,22 @@ export const buildNftQueryFilters = async (
     });
   }
 
+  const sort = {} as any;
+  switch (nftSort) {
+    case NftSortOrderOptionsEnum.TokenId:
+      sort.tokenId = 1;
+      break;
+    default:
+      sort.searchScore = -1;
+      sort.updatedAt = -1;
+      break;
+  }
+
   console.log('NFT FILTERS:');
   console.log(nftFilters);
-  return nftFilters;
+
+  return {
+    nftFilters,
+    sort,
+  };
 };

@@ -37,23 +37,27 @@ export const fetchNfts = async (params: IExecutionParameters) => {
   const {
     ownerAddress,
     tokenAddress,
+    contractAddress,
     tokenType,
     searchQuery,
+    tokenIds,
+    traits,
+    nftSort,
     page,
     limit,
     side,
     maker,
     assetClass,
-    tokenIds,
     beforeTimestamp,
-    contractAddress,
     minPrice,
     maxPrice,
     sortBy,
     hasOffers,
     buyNow,
-    traits,
   } = params;
+
+  // sortBy is a legacy parameter replaced by orderSort
+  const orderSort = params.orderSort ? params.orderSort : sortBy;
 
   const queryParams: IQueryParameters = {
     nftParams: {
@@ -62,11 +66,13 @@ export const fetchNfts = async (params: IExecutionParameters) => {
       searchQuery,
       tokenType: TokenType[tokenType] || '',
       traits,
+      nftSort: Number(nftSort),
     },
     orderParams: {
       minPrice,
       maxPrice,
-      sortBy: Number(sortBy),
+      // sortBy: Number(sortBy),
+      orderSort: Number(orderSort),
       hasOffers: !!hasOffers,
       buyNow: !!buyNow,
       side: Number(side),
@@ -87,7 +93,8 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     queryParams.nftParams.searchQuery ||
     queryParams.nftParams.tokenIds ||
     (queryParams.nftParams.traits &&
-      Object.keys(queryParams.nftParams.traits).length)
+      Object.keys(queryParams.nftParams.traits).length) ||
+    queryParams.nftParams.nftSort
   );
 
   const hasOrderParams = !!(
@@ -98,7 +105,7 @@ export const fetchNfts = async (params: IExecutionParameters) => {
     queryParams.orderParams.maxPrice ||
     queryParams.orderParams.beforeTimestamp ||
     queryParams.orderParams.tokenAddress ||
-    queryParams.orderParams.sortBy ||
+    queryParams.orderParams.orderSort ||
     queryParams.orderParams.hasOffers
   );
   // || queryParams.orderParams.buyNow

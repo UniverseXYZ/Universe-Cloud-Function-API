@@ -26,7 +26,7 @@ export class NftStrategy implements IStrategy {
     console.log('Querying only nft params');
     const { page, limit } = generalParams;
 
-    const nftFilters = await buildNftQueryFilters(nftParams);
+    const { nftFilters, sort } = await buildNftQueryFilters(nftParams);
 
     if (!nftFilters.length) {
       return {
@@ -42,12 +42,18 @@ export class NftStrategy implements IStrategy {
     const data = await TokenModel.aggregate(
       [
         ...nftFilters,
+        { $sort: sort },
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
         getOrdersLookup(),
-        { $sort: { searchScore: -1, updatedAt: -1 } },
       ],
-      { collation: { locale: 'en', strength: 2 } },
+      {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      },
     );
 
     if (!data.length) {

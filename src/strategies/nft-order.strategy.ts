@@ -29,7 +29,7 @@ export class NftOrderStrategy implements IStrategy {
 
     const { page, limit } = generalParams;
 
-    const nftFilters = await buildNftQueryFilters(nftParams);
+    const { nftFilters } = await buildNftQueryFilters(nftParams);
     if (!nftFilters.length) {
       return {
         page: page,
@@ -69,10 +69,10 @@ export class NftOrderStrategy implements IStrategy {
 
     const filtered = [];
     // Apply Pagination:
-    // Check if we have sortBy parameter
+    // Check if we have orderSort parameter
     // If yes --> ALWAYS iterate over the sorted orders to find the nfts, otherwise the sorting won't be persited to the response
     // If no --> we iterate over the nfts to find the orders
-    if (orderParams.sortBy) {
+    if (orderParams.orderSort) {
       for (let i = 0; i < orders.length; i++) {
         const order = orders[i];
 

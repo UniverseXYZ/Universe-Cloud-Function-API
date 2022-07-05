@@ -32,7 +32,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
 
     const { page, limit } = generalParams;
 
-    const nftFilters = await buildNftQueryFilters(nftParams);
+    const { nftFilters } = await buildNftQueryFilters(nftParams);
 
     if (!nftFilters.length) {
       return {

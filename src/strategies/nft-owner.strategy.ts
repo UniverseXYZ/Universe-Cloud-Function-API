@@ -39,7 +39,7 @@ export class NftOwnerStrategy implements IStrategy {
     const owners = await ownerQuery;
     console.timeEnd('owner-query-time');
 
-    const nftFilters = await buildNftQueryFilters(
+    const { nftFilters, sort } = await buildNftQueryFilters(
       nftParams,
       owners.map((owner) => ({
         contractAddress: owner.contractAddress,
@@ -60,12 +60,18 @@ export class NftOwnerStrategy implements IStrategy {
     const nfts = await TokenModel.aggregate(
       [
         ...nftFilters,
+        { $sort: sort },
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
         getOrdersLookup(),
-        { $sort: { searchScore: -1 } },
       ],
-      { collation: { locale: 'en', strength: 2 } },
+      {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      },
     );
 
     console.timeEnd('nft-query-time');
