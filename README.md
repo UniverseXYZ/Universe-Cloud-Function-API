@@ -59,9 +59,10 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 - In the query above the query will query all nfts with background either red or green AND purple skin
 - Case sensitive for both attribute and trait part of the query.
 
-#### `nftSort`: Allowed Values: "5"
+#### `nftSort`: Allowed Values: "5", "6"
 
-- 5 - Token Id
+- 5 - Token Id ascending
+- 6 - Token Id descending
 
 - Note that if you are passing any of the Order parameters, you should be using orderSort for sorting.
 
@@ -88,13 +89,14 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 
 ##### `maker`: Valid Ethereum wallet address
 
-##### `orderSort`: Allowed Values: "1", "2", "3", "4", "5"
+##### `orderSort`: Allowed Values: "1", "2", "3", "4", "5", "6"
 
 - 1 - Ending Soon
 - 2 - Highest Price
 - 3 - Lowest Price
 - 4 - Recently Listed
-- 5 - Token Id
+- 5 - Token Id ascending
+- 6 - Token Id descending
 
 - Note that orderSort is an Order parameter. Specifying orderSort in the request makes the result filtered by the default order filter. If you are pulling NFTs with no attachment to orders, look into the nftSort parameter.
 

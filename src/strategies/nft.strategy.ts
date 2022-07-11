@@ -55,9 +55,7 @@ export class NftStrategy implements IStrategy {
         },
       },
     );
-console.log(nftFilters);
-console.log(sort);
-console.log(data.map((x) => x.tokenId));
+
     if (!data.length) {
       return {
         page: page,
