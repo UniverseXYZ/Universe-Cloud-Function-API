@@ -32,7 +32,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
 
     const { page, limit } = generalParams;
 
-    const nftFilters = await buildNftQueryFilters(nftParams);
+    const { nftFilters } = await buildNftQueryFilters(nftParams);
 
     if (!nftFilters.length) {
       return {
@@ -59,6 +59,13 @@ export class NftOwnerOrderStrategy implements IStrategy {
         { $match: finalFilters },
         ...sortingAggregation,
         { $sort: sort },
+        {
+          collation: {
+            locale: 'en',
+            strength: 2,
+            numericOrdering: true,
+          },
+        },
       ]),
     ]);
     console.timeEnd('query-time');

@@ -41,6 +41,13 @@ export class OwnerOrderStrategy implements IStrategy {
         { $match: finalFilters },
         ...sortingAggregation,
         { $sort: sort },
+        {
+          collation: {
+            locale: 'en',
+            strength: 2,
+            numericOrdering: true,
+          },
+        },
       ]),
       ownerQuery,
     ]);
@@ -55,7 +62,7 @@ export class OwnerOrderStrategy implements IStrategy {
     }
 
     // Apply Pagination
-    // We have to iterate over orders in case sortBy is applied. Othwise the sort order won't be persisted
+    // We have to iterate over orders in case orderSort is applied. Othwise the sort order won't be persisted
     const filtered = [];
     for (let i = 0; i < orders.length; i++) {
       const order = orders[i];

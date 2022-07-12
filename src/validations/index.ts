@@ -38,9 +38,11 @@ export const validateNftParameters = (params: IExecutionParameters) => {
     side,
     maker,
     sortBy,
+    orderSort,
     tokenAddress,
     tokenIds,
     traits,
+    nftSort,
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
@@ -65,6 +67,14 @@ export const validateNftParameters = (params: IExecutionParameters) => {
 
   if (sortBy && !isValidPositiveIntParam(sortBy)) {
     throw new ValidationError('sortBy');
+  }
+
+  if (orderSort && !isValidPositiveIntParam(orderSort)) {
+    throw new ValidationError('orderSort');
+  }
+
+  if (nftSort && !isValidPositiveIntParam(nftSort)) {
+    throw new ValidationError('nftSort');
   }
 
   if (ownerAddress && !isValidContractAddress(ownerAddress)) {
@@ -147,6 +157,13 @@ export const validateNftParameters = (params: IExecutionParameters) => {
         );
       }
     }
+  }
+
+  if (sortBy && orderSort) {
+    throw new ApiError(
+      HTTP_STATUS_CODES.BAD_REQUEST,
+      `Simultaneous use of sortBy and orderSort is not supported`,
+    );
   }
 };
 
