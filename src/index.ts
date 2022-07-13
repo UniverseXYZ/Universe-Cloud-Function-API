@@ -50,10 +50,11 @@ export async function nfts(req: Request, res: Response) {
 
     console.timeEnd('service-execution-time');
 
-    if (config.node_env === 'production') {
-      client.disconnect();
-      console.log('Disconnected from DB');
-    }
+    // if (config.node_env === "production") {
+    //   client.disconnect();
+    //   console.log("Disconnected from DB");
+    // }
+    
   } catch (err) {
     console.log(err);
     if (err.statusCode) {
