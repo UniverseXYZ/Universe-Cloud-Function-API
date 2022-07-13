@@ -78,9 +78,9 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 
 ##### `hasOffers`: Allowed values: "true"
 
-##### `minPrice`: Valid positive integer
+##### `minPrice`: Valid positive number
 
-##### `maxPrice`: Valid positive integer
+##### `maxPrice`: Valid positive number
 
 ##### `side`: Allowed values: "0" or "1"
 
