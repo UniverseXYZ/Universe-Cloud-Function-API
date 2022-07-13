@@ -37,10 +37,8 @@ export class OwnerOrderStrategy implements IStrategy {
 
     console.time('query-time');
     const [orders, owners] = await Promise.all([
-      OrderModel.aggregate([
-        { $match: finalFilters },
-        ...sortingAggregation,
-        { $sort: sort },
+      OrderModel.aggregate(
+        [{ $match: finalFilters }, ...sortingAggregation, { $sort: sort }],
         {
           collation: {
             locale: 'en',
@@ -48,7 +46,7 @@ export class OwnerOrderStrategy implements IStrategy {
             numericOrdering: true,
           },
         },
-      ]),
+      ),
       ownerQuery,
     ]);
 
