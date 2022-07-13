@@ -66,7 +66,7 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 
 - Note that if you are passing any of the Order parameters, you should be using orderSort for sorting.
 
-#### Order parameters
+### Order parameters
 
 ##### `assetClass`: Allowed values: "ERC721", "ERC1155", "ERC721_BUNDLE"
 

@@ -52,13 +52,15 @@ export class NftOwnerOrderStrategy implements IStrategy {
     console.time('query-time');
     const [nfts, owners, orders] = await Promise.all([
       TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
-        collation: { locale: 'en', strength: 2 },
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
       }),
       ownerQuery,
-      OrderModel.aggregate([
-        { $match: finalFilters },
-        ...sortingAggregation,
-        { $sort: sort },
+      OrderModel.aggregate(
+        [{ $match: finalFilters }, ...sortingAggregation, { $sort: sort }],
         {
           collation: {
             locale: 'en',
@@ -66,7 +68,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
             numericOrdering: true,
           },
         },
-      ]),
+      ),
     ]);
     console.timeEnd('query-time');
 
