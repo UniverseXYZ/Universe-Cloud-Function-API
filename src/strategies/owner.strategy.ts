@@ -19,6 +19,51 @@ export class OwnerStrategy implements IStrategy {
     );
   }
 
+  count(parameters: IQueryParameters) {
+    return this.countOnlyOwnerParams(
+      parameters.ownerParams,
+      parameters.nftParams.tokenType.toString(),
+    );
+  }
+
+  private async countOnlyOwnerParams(
+    ownerParams: IOwnerParameters,
+    tokenType: string,
+  ) {
+    console.log('Counting only owner params');
+
+    const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
+
+    console.time('query-time');
+    const owners = await ownerQuery;
+    console.timeEnd('query-time');
+
+    let data = [];
+
+    if (owners.length) {
+      console.time('query-time2');
+      data = await TokenModel.aggregate(
+        [
+          {
+            $match: {
+              $or: owners.map((owner) => ({
+                tokenId: owner.tokenId,
+                contractAddress: owner.contractAddress,
+              })),
+            },
+          },
+          { $count: 'count' },
+        ],
+        { collation: { locale: 'en', strength: 2 } },
+      );
+      console.timeEnd('query-time2');
+    }
+
+    return {
+      count: data.length ? data[0].count : 0,
+    };
+  }
+
   private async queryOnlyOwnerParams(
     ownerParams: IOwnerParameters,
     generalParams: IGeneralParameters,

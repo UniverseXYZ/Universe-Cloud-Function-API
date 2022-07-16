@@ -170,19 +170,19 @@ export const validateNftParameters = (params: IExecutionParameters) => {
 export const validateCountParameters = (params: IExecutionParameters) => {
   const { ownerAddress, contractAddress } = params;
 
-  if (!ownerAddress && !contractAddress) {
-    throw new ApiError(
-      HTTP_STATUS_CODES.BAD_REQUEST,
-      `ownerAddress or contractAddress parameter is required`,
-    );
-  }
+  // if (!ownerAddress && !contractAddress) {
+  //   throw new ApiError(
+  //     HTTP_STATUS_CODES.BAD_REQUEST,
+  //     `ownerAddress or contractAddress parameter is required`,
+  //   );
+  // }
 
-  if (ownerAddress && contractAddress) {
-    throw new ApiError(
-      HTTP_STATUS_CODES.BAD_REQUEST,
-      `Combination of ownerAddress and contractAddress parameters isn't allowed`,
-    );
-  }
+  // if (ownerAddress && contractAddress) {
+  //   throw new ApiError(
+  //     HTTP_STATUS_CODES.BAD_REQUEST,
+  //     `Combination of ownerAddress and contractAddress parameters isn't allowed`,
+  //   );
+  // }
 
   if (ownerAddress && !isValidContractAddress(ownerAddress)) {
     throw new ValidationError('ownerAddress');

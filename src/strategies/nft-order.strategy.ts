@@ -20,6 +20,95 @@ export class NftOrderStrategy implements IStrategy {
     );
   }
 
+  count(parameters: IQueryParameters) {
+    return this.countNftAndOrderParams(
+      parameters.nftParams,
+      parameters.orderParams,
+      parameters.generalParams,
+    );
+  }
+
+  private async countNftAndOrderParams(
+    nftParams: INFTParameters,
+    orderParams: IOrderParameters,
+    generalParams: IGeneralParameters,
+  ) {
+    console.log('Counting nft and order params');
+
+    const { page, limit } = generalParams;
+
+    const { nftFilters } = await buildNftQueryFilters(nftParams);
+    if (!nftFilters.length) {
+      return {
+        count: 0,
+      };
+    }
+    //TODO: Try to transfer filters like contractAddress, ownerAddress... to narrow down order search
+    const { finalFilters, sortingAggregation, sort } =
+      await buildOrderQueryFilters(orderParams, generalParams);
+
+    const [nfts, orders] = await Promise.all([
+      TokenModel.aggregate([...nftFilters], {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      }),
+      OrderModel.aggregate([{ $match: finalFilters }], {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      }),
+    ]);
+
+    if (!nfts.length || !orders.length) {
+      return {
+        count: 0,
+      };
+    }
+
+    const filtered = [];
+
+    for (let i = 0; i < nfts.length; i++) {
+      const nft = nfts[i];
+
+      const nftOrders = orders.filter((order) => {
+        if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+          const contractIndex = order.make.assetType.contracts.indexOf(
+            nft.contractAddress.toLowerCase(),
+          );
+          if (
+            -1 !== contractIndex &&
+            order.make.assetType.tokenIds[contractIndex] &&
+            order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+          ) {
+            return true;
+          }
+          return false;
+        } else {
+          return (
+            order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType.contract?.toLowerCase() ===
+              nft.contractAddress.toLowerCase()
+          );
+        }
+      });
+
+      if (!nftOrders.length) {
+        continue;
+      }
+
+      filtered.push(nft);
+    }
+
+    return {
+      count: filtered.length,
+    };
+  }
+
   private async queryNftAndOrderParams(
     nftParams: INFTParameters,
     orderParams: IOrderParameters,

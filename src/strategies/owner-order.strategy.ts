@@ -20,6 +20,102 @@ export class OwnerOrderStrategy implements IStrategy {
     );
   }
 
+  count(parameters: IQueryParameters) {
+    return this.countOrderAndOwnerParams(
+      parameters.orderParams,
+      parameters.ownerParams,
+      parameters.generalParams,
+      parameters.nftParams.tokenType.toString(),
+    );
+  }
+
+  private async countOrderAndOwnerParams(
+    orderParams: IOrderParameters,
+    ownerParams: IOwnerParameters,
+    generalParams: IGeneralParameters,
+    tokenType: string,
+  ) {
+    console.log('Counting order and owner params');
+
+    const { finalFilters, sortingAggregation, sort } =
+      await buildOrderQueryFilters(orderParams, generalParams);
+
+    const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
+
+    console.time('query-time');
+    const [orders, owners] = await Promise.all([
+      OrderModel.aggregate([{ $match: finalFilters }], {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      }),
+      ownerQuery,
+    ]);
+
+    console.timeEnd('query-time');
+    if (!orders.length || !owners.length) {
+      return {
+        count: 0,
+      };
+    }
+
+    const filtered = [];
+    for (let i = 0; i < orders.length; i++) {
+      const order = orders[i];
+
+      const owner = owners.find((owner) => {
+        if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+          // assuming that if an owner owns at least 1 nft in an active bundle,
+          // they own all other nfts in that bundle
+          const contractIndex = order.make.assetType.contracts.indexOf(
+            owner.contractAddress.toLowerCase(),
+          );
+          if (
+            -1 !== contractIndex &&
+            order.make.assetType.tokenIds[contractIndex].includes(owner.tokenId)
+          ) {
+            return true;
+          }
+          return false;
+        } else {
+          return (
+            order.make.assetType.tokenId === owner.tokenId &&
+            order.make.assetType.contract?.toLowerCase() ===
+              owner.contractAddress.toLowerCase()
+          );
+        }
+      });
+
+      if (!owner) {
+        continue;
+      }
+
+      filtered.push(owner);
+    }
+
+    if (!filtered.length) {
+      return {
+        count: 0,
+      };
+    }
+
+    //  Populate order
+    const nftsQuery = filtered.map((owner) => ({
+      tokenId: owner.tokenId,
+      contractAddress: owner.contractAddress,
+    }));
+
+    const nftsCount = await TokenModel.find({
+      $and: [{ $or: nftsQuery }],
+    }).count();
+
+    return {
+      count: nftsCount,
+    };
+  }
+
   private async queryOrderAndOwnerParams(
     orderParams: IOrderParameters,
     ownerParams: IOwnerParameters,

@@ -19,6 +19,40 @@ export class NftStrategy implements IStrategy {
     );
   }
 
+  count(parameters: IQueryParameters) {
+    return this.countOnlyNftParams(parameters.nftParams);
+  }
+
+  private async countOnlyNftParams(nftParams: INFTParameters) {
+    console.log('Counting only nft params');
+
+    const { nftFilters } = await buildNftQueryFilters(nftParams);
+
+    if (!nftFilters.length) {
+      return 0;
+    }
+
+    console.log('Querying...');
+    console.time('query-time');
+
+    const data = await TokenModel.aggregate(
+      [...nftFilters, { $count: 'count' }],
+      {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      },
+    );
+
+    console.timeEnd('query-time');
+
+    return {
+      count: data.length ? data[0].count : 0,
+    };
+  }
+
   private async queryOnlyNftParams(
     nftParams: INFTParameters,
     generalParams: IGeneralParameters,
