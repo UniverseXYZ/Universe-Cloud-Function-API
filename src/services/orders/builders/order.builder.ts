@@ -95,7 +95,7 @@ export const buildOrderQueryFilters = async (
   }
 
   if (tokenAddress) {
-    const sideToFilter = side && OrderSide.BUY === side ? 'take' : 'make';
+    const sideToFilter = side && OrderSide.BUY === side ? 'make' : 'take';
     if (tokenAddress === ethers.constants.AddressZero) {
       filters.push({
         [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
