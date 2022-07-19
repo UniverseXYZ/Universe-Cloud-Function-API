@@ -3,6 +3,7 @@ import {
   ApiError,
   ERROR_MESSAGES,
   HTTP_STATUS_CODES,
+  PositiveIntValidationError,
   PositiveNumberValidationError,
   ValidationError,
 } from '../errors';
@@ -46,23 +47,23 @@ export const validateNftParameters = (params: IExecutionParameters) => {
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
-    throw new PositiveNumberValidationError('beforeTimestamp');
+    throw new PositiveIntValidationError('beforeTimestamp');
   }
 
   if (limit && !isValidPositiveIntParam(limit)) {
-    throw new PositiveNumberValidationError('limit');
+    throw new PositiveIntValidationError('limit');
   }
 
-  if (maxPrice && !isValidPositiveIntParam(maxPrice)) {
+  if (maxPrice && !isValidPositiveNumberParam(maxPrice)) {
     throw new PositiveNumberValidationError('maxPrice');
   }
 
-  if (minPrice && !isValidPositiveIntParam(maxPrice)) {
+  if (minPrice && !isValidPositiveNumberParam(minPrice)) {
     throw new PositiveNumberValidationError('minPrice');
   }
 
   if (page && !isValidPositiveIntParam(page)) {
-    throw new PositiveNumberValidationError('page');
+    throw new PositiveIntValidationError('page');
   }
 
   if (sortBy && !isValidPositiveIntParam(sortBy)) {
@@ -129,7 +130,7 @@ export const validateNftParameters = (params: IExecutionParameters) => {
     const ids = tokenIds.split(',');
     ids.forEach((id) => {
       if (!isValidPositiveIntParam(id)) {
-        throw new PositiveNumberValidationError('tokenIds');
+        throw new PositiveIntValidationError('tokenIds');
       }
     });
   }
@@ -199,6 +200,10 @@ export const isValidPositiveIntParam = (parameter: string) => {
     !Number.isInteger(Number(parameter)) ||
     Number(parameter) <= 0
   );
+};
+
+export const isValidPositiveNumberParam = (parameter: string) => {
+  return !(isNaN(Number(parameter)) || Number(parameter) <= 0);
 };
 
 export const isValidContractAddress = (parameter: string) => {
