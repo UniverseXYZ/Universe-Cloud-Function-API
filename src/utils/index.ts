@@ -52,4 +52,9 @@ export class Utils {
     //USDC Rinkeby Token has 18 decimals, mainnet has 6
     [TOKENS.USDC]: config.chain_id === '1' ? 6 : 18,
   };
+
+  public static tokenAddresses =
+    config.chain_id === '1'
+      ? this.PROD_TOKEN_ADDRESSES
+      : this.DEV_TOKEN_ADDRESSES;
 }

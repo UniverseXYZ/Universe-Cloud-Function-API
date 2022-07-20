@@ -61,7 +61,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', daiPrice],
+                    $eq: ['$make.assetType.contract', Utils.tokenAddresses.dai],
                   },
                   then: {
                     $divide: [
@@ -72,7 +72,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', wethPrice],
+                    $eq: ['$make.assetType.contract', Utils.tokenAddresses.weth],
                   },
                   then: {
                     $divide: [
@@ -84,7 +84,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', usdcPrice],
+                    $eq: ['$make.assetType.contract', Utils.tokenAddresses['usd-coin']],
                   },
                   then: {
                     $divide: [
@@ -96,7 +96,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', xyzPrice],
+                    $eq: ['$make.assetType.contract', Utils.tokenAddresses['universe-xyz']],
                   },
                   then: {
                     $divide: [
@@ -137,7 +137,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', daiPrice],
+                    $eq: ['$take.assetType.contract', Utils.tokenAddresses.dai],
                   },
                   then: {
                     $multiply: [
@@ -153,7 +153,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', wethPrice],
+                    $eq: ['$take.assetType.contract', Utils.tokenAddresses.weth],
                   },
                   then: {
                     $multiply: [
@@ -169,7 +169,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', usdcPrice],
+                    $eq: ['$take.assetType.contract', Utils.tokenAddresses['usd-coin']],
                   },
                   then: {
                     $multiply: [
@@ -185,7 +185,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', xyzPrice],
+                    $eq: ['$take.assetType.contract', Utils.tokenAddresses['universe-xyz']],
                   },
                   then: {
                     $multiply: [
