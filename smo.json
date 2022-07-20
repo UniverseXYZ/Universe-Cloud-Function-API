@@ -1,0 +1,671 @@
+{
+  "page": 1,
+  "size": 10,
+  "nfts": [
+    {
+      "_id": "621eb379e6c4f57cf57f0b71",
+      "contractAddress": "0x5a322B56eD080c559Da183b69aa720d19690EAF2",
+      "tokenId": "1927",
+      "createdAt": "2022-03-01T23:59:52.922Z",
+      "needToRefresh": true,
+      "alternativeMediaFiles": [],
+      "owners": [
+        { "owner": "0x88b503C81A4Fb9C9c5464dd3C6835fC34B2cc85d", "value": "1" }
+      ],
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-19T03:32:42.374Z",
+      "processingSentAt": "2022-03-02T00:13:25.010Z",
+      "externalDomainViewUrl": "https://arweave.net/yI3f77IG3TCtr68Pr90xRnZt7iuBypeObQw22TfDUJI",
+      "metadata": {
+        "name": "tests",
+        "image_url": "https://arweave.net/tUpr8EZoStaqh03ZddeRvJUhT550VEfgoUZWMSnayfQ",
+        "image_preview_url": "https://universeapp-assets-auctions.s3.amazonaws.com/c16fc610e5488b32ff423a54d4665e6c2db0da0c0a82b758.webp",
+        "image_thumbnail_url": "https://universeapp-assets-auctions.s3.amazonaws.com/6b19dc20ff2871dced738a020d13a9879bca2c1422e1937b.webp",
+        "image_original_url": "https://universeapp-assets-auctions.s3.amazonaws.com/c16fc610e5488b32ff423a54d4665e6c2db0da0c0a82b758.webp",
+        "royalties": [
+          {
+            "address": "0xc5b05d5fff403cad71dd965283abf23051cca5d2",
+            "amount": 10
+          }
+        ]
+      },
+      "sentAt": "2022-03-02T00:13:25.607Z",
+      "sentForMediaAt": "2022-03-02T17:04:00.088Z",
+      "source": "ARCHIVE",
+      "orders": [
+        {
+          "_id": "62a08e0688e214a455f30cd7",
+          "id": "2d271baf-bbb0-41b7-944d-d11fd3580aa1",
+          "createdAt": "2022-03-17T23:16:36.64164",
+          "updatedAt": "2022-03-17T23:16:36.64164",
+          "status": 0,
+          "hash": "0x8d9fdd5a9a24db8f3040fb751ad698b439237edcf36443c9bba1997325101744",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x88b503c81a4fb9c9c5464dd3c6835fc34b2cc85d",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "1927",
+              "contract": "0x5a322b56ed080c559da183b69aa720d19690eaf2",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "9988776655443322000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 25,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0xaeec7071b043b56a07f95693096985e8659b468a7e5e59392f7d720380ef411953f63abafa433394848588b6a0a59db822a69986851c8dd35f56270dae892ee31c",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "622f3553b102965e0c53e253",
+      "contractAddress": "0xB4F9a4a1909e129064ee386A12A53702E05F54f3",
+      "tokenId": "2",
+      "createdAt": "2022-03-14T12:30:11.592Z",
+      "needToRefresh": false,
+      "alternativeMediaFiles": [],
+      "source": "MONITOR",
+      "tokenType": "ERC721",
+      "updatedAt": "2022-03-14T12:30:24.811Z",
+      "processingSentAt": "2022-03-14T12:30:15.009Z",
+      "sentAt": "2022-03-14T12:30:16.093Z",
+      "externalDomainViewUrl": "https://arweave.net/kRYkYtwLJNjHcehkeobOHZminFiYQtR05T7P4eBGhuY",
+      "metadata": {
+        "name": "UnoreverseMoon140322",
+        "image_url": "https://arweave.net/5GrVsBBhscK3yFTHBWmOV6slEFF6IbsXesb6dtumHJ4",
+        "image_preview_url": "https://universeapp-assets-dev.s3.amazonaws.com/1d8927b129438bab378bd553c0da03f9c4a65eaedd53aefc.jpeg",
+        "image_thumbnail_url": "https://universeapp-assets-dev.s3.amazonaws.com/a712467dc2746f54dd3fc933621d699a3f42f0cc66900133.jpeg",
+        "image_original_url": "https://universeapp-assets-dev.s3.amazonaws.com/b1216c60e091d8fbee1ac920eea54be6ea5ea24d0b0f8831.jpeg"
+      },
+      "sentForMediaAt": "2022-03-14T12:30:24.786Z",
+      "owners": [
+        { "owner": "0x366DE0dA1Aa4C3095D74f3d0A485363127Ac7234", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0688e214a455f30acc",
+          "id": "e4aca7f2-55da-461b-8cd9-324ca114e1de",
+          "createdAt": "2022-03-16T14:14:54.345667",
+          "updatedAt": "2022-03-16T14:14:54.345667",
+          "status": 0,
+          "hash": "0xd1abb8cec56c9f85650d6266f486b77e955a8367820199072b5d606c1da80ba2",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x366de0da1aa4c3095d74f3d0a485363127ac7234",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "2",
+              "contract": "0xb4f9a4a1909e129064ee386a12a53702e05f54f3",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "8888888888888888000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 21,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0xd92bbd4fe3c975c97fcaf477c8acccfd4b7bc7e3cc8b304e2375113e8e947c0b2e11dcdd40edb17cbaab0a3bbd515373b04a54d15e8145e40ccf8441630cfd351b",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "62334aa9b102963b7d7d5ae7",
+      "contractAddress": "0x1EA9791582107861424D698E15AD816eA9cd5Df7",
+      "tokenId": "1",
+      "createdAt": "2022-03-17T14:50:17.227Z",
+      "needToRefresh": false,
+      "alternativeMediaFiles": [],
+      "source": "MONITOR",
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-20T09:09:53.398Z",
+      "processingSentAt": "2022-03-17T14:50:20.027Z",
+      "externalDomainViewUrl": "https://arweave.net/iPJP3tyQ-S9_41y1JbXHPH4-bMbexI3aZflbytL6tTM",
+      "metadata": {
+        "name": "OG TRANSMENTAL",
+        "description": "click click blip blip \r\n\r\n5% to 0x5473580406d12e1cbd4c00b77e158fff0ce9424e",
+        "image_url": "https://arweave.net/S39iHAFuhFJR5NmqaJaYsqtOe4se7R4NFZc1l_T1waw",
+        "image_preview_url": "https://universeapp-assets-dev.s3.amazonaws.com/0396b5e829bc1e7812cacd3d6cb392f675181c224ebbf7ce.png",
+        "image_thumbnail_url": "https://universeapp-assets-dev.s3.amazonaws.com/0396b5e829bc1e7812cacd3d6cb392f675181c224ebbf7ce.png",
+        "image_original_url": "https://universeapp-assets-dev.s3.amazonaws.com/0396b5e829bc1e7812cacd3d6cb392f675181c224ebbf7ce.png",
+        "royalties": [
+          {
+            "address": "0x5473580406d12e1cbd4c00b77e158fff0ce9424e",
+            "amount": 5
+          }
+        ]
+      },
+      "sentAt": "2022-03-17T14:50:21.278Z",
+      "sentForMediaAt": "2022-03-17T14:50:32.224Z",
+      "owners": [
+        { "owner": "0x5473580406D12E1cBD4c00B77e158FfF0CE9424e", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0688e214a455f30b4c",
+          "id": "55a069f1-3a97-4842-aff8-da919dd00a46",
+          "createdAt": "2022-03-22T00:23:58.078711",
+          "updatedAt": "2022-03-22T00:23:58.078711",
+          "status": 0,
+          "hash": "0x88fe5551b3316fa3c375b9ce559165fe7e790b73da333edf647bb3c2d9434717",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x5473580406d12e1cbd4c00b77e158fff0ce9424e",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "1",
+              "contract": "0x1ea9791582107861424d698e15ad816ea9cd5df7",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "20000000000000000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 63,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0x3a6c187b6c0d99d9676dd994918edcb6a97e61d83efa67f4c1b2356ddb515b2f7485e15cc0312f7902f7c421d679bc3bb74bc7725ca0012ee814681e5dda264d1c",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "623864ceb102960575270d74",
+      "contractAddress": "0xbA0Ade89D1711bE28692BECa81d5BD8990F4b3A4",
+      "tokenId": "2",
+      "createdAt": "2022-03-21T11:43:10.723Z",
+      "needToRefresh": false,
+      "alternativeMediaFiles": [],
+      "source": "MONITOR",
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-20T09:02:44.879Z",
+      "processingSentAt": "2022-03-21T11:43:35.019Z",
+      "sentAt": "2022-03-21T11:43:36.056Z",
+      "externalDomainViewUrl": "https://arweave.net/R1mO05XUmG59MwaORFe3XSAvO04t3_Os9Ilaf7XXQBU",
+      "metadata": {
+        "name": "NameBreakerfriendNameBreaker1234",
+        "image_url": "https://arweave.net/H3tyW9tv2ydnejn1rVM5qGrhBGfnj4ZU1Qg8UVaz-Z4",
+        "image_preview_url": "https://universeapp-assets-dev.s3.amazonaws.com/dc0ea89cbd2dcfc8979211e18753fa7f45890b0fb05023c1.jpg",
+        "image_thumbnail_url": "https://universeapp-assets-dev.s3.amazonaws.com/ce057fb03a85808c48dd855a6ef94c744c0215535d3987d3.jpg",
+        "image_original_url": "https://universeapp-assets-dev.s3.amazonaws.com/70dba61479ef528c8eb9073768e321065c970bd2cee84a53.jpg"
+      },
+      "sentForMediaAt": "2022-03-21T11:43:40.389Z",
+      "owners": [
+        { "owner": "0x366DE0dA1Aa4C3095D74f3d0A485363127Ac7234", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0688e214a455f30db7",
+          "id": "0c4e842f-25a1-4e3f-8319-3261815c31a7",
+          "createdAt": "2022-03-21T11:45:56.849795",
+          "updatedAt": "2022-03-21T11:45:56.849795",
+          "status": 0,
+          "hash": "0x629ffe5c138e89a57580b07b92850e68f57cd216fd4ca393d15a9a08bff0e780",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x366de0da1aa4c3095d74f3d0a485363127ac7234",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "2",
+              "contract": "0xba0ade89d1711be28692beca81d5bd8990f4b3a4",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "12345678000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 26,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0x6c51b26ada7dcb412f7ad66b4905005e8e6afd862009aa31686c5f9fa1329f01057af1634d6920adedef8b782f30330acddcb809ad20d0ba381af8134f8fb1641c",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "621eb3b9e6c4f565951fe8bf",
+      "contractAddress": "0x5a322B56eD080c559Da183b69aa720d19690EAF2",
+      "tokenId": "3511",
+      "createdAt": "2022-03-02T00:00:57.169Z",
+      "needToRefresh": true,
+      "alternativeMediaFiles": [],
+      "owners": [
+        { "owner": "0x366DE0dA1Aa4C3095D74f3d0A485363127Ac7234", "value": "1" }
+      ],
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-19T03:32:42.374Z",
+      "processingSentAt": "2022-03-02T00:01:00.061Z",
+      "externalDomainViewUrl": "https://arweave.net/M9Qhvj17O37HmIAtMTtOIXJlUOxG9D_QGF2Y3o8jwQQ",
+      "metadata": {
+        "name": "roaylties",
+        "description": "test",
+        "image_url": "https://arweave.net/nnWpJqVDVnt4h507ZCU1Sj6K1zaAihaEKnsjrIFU84s",
+        "image_preview_url": "https://universeapp-assets-dev.s3.amazonaws.com/94d6de004c279d06cf77c9b72342820291647375febc75c9.jpeg",
+        "image_thumbnail_url": "https://universeapp-assets-dev.s3.amazonaws.com/76582244f89f5c05ccd0b33f8eb3fcfed27afd3ec2cd68c5.jpeg",
+        "image_original_url": "https://universeapp-assets-dev.s3.amazonaws.com/c7e5887f32e38301b589d990b6243b38ad02f3d0be3b0260.jpeg",
+        "royalties": [
+          {
+            "address": "0x13bbdc67f17a0c257ef67328c658950573a16ade",
+            "amount": 16
+          }
+        ]
+      },
+      "sentAt": "2022-03-02T00:01:00.830Z",
+      "sentForMediaAt": "2022-03-02T00:13:30.070Z",
+      "source": "ARCHIVE",
+      "orders": [
+        {
+          "_id": "62a08e0688e214a455f30db5",
+          "id": "0298e6d0-2ee9-4687-988d-947f8848647d",
+          "createdAt": "2022-03-21T11:32:42.019688",
+          "updatedAt": "2022-03-21T11:32:42.019688",
+          "status": 0,
+          "hash": "0x30ed05bacd12df7100ef673d65ae0178d545b3f6aeb155d8452fd640dd63a001",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x366de0da1aa4c3095d74f3d0a485363127ac7234",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "3511",
+              "contract": "0x5a322b56ed080c559da183b69aa720d19690eaf2",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "999999000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 25,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0x37d3b5d297501fb8f1ed63df069c78bf0f79963337623e43baacbc49310eafac5a62f9fc2d38f4d81ed8bd2ea52903ffc4ba1825efe261e3bbae9931b179353d1c",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "623a4dd2b1029647ea540cd4",
+      "contractAddress": "0xfD7D165344a04241AB3Cd07d021eEC17F03ADc51",
+      "tokenId": "1400",
+      "createdAt": "2022-03-22T22:29:38.701Z",
+      "source": "ARCHIVE",
+      "needToRefresh": false,
+      "alternativeMediaFiles": [],
+      "tokenType": "ERC721",
+      "updatedAt": "2022-06-27T03:25:47.269Z",
+      "processingSentAt": "2022-03-22T22:33:40.023Z",
+      "externalDomainViewUrl": "https://arweave.net/aRc63GnlNOH0zfjbb80fPI_YHMR-aK7N_rwkM6VQiXs",
+      "metadata": {
+        "name": "tes",
+        "image_url": "https://arweave.net/zL8bWTInASUCj2W09EDmFE5IC0i4IVHfvC2LbcGXnL8",
+        "image_preview_url": "https://universeapp-assets-auctions.s3.amazonaws.com/ce3fbbd1991b2f979bbe2d8a77dd0c03e628b9e7baed1f8f.jpg",
+        "image_thumbnail_url": "https://universeapp-assets-auctions.s3.amazonaws.com/440d41f80f823fe76cb5d84b0910c362e19102ba15b6e361.jpg",
+        "image_original_url": "https://universeapp-assets-auctions.s3.amazonaws.com/3d70d48077ae61cb871917e0cc4e507cbdbcf286b26a289c.jpg",
+        "royalties": [
+          {
+            "address": "0xc5b05d5fff403cad71dd965283abf23051cca5d2",
+            "amount": 10
+          }
+        ]
+      },
+      "sentAt": "2022-03-22T22:33:41.317Z",
+      "sentForMediaAt": "2022-03-22T22:34:21.123Z",
+      "owners": [
+        { "owner": "0xC5b05d5ffF403cAd71dd965283aBf23051ccA5d2", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0c88e214a455f30e99",
+          "id": "1ed2584c-52e2-41ca-b235-72fd41b05570",
+          "createdAt": "2022-03-24T10:01:16.797826",
+          "updatedAt": "2022-03-24T10:01:16.797826",
+          "status": 0,
+          "hash": "0xd557d45ed63267d6d776551996bada7e1c381ceb1226f5050a2606b7e452fbb5",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0xc5b05d5fff403cad71dd965283abf23051cca5d2",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "1400",
+              "contract": "0xfd7d165344a04241ab3cd07d021eec17f03adc51",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "11111000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 68,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0x0c62272cb1240edb21254692e549cfc7e72cd79cf01facf6b2563424718d90f337ae1c8f56c53ac4e51a779eabfddfee0c32cfe09fab7362fe2a7fe9b5f66d021b",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "623203e6b102967722190ceb",
+      "contractAddress": "0x5a322B56eD080c559Da183b69aa720d19690EAF2",
+      "tokenId": "3658",
+      "createdAt": "2022-03-16T15:36:06.405Z",
+      "needToRefresh": true,
+      "alternativeMediaFiles": [],
+      "source": "MONITOR",
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-19T03:32:42.374Z",
+      "processingSentAt": "2022-03-16T15:36:10.023Z",
+      "externalDomainViewUrl": "https://arweave.net/Fw6ZUdUBOLrf1vDvz2oqMAqYVNaYJiRHHz0ugSUnmVY",
+      "metadata": {
+        "name": "wen shirtless for my crew",
+        "image_url": "https://arweave.net/JaNI37CVV1Hs08P1sS6nooYYInnSakftw_xXJlykLFo",
+        "image_preview_url": "https://universeapp-assets-dev.s3.amazonaws.com/9229b641a4af4f1b8861fc7cf2ba41717d982b77798a812d.jpeg",
+        "image_thumbnail_url": "https://universeapp-assets-dev.s3.amazonaws.com/9229b641a4af4f1b8861fc7cf2ba41717d982b77798a812d.jpeg",
+        "image_original_url": "https://universeapp-assets-dev.s3.amazonaws.com/9229b641a4af4f1b8861fc7cf2ba41717d982b77798a812d.jpeg",
+        "royalties": [
+          {
+            "address": "0x1d7f4ba2997d644d21195aada3f2f85f24330e6d",
+            "amount": 10
+          }
+        ],
+        "attributes": [
+          { "trait_type": "Fast Food", "value": "McDonalds" },
+          { "trait_type": "Polymorph 1", "value": "Clown Charlie" },
+          { "trait_type": "Polymorph 2", "value": "Clown Charlie" },
+          { "trait_type": "Car", "value": "Lamborghini" },
+          { "trait_type": "7", "value": "7" },
+          { "trait_type": "6", "value": "6" },
+          { "trait_type": "5", "value": "5" },
+          { "trait_type": "4", "value": "4" },
+          { "trait_type": "3", "value": "3" },
+          { "trait_type": "2", "value": "2" },
+          { "trait_type": "1", "value": "1" }
+        ]
+      },
+      "sentAt": "2022-03-16T15:36:11.199Z",
+      "sentForMediaAt": "2022-03-16T15:36:22.526Z",
+      "owners": [
+        { "owner": "0x1d7F4bA2997D644d21195aaDA3F2f85F24330e6d", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0c88e214a455f30ef0",
+          "id": "759f845d-53d4-4827-9b4e-154d526b8b45",
+          "createdAt": "2022-04-25T15:15:13.244305",
+          "updatedAt": "2022-04-25T15:15:13.244305",
+          "status": 0,
+          "hash": "0x9935ae5cce2d6a4e15765e2b6ad5a3db055b55c255084240de3033ead69756c0",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x1d7f4ba2997d644d21195aada3f2f85f24330e6d",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "3658",
+              "contract": "0x5a322b56ed080c559da183b69aa720d19690eaf2",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "10000000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 7,
+          "start": 1650899700,
+          "end": 1731770100,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0xac19fd82c711c1cc6feb8efd804742b08c74ce59ecde65034c52311179ff5f2f106ddfd80cdc3eb1ec51170b98929ba1e25a7c912099801e43b29b4490233e4a1c",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "621eb372e6c4f57cf57f09f5",
+      "contractAddress": "0x5a322B56eD080c559Da183b69aa720d19690EAF2",
+      "tokenId": "1709",
+      "createdAt": "2022-03-01T23:59:45.492Z",
+      "needToRefresh": true,
+      "alternativeMediaFiles": [],
+      "owners": [
+        { "owner": "0x75D38741878da8520d1Ae6db298A9BD994A5D241", "value": "1" }
+      ],
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-19T03:32:42.374Z",
+      "processingSentAt": "2022-03-02T00:11:30.011Z",
+      "sentAt": "2022-03-02T00:11:30.558Z",
+      "externalDomainViewUrl": "https://arweave.net/Em0QJrdiO1sNQlLOSVaN1qUYQsL4po-IiL99zcE5IVI",
+      "metadata": {
+        "name": "81",
+        "description": null,
+        "image_url": "https://arweave.net/-H3jmtEYeySnigzmpE70q1RjA15SOJSfqG6rUOt9KoY",
+        "image_preview_url": "https://universeapp-assets-local.s3.amazonaws.com/c86c871128d8943e490daa4dc16d520813e4838588b54962.jpg",
+        "image_thumbnail_url": "https://universeapp-assets-local.s3.amazonaws.com/c86c871128d8943e490daa4dc16d520813e4838588b54962.jpg",
+        "image_original_url": "https://universeapp-assets-local.s3.amazonaws.com/c86c871128d8943e490daa4dc16d520813e4838588b54962.jpg",
+        "royalties": [
+          {
+            "amount": 10,
+            "address": "0x75d38741878da8520d1ae6db298a9bd994a5d241"
+          }
+        ]
+      },
+      "sentForMediaAt": "2022-03-02T15:14:00.114Z",
+      "source": "ARCHIVE",
+      "orders": [
+        {
+          "_id": "62a08e0c88e214a455f30e3f",
+          "id": "6c3ec5b7-2c1e-44e8-aca0-ba7b3005169e",
+          "createdAt": "2022-03-22T12:49:15.728599",
+          "updatedAt": "2022-03-22T12:49:15.728599",
+          "status": 0,
+          "hash": "0xeb6dc37da60f3fb2db286c9c931d862fefc68429b791fe0b7fb13f236d2af1de",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x75d38741878da8520d1ae6db298a9bd994a5d241",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "1709",
+              "contract": "0x5a322b56ed080c559da183b69aa720d19690eaf2",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "420000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 120,
+          "start": 0,
+          "end": 1706652000,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0xa5267f9dccfb3a1abd2a0c74109c6b4f9e00701b8ae57702d1836f0915185e87279bb0932410ede16802e6f16a57cbdd039d7fd49aea76fb8bf60e04c1153a3c1b",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "622c3793b102967c1237c178",
+      "contractAddress": "0xf5de760f2e916647fd766B4AD9E85ff943cE3A2b",
+      "tokenId": "224990",
+      "createdAt": "2022-03-12T06:02:59.354Z",
+      "needToRefresh": false,
+      "alternativeMediaFiles": [
+        {
+          "type": "image",
+          "url": "https://universe-rinkeby-datascraper-images.s3.amazonaws.com/0xf5de760f2e916647fd766B4AD9E85ff943cE3A2b/224990/image.png"
+        }
+      ],
+      "source": "MONITOR",
+      "tokenType": "ERC721",
+      "updatedAt": "2022-06-13T15:25:39.705Z",
+      "processingSentAt": "2022-03-12T06:07:27.265Z",
+      "sentAt": "2022-03-12T06:07:27.681Z",
+      "externalDomainViewUrl": "https://ipfs.io/ipfs/bafybeiezeds576kygarlq672cnjtimbsrspx5b3tr3gct2lhqud6abjgiu",
+      "metadata": {
+        "name": "MultiFaucet Test NFT",
+        "description": "A test NFT dispensed from faucet.paradigm.xyz.",
+        "image": "https://ipfs.io/ipfs/bafybeifvwitulq6elvka2hoqhwixfhgb42l4aiukmtrw335osetikviuuu"
+      },
+      "sentForMediaAt": "2022-03-12T06:07:34.481Z",
+      "owners": [
+        { "owner": "0x67b93852482113375666a310ac292D61dDD4bbb9", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0688e214a455f30bfa",
+          "id": "da183c5a-c578-45b1-a84e-9a2382a1210c",
+          "createdAt": "2022-03-16T07:54:00.203679",
+          "updatedAt": "2022-03-16T07:54:00.203679",
+          "status": 0,
+          "hash": "0x8b3a444c4af14d22dd068c7bea1df5d164a50c9be63dba05fea7ab2aff3fc8fa",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0x67b93852482113375666a310ac292d61ddd4bbb9",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "224990",
+              "contract": "0xf5de760f2e916647fd766b4ad9e85ff943ce3a2b",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "222000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 42,
+          "start": 0,
+          "end": 0,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0x8d8c0c4fb2499f6a89f22b35e7dc78d44a6415068f9a4a7ef15e1c7a3ca8685c7eef1eb38ed469adbaff806e634a2646d3ad8ffbeeaf22ae6e84490a4853b55e1b",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    },
+    {
+      "_id": "6238425bb102965f2733b112",
+      "contractAddress": "0xa39efE3E3D2ffD1756D6440738c1ef20f60BCc2D",
+      "tokenId": "53294341517339190515659799140861485604612658297401227284598735892131312828418",
+      "createdAt": "2022-03-21T09:16:10.835Z",
+      "needToRefresh": false,
+      "alternativeMediaFiles": [],
+      "source": "MONITOR",
+      "tokenType": "ERC721",
+      "updatedAt": "2022-07-20T09:10:27.387Z",
+      "processingSentAt": "2022-03-21T09:16:15.274Z",
+      "sentAt": "2022-03-21T09:16:16.246Z",
+      "externalDomainViewUrl": "https://graviton.mypinata.cloud/ipfs/QmbgE8AaxVeWpbs1QGF7NzeBuWTmpkaqAVsW1m3JDxKhPN",
+      "metadata": {
+        "name": "Display  diagrams with royalties",
+        "description": "",
+        "image": "ipfs://ipfs/QmcPGTSzBU3mMUuvJwLEtDh8kvfJdKUG63Bk8k5nD2ywcz/image.jpeg",
+        "external_url": "https://rinkeby.rarible.com/token/0xa39efe3e3d2ffd1756d6440738c1ef20f60bcc2d:53294341517339190515659799140861485604612658297401227284598735892131312828418",
+        "attributes": []
+      },
+      "sentForMediaAt": "2022-03-21T09:16:20.857Z",
+      "owners": [
+        { "owner": "0xbb485c4Bb372f76D9654B2Eb39807E905920d1D5", "value": "1" }
+      ],
+      "orders": [
+        {
+          "_id": "62a08e0c88e214a455f30f11",
+          "id": "9809f467-34f7-4623-9c26-3b769e14d6f6",
+          "createdAt": "2022-04-28T12:12:25.224301",
+          "updatedAt": "2022-04-28T12:12:25.224301",
+          "status": 0,
+          "hash": "0xe100b681078ec39a926bc0f173c48845196e572cdd97dec35eb8ee1cee24662f",
+          "type": "UNIVERSE_V1",
+          "side": 1,
+          "maker": "0xbb485c4bb372f76d9654b2eb39807e905920d1d5",
+          "make": {
+            "value": "1",
+            "assetType": {
+              "tokenId": "53294341517339190515659799140861485604612658297401227284598735892131312828418",
+              "contract": "0xa39efe3e3d2ffd1756d6440738c1ef20f60bcc2d",
+              "assetClass": "ERC721"
+            }
+          },
+          "taker": "0x0000000000000000000000000000000000000000",
+          "take": {
+            "value": "123000000000000000000",
+            "assetType": { "assetClass": "ETH" }
+          },
+          "salt": 48,
+          "start": 1651147980,
+          "end": 1658398380,
+          "data": { "dataType": "ORDER_DATA", "revenueSplits": [] },
+          "signature": "0xfd8b90ed14b5ec765f5358602761f1eb31846fa2664ea0070cc27fe002143a8e5cc23df61fc08129a9b81920b3683200ff47b695cbe88a847a8688645190b1971b",
+          "fill": "0",
+          "make_stock": "1",
+          "make_balance": "1",
+          "cancelled_tx_hash": null,
+          "matched_tx_hash": null
+        }
+      ]
+    }
+  ]
+}
