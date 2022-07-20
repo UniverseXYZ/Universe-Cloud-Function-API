@@ -21,6 +21,82 @@ export class NftOwnerStrategy implements IStrategy {
     );
   }
 
+  count(parameters: IQueryParameters) {
+    return this.countNftAndOwnerParams(
+      parameters.nftParams,
+      parameters.ownerParams,
+    );
+  }
+
+  private async countNftAndOwnerParams(
+    nftParams: INFTParameters,
+    ownerParams: IOwnerParameters,
+  ) {
+    console.log('Counting nft and owner params');
+
+    const ownerQuery = buildOwnerQuery(
+      ownerParams,
+      nftParams.tokenType.toString(),
+    );
+
+    console.time('owner-query-time');
+    const owners = await ownerQuery;
+    console.timeEnd('owner-query-time');
+
+    const { nftFilters, sort } = await buildNftQueryFilters(
+      nftParams,
+      owners.map((owner) => ({
+        contractAddress: owner.contractAddress,
+        tokenId: owner.tokenId,
+      })),
+    );
+
+    if (!nftFilters.length) {
+      return {
+        count: 0,
+      };
+    }
+
+    console.time('nft-query-time');
+    const nfts = await TokenModel.aggregate([...nftFilters], {
+      collation: {
+        locale: 'en',
+        strength: 2,
+        numericOrdering: true,
+      },
+    });
+    console.timeEnd('nft-query-time');
+
+    const filtered = [];
+
+    if (!nfts.length || !owners.length) {
+      return {
+        count: 0,
+      };
+    }
+
+    for (let i = 0; i < nfts.length; i++) {
+      const nft = nfts[i];
+
+      const nftOwners = owners.filter(
+        (owner) =>
+          owner.tokenId === nft.tokenId &&
+          owner.contractAddress.toLowerCase() ===
+            nft.contractAddress.toLowerCase(),
+      );
+
+      if (!nftOwners.length) {
+        continue;
+      }
+
+      filtered.push(nft);
+    }
+
+    return {
+      count: filtered.length,
+    };
+  }
+
   private async queryNftAndOwnerParams(
     nftParams: INFTParameters,
     ownerParams: IOwnerParameters,

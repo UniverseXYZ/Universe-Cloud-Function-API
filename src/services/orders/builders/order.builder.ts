@@ -101,7 +101,7 @@ export const buildOrderQueryFilters = async (
         [`${sideToFilter}.assetType.assetClass`]: AssetClass.ETH,
       });
     } else {
-      const checkSumAddress = utils.getAddress(tokenAddress);
+      const checkSumAddress = utils.getAddress(tokenAddress.toLowerCase());
       filters.push({
         $or: [
           {

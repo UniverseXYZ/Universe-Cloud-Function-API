@@ -19,6 +19,56 @@ export class OrderStrategy implements IStrategy {
     );
   }
 
+  count(parameters: IQueryParameters) {
+    return this.countOnlyOrderParams(
+      parameters.orderParams,
+      parameters.generalParams,
+    );
+  }
+
+  private async countOnlyOrderParams(
+    orderParams: IOrderParameters,
+    generalParams: IGeneralParameters,
+  ) {
+    console.log('Counting only order params');
+
+    const { finalFilters, sort, sortingAggregation } =
+      await buildOrderQueryFilters(orderParams, generalParams);
+
+    console.log('Querying...');
+    console.time('query-time');
+
+    const data = await OrderModel.aggregate(
+      [
+        { $match: finalFilters },
+        {
+          $group: {
+            _id: {
+              contract: '$make.assetType.contract',
+              tokenId: '$make.assetType.tokenId',
+              contracts: '$make.assetType.contracts',
+              tokenIds: '$make.assetType.tokenIds',
+            },
+          },
+        },
+        { $count: 'count' },
+      ],
+      {
+        collation: {
+          locale: 'en',
+          strength: 2,
+          numericOrdering: true,
+        },
+      },
+    );
+
+    console.timeEnd('query-time');
+
+    return {
+      count: data.length ? data[0].count : 0,
+    };
+  }
+
   /**
    * Returns an array (nested in the "nfts" property) with 3 types of elements:
    * 1. erc721 token with nested "owners" and "orders" (should have 1 order for erc721);
@@ -89,25 +139,6 @@ export class OrderStrategy implements IStrategy {
         { $limit: Number(limit) },
         // getNFTLookup(),
         getOrdersLookup(), // joining erc1155 and erc721 orders
-        // {
-        //   $project: {
-        //     _id: 0,
-        //     contractAddress: "$contractAddress",
-        //     tokenId: "$tokenId",
-        //     tokenType: { $first: "$nft.tokenType" },
-        //     externalDomainViewUrl: { $first: "$nft.externalDomainViewUrl" },
-        //     metadata: { $first: "$nft.metadata" },
-        //     firstOwner: { $first: "$nft.firstOwner" },
-        //     metadataFetchError: { $first: "$nft.metadataFetchError" },
-        //     processingSentAt: { $first: "$nft.processingSentAt" },
-        //     sentAt: { $first: "$nft.sentAt" },
-        //     sentForMediaAt: { $first: "$nft.sentForMediaAt" },
-        //     alternativeMediaFiles: { $first: "$nft.alternativeMediaFiles" },
-        //     needToRefresh: { $first: "$nft.needToRefresh" },
-        //     source: { $first: "$nft.source" },
-        //     orders: "$orders",
-        //   },
-        // },
       ],
       {
         collation: {

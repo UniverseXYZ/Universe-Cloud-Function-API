@@ -1,6 +1,7 @@
 export const ERROR_MESSAGES = {
   STRATEGY_NOT_SET:
     'Please send a request with at least one nft, owner or order parameter',
+  STRATEGY_NOT_INITIALIZED: 'Strategy context not properly initialized',
   UNEXPECTED_ERROR: 'Unexpected error occurred',
   INVALID_ATTRIBUTE_TRAIT_PAIR: 'Invalid attribute:trait pair',
   ATTRIBUTE_CONTRACT_ADDRESS_REQUIRED:
