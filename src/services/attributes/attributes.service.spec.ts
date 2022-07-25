@@ -19,14 +19,9 @@ describe('getTokenIdsByCollectionAttributes', () => {
           human: ['1', '2', '3'],
           robot: ['4', '5', '6', '7'],
         },
-      },
-    },
-    {
-      contractAddress: '0x69898c16f9153950cf07b9Db36A0f3AEb2F51372',
-      attributes: {
         background: {
-          red: ['1', '2', '3'],
-          blue: ['4', '5', '6', '7'],
+          red: ['1', '2', '3', '4'],
+          blue: ['9', '5', '6', '7', '8'],
         },
       },
     },
@@ -36,7 +31,7 @@ describe('getTokenIdsByCollectionAttributes', () => {
 
     const result = await getTokenIdsByCollectionAttributes(
       '0x2b7DD23595aC4c25e98dEf9D53ad2f455C6fE0E1',
-      'dna:robot,dna:human',
+      'dna:robot,background:red',
     );
 
     expect(result).to.be.an('array');
