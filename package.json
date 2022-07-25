@@ -7,7 +7,7 @@
     "clean": "rimraf \"cloudfn/*\"",
     "build": "tsc",
     "copy-package": "copyfiles package.json cloudfn",
-    "mocha": "mocha \"cloudfn/**/*.spec.js\"",
+    "mocha": "mocha \"cloudfn/**/*.spec.js\" --timeout 10000",
     "gcfscript": "./gcf.sh",
     "run-local-harness": "node cloudfn/local-harness.js",
     "run-local-server": "node cloudfn/index.js",
@@ -41,6 +41,7 @@
   "dependencies": {
     "dotenv": "^16.0.0",
     "ethers": "^5.6.4",
+    "mongodb-memory-server": "^8.7.2",
     "mongoose": "^6.2.10",
     "run-s": "^0.0.0"
   }
