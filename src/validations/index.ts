@@ -129,7 +129,7 @@ export const validateNftParameters = (params: IExecutionParameters) => {
   if (tokenIds) {
     const ids = tokenIds.split(',');
     ids.forEach((id) => {
-      if (!isValidPositiveIntParam(id)) {
+      if (!isGreaterOrEqualToZeroIntParam(id)) {
         throw new PositiveIntValidationError('tokenIds');
       }
     });
@@ -192,6 +192,14 @@ export const validateCountParameters = (params: IExecutionParameters) => {
   if (contractAddress && !isValidContractAddress(contractAddress)) {
     throw new ValidationError('contractAddress');
   }
+};
+
+export const isGreaterOrEqualToZeroIntParam = (parameter: string) => {
+  return !(
+    isNaN(Number(parameter)) ||
+    !Number.isInteger(Number(parameter)) ||
+    Number(parameter) < 0
+  );
 };
 
 export const isValidPositiveIntParam = (parameter: string) => {
