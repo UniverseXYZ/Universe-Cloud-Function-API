@@ -11,7 +11,10 @@
     "experimentalDecorators": true,
     "esModuleInterop": true
   },
-  "files": ["src/services/attributes/attributes.service.spec.ts"],
+  "files": [
+    "src/services/nfts/nft.service.spec.ts",
+    "src/services/attributes/attributes.service.spec.ts"
+  ],
   "exclude": ["node_modules"],
   "typeRoots": ["node_modules/@types"]
 }
