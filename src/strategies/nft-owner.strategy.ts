@@ -215,7 +215,7 @@ export class NftOwnerStrategy implements IStrategy {
 
       return nft;
     });
-// console.log(finalNfts.length)
+
     return {
       page: page,
       size: limit,
