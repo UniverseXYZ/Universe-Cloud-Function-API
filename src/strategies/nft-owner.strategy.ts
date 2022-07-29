@@ -131,16 +131,9 @@ export class NftOwnerStrategy implements IStrategy {
       };
     }
 
-    // Apply Pagination
     console.time('nft-query-time');
     const nfts = await TokenModel.aggregate(
-      [
-        ...nftFilters,
-        { $sort: sort },
-        { $skip: generalParams.skippedItems },
-        { $limit: Number(limit) },
-        getOrdersLookup(),
-      ],
+      [...nftFilters, { $sort: sort }, getOrdersLookup()],
       {
         collation: {
           locale: 'en',
