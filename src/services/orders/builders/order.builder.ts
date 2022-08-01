@@ -15,12 +15,11 @@ import {
 import { Utils } from '../../../utils';
 
 enum SortOrderOptionsEnum {
-  EndingSoon = 1,
+  RecentlyListed = 1,
   HighestPrice = 2,
   LowestPrice = 3,
-  RecentlyListed = 4,
-  TokenIdAscending = 5,
-  TokenIdDescending = 6,
+  TokenIdAscending = 8,
+  TokenIdDescending = 9,
 }
 
 export const buildOrderQueryFilters = async (
@@ -185,10 +184,10 @@ export const buildOrderQueryFilters = async (
   let sortingAggregation = [] as any;
   const sorting = orderSort ? orderSort : sortBy;
   switch (sorting) {
-    case SortOrderOptionsEnum.EndingSoon:
-      sortingAggregation = addEndSortingAggregation();
-      sort.orderSort = 1;
-      break;
+    // case SortOrderOptionsEnum.EndingSoon:
+    //   sortingAggregation = addEndSortingAggregation();
+    //   sort.orderSort = 1;
+    //   break;
     case SortOrderOptionsEnum.HighestPrice:
       sortingAggregation = await addPriceSortingAggregation(OrderSide.SELL);
       sort.usd_value = -1;

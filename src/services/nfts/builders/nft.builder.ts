@@ -2,8 +2,8 @@ import { INFTParameters } from '../../../interfaces';
 import { getTokenIdsByCollectionAttributes } from '../../attributes/attributes.service';
 
 enum NftSortOrderOptionsEnum {
-  TokenIdAscending = 5,
-  TokenIdDescending = 6,
+  TokenIdAscending = 8,
+  TokenIdDescending = 9,
 }
 
 export const buildNftQueryFilters = async (
