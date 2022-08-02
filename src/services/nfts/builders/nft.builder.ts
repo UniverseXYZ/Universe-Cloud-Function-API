@@ -1,5 +1,6 @@
 import { INFTParameters } from '../../../interfaces';
 import { getTokenIdsByCollectionAttributes } from '../../attributes/attributes.service';
+import config from '../../../config';
 
 enum NftSortOrderOptionsEnum {
   TokenIdAscending = 8,
@@ -36,24 +37,30 @@ export const buildNftQueryFilters = async (
   if (searchQuery) {
     searchFilters.push({
       $search: {
-        index: 'metadata.name',
+        index: config.chain_id === '4' ? 'metadata.name' : 'metadata-name',
         // text: {
         //   query: searchQuery,
-        //   path: "metadata.name",
+        //   path: {
+        //     wildcard: "*"
+        //   },
         // },
         regex: {
           query: `.*${searchQuery}*.`,
           path: 'metadata.name',
           allowAnalyzedField: true,
-        },
+         },
         // phrase: {
-        //   path: "metadata.name",
+        //   path: {
+        //     wildcard: "*"
+        //   },
         //   query: searchQuery,
         //   slop: 5,
         // },
         // autocomplete: {
         //   query: searchQuery,
-        //   path: "metadata.name",
+        //   path: {
+        //     wildcard: "*"
+        //   },
         // },
       },
     });
