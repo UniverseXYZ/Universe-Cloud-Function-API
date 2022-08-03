@@ -45,7 +45,7 @@ export const buildNftQueryFilters = async (
         //   },
         // },
         regex: {
-          query: `.*${searchQuery}*.`,
+          query: `.*${searchQuery}.*`,
           path: 'metadata.name',
           allowAnalyzedField: true,
          },
@@ -124,6 +124,12 @@ export const buildNftQueryFilters = async (
         searchScore: { $meta: 'searchScore' },
       },
     });
+  }
+
+  if (searchQuery){
+    nftFilters.push({
+      $limit: 120
+    });  
   }
 
   const sort = {} as any;
