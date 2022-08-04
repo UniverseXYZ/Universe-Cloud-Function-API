@@ -157,7 +157,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
 
     console.time('query-time');
     const [nfts, owners, orders] = await Promise.all([
-      TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
+      TokenModel.aggregate([...nftFilters], {
         collation: {
           locale: 'en',
           strength: 2,
