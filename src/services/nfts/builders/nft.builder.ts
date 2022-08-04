@@ -14,7 +14,6 @@ export const buildNftQueryFilters = async (
   const { contractAddress, tokenIds, searchQuery, tokenType, traits, nftSort } =
     nftParams;
   const filters = [] as any;
-  const searchFilters = [] as any;
 
   if (contractAddress) {
     if (!owners.length) {
@@ -35,35 +34,10 @@ export const buildNftQueryFilters = async (
   }
 
   if (searchQuery) {
-    searchFilters.push({
-      $search: {
-        index: config.chain_id === '4' ? 'metadata.name' : 'metadata-name',
-        // text: {
-        //   query: searchQuery,
-        //   path: {
-        //     wildcard: "*"
-        //   },
-        // },
-        regex: {
-          query: `.*${searchQuery}*.`,
-          path: 'metadata.name',
-          allowAnalyzedField: true,
-         },
-        // phrase: {
-        //   path: {
-        //     wildcard: "*"
-        //   },
-        //   query: searchQuery,
-        //   slop: 5,
-        // },
-        // autocomplete: {
-        //   query: searchQuery,
-        //   path: {
-        //     wildcard: "*"
-        //   },
-        // },
-      },
-    });
+    filters.push({ $or: [
+      { tokenId: searchQuery },
+      {'metadata.name': { $regex: `.*${searchQuery}.*`, $options: 'i' } }
+    ]});
   }
 
   // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
@@ -97,9 +71,6 @@ export const buildNftQueryFilters = async (
   const nftFilters = [] as any;
   // Assemble final order of filters
 
-  if (searchFilters.length) {
-    nftFilters.push(...searchFilters);
-  }
 
   if (filters.length && owners.length) {
     nftFilters.push({
@@ -116,14 +87,6 @@ export const buildNftQueryFilters = async (
     nftFilters.push({ $match: { $and: filters } });
   } else if (owners.length) {
     nftFilters.push({ $match: { $or: owners } });
-  }
-
-  if (searchFilters.length) {
-    nftFilters.push({
-      $addFields: {
-        searchScore: { $meta: 'searchScore' },
-      },
-    });
   }
 
   const sort = {} as any;

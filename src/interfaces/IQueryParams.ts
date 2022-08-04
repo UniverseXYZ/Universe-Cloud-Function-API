@@ -18,7 +18,6 @@ export interface IOrderParameters {
   beforeTimestamp: number;
   minPrice: string;
   maxPrice: string;
-  sortBy?: number;
   orderSort: number;
   hasOffers: boolean;
   tokenAddress: string;
@@ -61,7 +60,6 @@ export interface IExecutionParameters {
   beforeTimestamp: string;
   minPrice: string;
   maxPrice: string;
-  sortBy: string;
   orderSort: string;
   // Has offers checkbox
   hasOffers: string;

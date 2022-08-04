@@ -55,13 +55,11 @@ export class StrategyContext {
       beforeTimestamp,
       minPrice,
       maxPrice,
-      sortBy,
       hasOffers,
       buyNow,
     } = params;
 
-    // sortBy is a legacy parameter replaced by orderSort
-    const orderSort = params.orderSort ? params.orderSort : sortBy;
+    const orderSort = params.orderSort;
 
     this.queryParams = {
       nftParams: {
@@ -77,7 +75,6 @@ export class StrategyContext {
       orderParams: {
         minPrice,
         maxPrice,
-        // sortBy: Number(sortBy),
         orderSort: Number(orderSort),
         hasOffers: !!hasOffers,
         buyNow: !!buyNow,
