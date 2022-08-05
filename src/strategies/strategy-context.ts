@@ -19,6 +19,7 @@ import {
   OrderStrategy,
   OwnerOrderStrategy,
   OwnerStrategy,
+  HistoryStrategy,
 } from '../strategies';
 import { CloudActions } from '../validations';
 import { utils } from 'ethers';
@@ -58,6 +59,7 @@ export class StrategyContext {
       sortBy,
       hasOffers,
       buyNow,
+      historySort,
     } = params;
 
     // sortBy is a legacy parameter replaced by orderSort
@@ -90,6 +92,9 @@ export class StrategyContext {
       ownerParams: {
         ownerAddress,
       },
+      historyParams: {
+        historySort,
+      },
       generalParams: buildGeneralParams(Number(page), Number(limit)),
     };
 
@@ -118,22 +123,30 @@ export class StrategyContext {
 
     const hasOwnerParams = !!this.queryParams.ownerParams.ownerAddress;
 
+    const hasHistoryParams = !!(
+      this.queryParams.historyParams.historySort &&
+      this.queryParams.nftParams.contractAddress
+    );
+
     const onlyNftsParams = hasNftParamsOnly(
       hasNftParams,
       hasOrderParams,
       hasOwnerParams,
+      hasHistoryParams,
     );
 
     const onlyOrderParams = hasOrderParamsOnly(
       hasNftParams,
       hasOrderParams,
       hasOwnerParams,
+      hasHistoryParams,
     );
 
     const onlyOwnerParams = hasOwnerParamsOnly(
       hasNftParams,
       hasOrderParams,
       hasOwnerParams,
+      hasHistoryParams,
     );
 
     if (onlyNftsParams) {
@@ -148,20 +161,39 @@ export class StrategyContext {
       this.setStrategy(new OwnerStrategy());
     }
 
-    if (hasNftParams && hasOwnerParams && !hasOrderParams) {
+    if (
+      hasNftParams &&
+      hasOwnerParams &&
+      !hasOrderParams &&
+      !hasHistoryParams
+    ) {
       this.setStrategy(new NftOwnerStrategy());
     }
 
-    if (hasNftParams && hasOrderParams && !hasOwnerParams) {
+    if (
+      hasNftParams &&
+      hasOrderParams &&
+      !hasOwnerParams &&
+      !hasHistoryParams
+    ) {
       this.setStrategy(new NftOrderStrategy());
     }
 
-    if (hasOrderParams && hasOwnerParams && !hasNftParams) {
+    if (
+      hasOrderParams &&
+      hasOwnerParams &&
+      !hasNftParams &&
+      !hasHistoryParams
+    ) {
       this.setStrategy(new OwnerOrderStrategy());
     }
 
-    if (hasNftParams && hasOrderParams && hasOwnerParams) {
+    if (hasNftParams && hasOrderParams && hasOwnerParams && !hasHistoryParams) {
       this.setStrategy(new NftOwnerOrderStrategy());
+    }
+
+    if (hasHistoryParams) {
+      this.setStrategy(new HistoryStrategy());
     }
   }
 

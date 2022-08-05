@@ -5,3 +5,4 @@ export * from './token';
 export * from './tokenOwner';
 export * from './erc1155TokenOwner';
 export * from './tokenPrice';
+export * from './transferHistory';

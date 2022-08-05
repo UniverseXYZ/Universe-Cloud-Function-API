@@ -9,6 +9,7 @@ import {
 } from '../errors';
 import { ethers } from 'ethers';
 import { OrderSide, NFTAssetClasses } from '../models';
+import { SortHistoryOptionsEnum } from '../services/history/builders/history.builder';
 
 export enum CloudActions {
   QUERY = 'query',
@@ -44,6 +45,7 @@ export const validateNftParameters = (params: IExecutionParameters) => {
     tokenIds,
     traits,
     nftSort,
+    historySort,
   } = params;
 
   if (beforeTimestamp && !isValidPositiveIntParam(beforeTimestamp)) {
@@ -76,6 +78,13 @@ export const validateNftParameters = (params: IExecutionParameters) => {
 
   if (nftSort && !isValidPositiveIntParam(nftSort)) {
     throw new ValidationError('nftSort');
+  }
+
+  if (
+    historySort &&
+    !Object.values(SortHistoryOptionsEnum).includes(Number(historySort))
+  ) {
+    throw new ValidationError('historySort');
   }
 
   if (ownerAddress && !isValidContractAddress(ownerAddress)) {
@@ -164,6 +173,13 @@ export const validateNftParameters = (params: IExecutionParameters) => {
     throw new ApiError(
       HTTP_STATUS_CODES.BAD_REQUEST,
       `Simultaneous use of sortBy and orderSort is not supported`,
+    );
+  }
+
+  if (historySort && !isValidContractAddress(contractAddress)) {
+    throw new ApiError(
+      HTTP_STATUS_CODES.BAD_REQUEST,
+      `contractAddress is required when using historySort`,
     );
   }
 };

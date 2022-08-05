@@ -29,6 +29,10 @@ export interface IOwnerParameters {
   ownerAddress: string;
 }
 
+export interface IHistoryParameters {
+  historySort: string;
+}
+
 export interface IGeneralParameters {
   page: number;
   limit: number;
@@ -39,6 +43,7 @@ export interface IQueryParameters {
   nftParams: INFTParameters;
   orderParams: IOrderParameters;
   ownerParams: IOwnerParameters;
+  historyParams: IHistoryParameters;
   generalParams: IGeneralParameters;
 }
 
@@ -68,4 +73,6 @@ export interface IExecutionParameters {
   //Buy Now checkbox
   buyNow: string;
   action: string;
+  // History params
+  historySort: string;
 }

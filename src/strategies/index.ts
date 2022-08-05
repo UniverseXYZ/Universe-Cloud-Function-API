@@ -8,3 +8,5 @@ export * from './nft-order.strategy';
 export * from './owner-order.strategy';
 
 export * from './nft-owner-order.strategy';
+
+export * from './history.strategy';
