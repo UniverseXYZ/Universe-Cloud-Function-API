@@ -21,11 +21,16 @@ import { buildNftQueryFilters } from '../services/nfts/builders';
 import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
 import {
   buildOwnerQuery,
-  getOwnersByTokens
+  getOwnersByTokens,
 } from '../services/owners/owners.service';
 import { getOrdersByTokens } from '../services/orders/orders.service';
-import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
 
+/**
+ * History strategy is an experimental strategy designed to support sorting
+ * by transfer history (mints and transfers).
+ * Unlike other strategies, history strategy gets triggered by a single sorting
+ * query parameter - historySort, AND IT SUPPORTS ALL FILTERS from other strategies!
+ */
 export class HistoryStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
     return this.queryHistoryParams(
@@ -40,18 +45,143 @@ export class HistoryStrategy implements IStrategy {
   count(parameters: IQueryParameters) {
     return this.countHistoryParams(
       parameters.nftParams,
+      parameters.orderParams,
       parameters.ownerParams,
+      parameters.historyParams,
+      parameters.generalParams,
     );
   }
 
   private async countHistoryParams(
     nftParams: INFTParameters,
+    orderParams: IOrderParameters,
     ownerParams: IOwnerParameters,
+    historyParams: IHistoryParameters,
+    generalParams: IGeneralParameters,
   ) {
     console.log('Counting history params');
 
+    const { historyAggregation } = buildHistoryQueryFilters(
+      nftParams.contractAddress,
+      historyParams,
+    );
+    const { nftFilters } = await buildNftQueryFilters(nftParams);
+    const { finalFilters } = await buildOrderQueryFilters(
+      orderParams,
+      generalParams,
+    );
+
+    // in fact nftParams is never empty because nftParams.contractAddress is required for this strategy!
+    const isNftParamsEmpty = this.isEmptyParams(nftParams);
+    const isOwnerParamsEmpty = this.isEmptyParams(ownerParams);
+    const isOrderParamsEmpty = this.isEmptyParams(orderParams);
+
+    console.time('query-time');
+    const [historySortedNfts, nfts, owners, orders] = await Promise.all([
+      TransferHistoryModel.aggregate([...historyAggregation]),
+      isNftParamsEmpty
+        ? Promise.resolve([])
+        : TokenModel.aggregate(
+            [...nftFilters, { $sort: { searchScore: -1 } }],
+            {
+              collation: {
+                locale: 'en',
+                strength: 2,
+                numericOrdering: true,
+              },
+            },
+          ),
+      isOwnerParamsEmpty
+        ? Promise.resolve([])
+        : buildOwnerQuery(ownerParams, nftParams.tokenType.toString()),
+      isOrderParamsEmpty
+        ? Promise.resolve([])
+        : OrderModel.aggregate([{ $match: finalFilters }], {
+            collation: {
+              locale: 'en',
+              strength: 2,
+              numericOrdering: true,
+            },
+          }),
+    ]);
+    console.timeEnd('query-time');
+
+    if (
+      !historySortedNfts.length ||
+      (!isNftParamsEmpty && !nfts.length) ||
+      (!isOwnerParamsEmpty && !owners.length) ||
+      (!isOrderParamsEmpty && !orders.length)
+    ) {
+      return {
+        count: 0,
+      };
+    }
+
+    const filtered = [];
+    for (let i = 0; i < historySortedNfts.length; i++) {
+      const historyNft = historySortedNfts[i];
+
+      // keeping in mind that isNftParamsEmpty is never true.
+      const nft = nfts.find((nft) => {
+        if (
+          nft.tokenId === historyNft['tokenId'] &&
+          nft.contractAddress === historyNft['contractAddress']
+        ) {
+          return true;
+        }
+        return false;
+      });
+
+      if (!nft) {
+        continue;
+      }
+
+      if (!isOwnerParamsEmpty) {
+        const ownersInfo = owners.filter(
+          (owner) =>
+            owner.tokenId === nft.tokenId &&
+            owner.contractAddress.toLowerCase() ===
+              nft.contractAddress.toLowerCase(),
+        );
+
+        if (!ownersInfo.length) {
+          continue;
+        }
+      }
+
+      if (!isOrderParamsEmpty) {
+        const nftOrders = orders.filter((order) => {
+          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+            const contractIndex = order.make.assetType.contracts.indexOf(
+              nft.contractAddress.toLowerCase(),
+            );
+            if (
+              -1 !== contractIndex &&
+              order.make.assetType.tokenIds[contractIndex] &&
+              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
+            ) {
+              return true;
+            }
+            return false;
+          } else {
+            return (
+              order.make.assetType.tokenId === nft.tokenId &&
+              order.make.assetType.contract?.toLowerCase() ===
+                nft.contractAddress.toLowerCase()
+            );
+          }
+        });
+
+        if (!nftOrders.length) {
+          continue;
+        }
+      }
+
+      filtered.push(nft);
+    }
+
     return {
-      count: 0,
+      count: filtered.length,
     };
   }
 
@@ -69,7 +199,6 @@ export class HistoryStrategy implements IStrategy {
       nftParams.contractAddress,
       historyParams,
     );
-
     const { nftFilters } = await buildNftQueryFilters(nftParams);
     const { finalFilters } = await buildOrderQueryFilters(
       orderParams,
@@ -222,7 +351,7 @@ export class HistoryStrategy implements IStrategy {
       console.timeEnd('owners-query-time');
 
       paginated.forEach((nft) => {
-        const ownersInfo = owners.filter(
+        const ownersInfo = lookupOwners.filter(
           (owner) =>
             owner.contractAddress === nft.contractAddress &&
             owner.tokenId === nft.tokenId,

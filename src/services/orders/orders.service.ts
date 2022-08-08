@@ -77,8 +77,10 @@ export const getOrdersByTokens = async (tokens) => {
       }
     } else {
       if (
-        order.make.assetType.tokenId ==
-        contractsTokensMap[order.make.assetType.contract]
+        contractsTokensMap[order.make.assetType.contract] &&
+        contractsTokensMap[order.make.assetType.contract].includes(
+          order.make.assetType.tokenId,
+        )
       ) {
         value.push(order);
       }

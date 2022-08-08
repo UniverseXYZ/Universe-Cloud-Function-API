@@ -1,10 +1,6 @@
 import { ethers } from 'ethers';
 import { ApiError, ERROR_MESSAGES, HTTP_STATUS_CODES } from '../../../errors';
-import {
-  IHistoryParameters,
-  INFTParameters,
-  IQueryParameters,
-} from '../../../interfaces';
+import { IHistoryParameters } from '../../../interfaces';
 
 export enum SortHistoryOptionsEnum {
   MintedAscending = 1,
@@ -13,6 +9,13 @@ export enum SortHistoryOptionsEnum {
   LastTransferredDescending = 4,
 }
 
+/**
+ * Returns aggregation stages and sorting for the history strategy.
+ * @param contractAddress
+ * @param historyParams
+ * @returns {Object}
+ * @throws {ApiError}
+ */
 export const buildHistoryQueryFilters = (
   contractAddress: string,
   historyParams: IHistoryParameters,
@@ -126,7 +129,7 @@ export const buildHistoryQueryFilters = (
       $project: {
         tokenId: '$_id.tokenId',
         contractAddress: '$_id.contractAddress',
-        maxLogIndex: '$maxLogIndex',
+        maxLogIndex: { $first: '$maxLogIndex' },
       },
     },
   ];
@@ -145,8 +148,8 @@ export const buildHistoryQueryFilters = (
       sort['maxLogIndex'] = -1;
       break;
     case SortHistoryOptionsEnum.LastTransferredAscending:
-      sort['_id.maxBlockNum'] = -1;
-      sort['maxLogIndex'] = -1;
+      sort['_id.maxBlockNum'] = 1;
+      sort['maxLogIndex'] = 1;
       break;
     case SortHistoryOptionsEnum.LastTransferredDescending:
       sort['_id.maxBlockNum'] = -1;
