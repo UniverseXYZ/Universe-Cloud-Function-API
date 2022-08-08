@@ -220,5 +220,8 @@ export const buildOrderQueryFilters = async (
 
   const finalFilters = { $and: filters };
 
+  console.log('ORDER FILTERS:');
+  console.log(finalFilters);
+
   return { finalFilters, sortingAggregation, sort };
 };

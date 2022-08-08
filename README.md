@@ -110,11 +110,22 @@ Currently supported tokens:
 - DAI
 - USDC
 
+### History parameters
+
+#### `historySort`: Allowed Values: "1", "2", "3", "4"
+
+- 1 - Least recently created (minted) NFT
+- 2 - Most recently created (minted) NFT
+- 3 - Least recently transferred NFT
+- 4 - Most recently transferred NFT
+
 ## Query Strategies
 
 NFTs, Owners and Order are stored in different collections inside the MongoDB Universe Database. Having a unified query strategy wasn't optimal in terms of speed and response time.
 
 That's why depending on the combination of NFT, Owner or Order parameters a specific query strategy is used in order to achieve optimal response time.
+
+"History Params" strategy is always used if the query contains the `historySort` parameter.
 
 #### Current strategies:
 
@@ -125,6 +136,7 @@ That's why depending on the combination of NFT, Owner or Order parameters a spec
 - NFT + Order Params
 - Owner + Order Params
 - NFT + Owner + Order Params
+- History Params
 
 ## Build, test, run, deploy
 

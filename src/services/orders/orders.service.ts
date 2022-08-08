@@ -8,6 +8,89 @@ import {
 import { Utils } from '../../utils';
 
 /**
+ * Returns active SELL orders that contain passed tokens.
+ * @param tokens  - array of tokens returned by TokenModel.find()/.aggregate().
+ * @returns {Array}
+ */
+export const getOrdersByTokens = async (tokens) => {
+  const value = [];
+
+  if (!tokens.length) {
+    return [];
+  }
+
+  const utcTimestamp = Utils.getUtcTimestamp();
+
+  const contractsTokensMap = {};
+  tokens.forEach((token) => {
+    if (
+      contractsTokensMap.hasOwnProperty(token.contractAddress.toLowerCase())
+    ) {
+      contractsTokensMap[token.contractAddress.toLowerCase()].push(
+        token.tokenId,
+      );
+    } else {
+      contractsTokensMap[token.contractAddress.toLowerCase()] = [token.tokenId];
+    }
+  });
+
+  const orders = await OrderModel.find({
+    $and: [
+      { side: OrderSide.SELL },
+      { status: { $in: [OrderStatus.CREATED, OrderStatus.PARTIALFILLED] } },
+      { $or: [{ start: { $lt: utcTimestamp } }, { start: 0 }] },
+      { $or: [{ end: { $gt: utcTimestamp } }, { end: 0 }] },
+      {
+        $or: [
+          {
+            'make.assetType.contract': {
+              $in: Object.keys(contractsTokensMap),
+            },
+          },
+          {
+            'make.assetType.contracts': {
+              $in: Object.keys(contractsTokensMap),
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  orders.forEach((order) => {
+    order = JSON.parse(JSON.stringify(order));
+
+    if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
+      for (let i = 0; i < order.make.assetType.contracts.length; i++) {
+        if (
+          contractsTokensMap.hasOwnProperty(
+            order.make.assetType.contracts[i],
+          ) &&
+          Utils.findArrayIntersection(
+            contractsTokensMap[order.make.assetType.contracts[i]],
+            order.make.assetType.tokenIds[i],
+          ).length
+        ) {
+          value.push(order);
+          break;
+        }
+      }
+    } else {
+      if (
+        contractsTokensMap[order.make.assetType.contract] &&
+        contractsTokensMap[order.make.assetType.contract].includes(
+          order.make.assetType.tokenId,
+        )
+      ) {
+        value.push(order);
+      }
+    }
+  });
+
+  return value;
+};
+
+/**
  * Returns active SELL bundle orders that contain passed tokens.
  * The returning bundles are not limited to the passed tokens and may have other
  * tokens within the order.
