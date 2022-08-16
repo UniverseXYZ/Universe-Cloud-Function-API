@@ -90,6 +90,8 @@ export class NftStrategy implements IStrategy {
       },
     );
 
+    console.timeEnd('query-time');
+
     if (!data.length) {
       return {
         page: page,
@@ -141,8 +143,6 @@ export class NftStrategy implements IStrategy {
         owners: ownerAddresses,
       };
     });
-
-    console.timeEnd('query-time');
 
     return {
       page: page,

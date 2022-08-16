@@ -5,6 +5,7 @@ import {
   HTTP_STATUS_CODES,
   PositiveIntValidationError,
   PositiveNumberValidationError,
+  NonNegativeIntValidationError,
   ValidationError,
 } from '../errors';
 import { ethers } from 'ethers';
@@ -138,8 +139,8 @@ export const validateNftParameters = (params: IExecutionParameters) => {
   if (tokenIds) {
     const ids = tokenIds.split(',');
     ids.forEach((id) => {
-      if (!isValidPositiveIntParam(id)) {
-        throw new PositiveIntValidationError('tokenIds');
+      if (!isValidNonNegativeIntParam(id)) {
+        throw new NonNegativeIntValidationError('tokenIds');
       }
     });
   }
@@ -215,6 +216,14 @@ export const isValidPositiveIntParam = (parameter: string) => {
     isNaN(Number(parameter)) ||
     !Number.isInteger(Number(parameter)) ||
     Number(parameter) <= 0
+  );
+};
+
+export const isValidNonNegativeIntParam = (parameter: string) => {
+  return !(
+    isNaN(Number(parameter)) ||
+    !Number.isInteger(Number(parameter)) ||
+    Number(parameter) < 0
   );
 };
 

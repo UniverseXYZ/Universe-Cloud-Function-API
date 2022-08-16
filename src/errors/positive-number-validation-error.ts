@@ -14,6 +14,19 @@ export class PositiveIntValidationError extends BaseError {
   }
 }
 
+export class NonNegativeIntValidationError extends BaseError {
+  propertyName: string;
+
+  constructor(parameterName: string) {
+    super(
+      HTTP_STATUS_CODES.BAD_REQUEST,
+      ERROR_MESSAGES.NON_NEGATIVE_INTEGER(parameterName),
+    );
+
+    this.propertyName = parameterName;
+  }
+}
+
 export class PositiveNumberValidationError extends BaseError {
   propertyName: string;
 
