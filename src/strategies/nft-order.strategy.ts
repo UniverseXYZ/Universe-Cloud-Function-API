@@ -131,7 +131,7 @@ export class NftOrderStrategy implements IStrategy {
       await buildOrderQueryFilters(orderParams, generalParams);
 
     const [nfts, orders] = await Promise.all([
-      TokenModel.aggregate([...nftFilters, { $sort: { searchScore: -1 } }], {
+      TokenModel.aggregate([...nftFilters], {
         collation: {
           locale: 'en',
           strength: 2,

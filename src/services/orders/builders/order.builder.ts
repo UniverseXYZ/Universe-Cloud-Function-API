@@ -35,7 +35,6 @@ export const buildOrderQueryFilters = async (
   const {
     minPrice,
     maxPrice,
-    sortBy,
     orderSort,
     hasOffers,
     side,
@@ -182,7 +181,7 @@ export const buildOrderQueryFilters = async (
 
   const sort = {} as any;
   let sortingAggregation = [] as any;
-  const sorting = orderSort ? orderSort : sortBy;
+  const sorting = orderSort;
   switch (sorting) {
     // case SortOrderOptionsEnum.EndingSoon:
     //   sortingAggregation = addEndSortingAggregation();
