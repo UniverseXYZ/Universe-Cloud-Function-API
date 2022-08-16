@@ -30,7 +30,9 @@ export const getTokenIdsByCollectionAttributes = async (
 
     attribute = attribute.trim();
     trait = trait.trim();
-
+    if (trait === "None") {
+      trait = '';
+    }
     try {
       const tokenIds = collAttributes.attributes[attribute][trait];
 

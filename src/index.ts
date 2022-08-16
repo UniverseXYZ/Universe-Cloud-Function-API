@@ -78,7 +78,7 @@ mimicking the behaviour of the cloud function endpoint
 if (config.node_env !== 'production') {
   const express = require('express');
   const app = express();
-  const port = 3000;
+  const port = 3001;
 
   app.get('/nfts', (req, res) => {
     nfts(req, res);

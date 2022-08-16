@@ -58,6 +58,7 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 - Format: `traits=background:red,background:green,skin:purple`
 - In the query above the query will query all nfts with background either red or green AND purple skin
 - Case sensitive for both attribute and trait part of the query.
+- If you want to query by a empty traits you need to pass 'None' (ex. No Eyewear for Flufs - Eyewear:None)
 
 #### `nftSort`: Allowed Values: "8", "9"
 
