@@ -98,7 +98,6 @@ export const buildNftQueryFilters = async (
       sort.tokenId = -1;
       break;
     default:
-      sort.searchScore = -1;
       sort.updatedAt = -1;
       break;
   }
