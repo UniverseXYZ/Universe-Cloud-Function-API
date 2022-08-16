@@ -9,6 +9,8 @@ export const ERROR_MESSAGES = {
   INVALID_PARAMETER: (parameter: string) => `Invalid parameter '${parameter}'`,
   POSTIVE_INTEGER: (parameter: string) =>
     `Parameter must be a positive integer '${parameter}'`,
+  NON_NEGATIVE_INTEGER: (parameter: string) =>
+    `Parameter must be a non-negative integer '${parameter}'`,
   POSTIVE_NUMBER: (parameter: string) =>
     `Parameter must be a positive number '${parameter}'`,
 };

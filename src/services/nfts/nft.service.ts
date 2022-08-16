@@ -1,29 +1,5 @@
-import {
-  IExecutionParameters,
-  IQueryParameters,
-  TokenType,
-} from '../../interfaces';
-
-import {
-  hasNftParamsOnly,
-  hasOrderParamsOnly,
-  hasOwnerParamsOnly,
-} from './helpers/nft.helpers';
-
-import { buildGeneralParams } from './builders';
-
-import {
-  NftOrderStrategy,
-  NftOwnerOrderStrategy,
-  NftOwnerStrategy,
-  NftStrategy,
-  OrderStrategy,
-  OwnerOrderStrategy,
-  OwnerStrategy,
-  StrategyContext,
-} from '../../strategies';
-import { NFTTokenOwnerModel, TokenModel } from '../../models';
-import { utils } from 'ethers';
+import { IExecutionParameters } from '../../interfaces';
+import { StrategyContext } from '../../strategies';
 import { CloudActions } from '../../validations';
 
 /**
