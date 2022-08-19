@@ -3,10 +3,10 @@ import { ApiError, ERROR_MESSAGES, HTTP_STATUS_CODES } from '../../../errors';
 import { IHistoryParameters } from '../../../interfaces';
 
 export enum SortHistoryOptionsEnum {
-  MintedAscending = 1,
-  MintedDescending = 2,
-  LastTransferredAscending = 3,
-  LastTransferredDescending = 4,
+  MintedDescending = 4,
+  MintedAscending = 5,
+  LastTransferredDescending = 6,
+  LastTransferredAscending = 7,
 }
 
 /**
