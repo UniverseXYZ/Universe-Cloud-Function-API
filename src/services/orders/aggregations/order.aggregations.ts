@@ -1,4 +1,4 @@
-import { OrderSide, AssetClass } from '../../../models';
+import { OrderSide, AssetClass, OrderStatus } from '../../../models';
 import { Utils, TOKENS } from '../../../utils';
 import { fetchTokenPrices } from '../../token-prices/token-price.service';
 
@@ -72,7 +72,10 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', Utils.tokenAddresses.weth],
+                    $eq: [
+                      '$make.assetType.contract',
+                      Utils.tokenAddresses.weth,
+                    ],
                   },
                   then: {
                     $divide: [
@@ -84,7 +87,10 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', Utils.tokenAddresses['usd-coin']],
+                    $eq: [
+                      '$make.assetType.contract',
+                      Utils.tokenAddresses['usd-coin'],
+                    ],
                   },
                   then: {
                     $divide: [
@@ -96,7 +102,10 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$make.assetType.contract', Utils.tokenAddresses['universe-xyz']],
+                    $eq: [
+                      '$make.assetType.contract',
+                      Utils.tokenAddresses['universe-xyz'],
+                    ],
                   },
                   then: {
                     $divide: [
@@ -153,7 +162,10 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', Utils.tokenAddresses.weth],
+                    $eq: [
+                      '$take.assetType.contract',
+                      Utils.tokenAddresses.weth,
+                    ],
                   },
                   then: {
                     $multiply: [
@@ -169,7 +181,10 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', Utils.tokenAddresses['usd-coin']],
+                    $eq: [
+                      '$take.assetType.contract',
+                      Utils.tokenAddresses['usd-coin'],
+                    ],
                   },
                   then: {
                     $multiply: [
@@ -185,7 +200,10 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                 },
                 {
                   case: {
-                    $eq: ['$take.assetType.contract', Utils.tokenAddresses['universe-xyz']],
+                    $eq: [
+                      '$take.assetType.contract',
+                      Utils.tokenAddresses['universe-xyz'],
+                    ],
                   },
                   then: {
                     $multiply: [
@@ -207,4 +225,35 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
       },
     ];
   }
+};
+
+export const recentlyListedAggregation = async (timestamp: number) => {
+  return [
+    {
+      $addFields: {
+        active: {
+          $cond: {
+            if: {
+              $and: [
+                {
+                  $in: [
+                    '$status',
+                    [OrderStatus.CREATED, OrderStatus.PARTIALFILLED],
+                  ],
+                },
+                {
+                  $or: [{ $lt: ['$start', timestamp] }, { $eq: ['$start', 0] }],
+                },
+                {
+                  $or: [{ $gt: ['$end', timestamp] }, { $eq: ['$end', 0] }],
+                },
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+  ];
 };

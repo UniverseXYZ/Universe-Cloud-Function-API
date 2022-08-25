@@ -199,7 +199,8 @@ export const buildOrderQueryFilters = async (
       sort.usd_value = 1;
       break;
     case SortOrderOptionsEnum.RecentlyListed:
-      sort.status = 1;
+      sortingAggregation = await recentlyListedAggregation(utcTimestamp);
+      sort.active = -1;
       sort.createdAt = -1;
       break;
     case SortOrderOptionsEnum.TokenIdAscending:
@@ -226,5 +227,5 @@ export const buildOrderQueryFilters = async (
   console.log('ORDER FILTERS:');
   console.log(finalFilters);
 
-  return { finalFilters, sortingAggregation, sort };
+  return { finalFilters, sortingAggregation, sort, sorting };
 };
