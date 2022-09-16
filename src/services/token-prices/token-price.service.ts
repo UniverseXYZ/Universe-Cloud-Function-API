@@ -20,5 +20,6 @@ export const fetchTokenPrices = async () => {
     pricesData.find((price) => price.coin == 'dai'),
     pricesData.find((price) => price.coin == 'usd-coin'),
     pricesData.find((price) => price.coin == 'universe-xyz'),
+    pricesData.find((price) => price.coin == 'apecoin'),
   ];
 };

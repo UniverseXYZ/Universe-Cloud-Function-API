@@ -12,6 +12,7 @@ export enum AssetClass {
   XYZ = 'XYZ',
   DAI = 'DAI',
   WETH = 'WETH',
+  APE = 'APE',
   ERC20 = 'ERC20',
   ERC721 = 'ERC721',
   ERC721_BUNDLE = 'ERC721_BUNDLE',
