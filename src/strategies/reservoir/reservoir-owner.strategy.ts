@@ -6,10 +6,7 @@ import {
   IStrategy,
 } from '../../interfaces';
 import { TokenModel } from '../../models';
-import { getOrdersLookup } from '../../services/orders/lookups/order.lookup';
 import { buildOwnerQuery } from '../../services/owners/owners.service';
-import { getBundleOrdersByTokens } from '../../services/orders/orders.service';
-import { getReservoirOrdersByTokenIds } from '../../services/reservoir/reservoir.service';
 
 export class ReservoirOwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -95,23 +92,19 @@ export class ReservoirOwnerStrategy implements IStrategy {
 
     console.time('query-time2');
 
-    const [data, orders] = await Promise.all([
-      TokenModel.aggregate(
-        [
-          {
-            $match: {
-              $or: owners.map((owner) => ({
-                tokenId: owner.tokenId,
-                contractAddress: owner.contractAddress,
-              })),
-            },
+    const data = await TokenModel.aggregate(
+      [
+        {
+          $match: {
+            $or: owners.map((owner) => ({
+              tokenId: owner.tokenId,
+              contractAddress: owner.contractAddress,
+            })),
           },
-        ],
-        { collation: { locale: 'en', strength: 2 } },
-      ),
-      getReservoirOrdersByTokenIds(owners),
-    ]);
-
+        },
+      ],
+      { collation: { locale: 'en', strength: 2 } },
+    );
     console.timeEnd('query-time2');
 
     const finalData = data.map((nft) => {
@@ -131,7 +124,6 @@ export class ReservoirOwnerStrategy implements IStrategy {
       return {
         ...nft,
         owners: ownerAddresses,
-        orders: orders[`${nft.contractAddress.toLowerCase()}:${nft.tokenId}`],
       };
     });
 

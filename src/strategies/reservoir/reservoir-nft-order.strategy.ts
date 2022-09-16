@@ -5,12 +5,11 @@ import {
   IQueryParameters,
   IStrategy,
 } from '../../interfaces';
-import { TokenModel, OrderModel, AssetClass } from '../../models';
+import { TokenModel } from '../../models';
 
 import { buildNftQueryFilters } from '../../services/nfts/builders';
 
-import { buildOrderQueryFilters } from '../../services/orders/builders/order.builder';
-import { getReservoirOrdersByOrderParameters } from '../../services/reservoir/reservoir.service';
+import { getReservoirTokenIds } from '../../services/reservoir/reservoir.service';
 
 export class ReservoirNftOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -43,7 +42,7 @@ export class ReservoirNftOrderStrategy implements IStrategy {
       };
     }
 
-    const [nfts, orders] = await Promise.all([
+    const [nfts, ordersTokenIds] = await Promise.all([
       TokenModel.aggregate([...nftFilters], {
         collation: {
           locale: 'en',
@@ -53,15 +52,10 @@ export class ReservoirNftOrderStrategy implements IStrategy {
       }),
       // We always have contractAddress because of the NFT Embed Collection page
       // This strategy shouldn't execute if we're on Single Embed Page
-      await getReservoirOrdersByOrderParameters(
-        [],
-        nftParams.contractAddress,
-        orderParams,
-        '',
-      ),
+      await getReservoirTokenIds(nftParams.contractAddress, orderParams),
     ]);
 
-    if (!nfts.length || !orders.length) {
+    if (!nfts.length || !ordersTokenIds.length) {
       return {
         count: 0,
       };
@@ -69,15 +63,10 @@ export class ReservoirNftOrderStrategy implements IStrategy {
 
     let count = 0;
 
-    for (let i = 0; i < orders.length; i++) {
-      const order = orders[i];
+    for (let i = 0; i < ordersTokenIds.length; i++) {
+      const tokenId = ordersTokenIds[i];
 
-      const nft = nfts.find(
-        (nft) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract?.toLowerCase() ===
-            nft.contractAddress.toLowerCase(),
-      );
+      const nft = nfts.find((nft) => tokenId === nft.tokenId);
 
       if (!nft) {
         continue;
@@ -109,7 +98,7 @@ export class ReservoirNftOrderStrategy implements IStrategy {
       };
     }
 
-    const [nfts, orders] = await Promise.all([
+    const [nfts, orderTokenIds] = await Promise.all([
       TokenModel.aggregate([...nftFilters], {
         collation: {
           locale: 'en',
@@ -119,15 +108,10 @@ export class ReservoirNftOrderStrategy implements IStrategy {
       }),
       // We always have contractAddress because of the NFT Embed Collection page
       // This strategy shouldn't execute if we're on Single Embed Page
-      await getReservoirOrdersByOrderParameters(
-        [],
-        nftParams.contractAddress,
-        orderParams,
-        '',
-      ),
+      await getReservoirTokenIds(nftParams.contractAddress, orderParams),
     ]);
 
-    if (!nfts.length || !orders.length) {
+    if (!nfts.length || !orderTokenIds.length) {
       return {
         page: page,
         size: limit,
@@ -141,27 +125,15 @@ export class ReservoirNftOrderStrategy implements IStrategy {
     // If yes --> ALWAYS iterate over the sorted orders to find the nfts, otherwise the sorting won't be persited to the response
     // If no --> we iterate over the nfts to find the orders
     if (orderParams.orderSort) {
-      for (let i = 0; i < orders.length; i++) {
-        const order = orders[i];
+      for (let i = 0; i < orderTokenIds.length; i++) {
+        const tokenId = orderTokenIds[i];
 
-        const nft = nfts.find(
-          (nft) =>
-            order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType.contract === nft.contractAddress.toLowerCase(),
-        );
+        const nft = nfts.find((nft) => tokenId === nft.tokenId);
 
         if (!nft) {
           continue;
         }
 
-        // ERC1155 may have more than one active listing
-        const nftOrders = orders.filter(
-          (o) =>
-            o.make.assetType.contract === order.make.assetType.contract &&
-            o.make.assetType.tokenId === order.make.assetType.tokenId,
-        );
-
-        nft.orders = nftOrders;
         filtered.push(nft);
 
         if (filtered.length === generalParams.skippedItems + limit) {
@@ -172,18 +144,14 @@ export class ReservoirNftOrderStrategy implements IStrategy {
       for (let i = 0; i < nfts.length; i++) {
         const nft = nfts[i];
 
-        const nftOrders = orders.filter(
-          (order) =>
-            order.make.assetType.tokenId === nft.tokenId &&
-            order.make.assetType.contract?.toLowerCase() ===
-              nft.contractAddress.toLowerCase(),
+        const tokenId = orderTokenIds.find(
+          (tokenId) => tokenId === nft.tokenId,
         );
 
-        if (!nftOrders.length) {
+        if (!tokenId.length) {
           continue;
         }
 
-        nft.orders = nftOrders;
         filtered.push(nft);
 
         if (filtered.length === generalParams.skippedItems + limit) {

@@ -7,11 +7,10 @@ import {
   IQueryParameters,
   IStrategy,
 } from '../../interfaces';
-import { AssetClass, TokenModel, OrderModel } from '../../models';
+import { TokenModel } from '../../models';
 import { buildNftQueryFilters } from '../../services/nfts/builders';
-import { buildOrderQueryFilters } from '../../services/orders/builders/order.builder';
 import { buildOwnerQuery } from '../../services/owners/owners.service';
-import { getReservoirOrdersByOrderParameters } from '../../services/reservoir/reservoir.service';
+import { getReservoirTokenIds } from '../../services/reservoir/reservoir.service';
 
 export class ReservoirNftOwnerOrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -54,7 +53,7 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
     );
 
     console.time('query-time');
-    const [nfts, owners, orders] = await Promise.all([
+    const [nfts, owners, orderTokenIds] = await Promise.all([
       TokenModel.aggregate([...nftFilters], {
         collation: {
           locale: 'en',
@@ -65,35 +64,27 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
       ownerQuery,
       // We always have contractAddress because of the NFT Embed Collection page
       // This strategy shouldn't execute if we're on Single Embed Page
-      await getReservoirOrdersByOrderParameters(
-        [],
-        nftParams.contractAddress,
-        orderParams,
-        '',
-      ),
+      await getReservoirTokenIds(nftParams.contractAddress, orderParams),
     ]);
     console.timeEnd('query-time');
 
-    if (!nfts.length || !owners.length || !orders.length) {
+    if (!nfts.length || !owners.length || !orderTokenIds.length) {
       return {
         count: 0,
       };
     }
 
     const filtered = [];
-    for (let i = 0; i < orders.length; i++) {
-      const order = orders[i];
+    for (let i = 0; i < orderTokenIds.length; i++) {
+      const tokenId = orderTokenIds[i];
 
-      const nft = nfts.find(
-        (nft) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract === nft.contractAddress.toLowerCase(),
-      );
+      const nft = nfts.find((nft) => tokenId === nft.tokenId);
 
       if (!nft) {
         continue;
       }
 
+      //TODO: Try to add contract address to owners query filter to speed it up?
       const ownersInfo = owners.filter(
         (owner) =>
           owner.tokenId === nft.tokenId &&
@@ -139,7 +130,7 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
     );
 
     console.time('query-time');
-    const [nfts, owners, orders] = await Promise.all([
+    const [nfts, owners, orderTokenIds] = await Promise.all([
       TokenModel.aggregate([...nftFilters], {
         collation: {
           locale: 'en',
@@ -150,16 +141,11 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
       ownerQuery,
       // We always have contractAddress because of the NFT Embed Collection page
       // This strategy shouldn't execute if we're on Single Embed Page
-      await getReservoirOrdersByOrderParameters(
-        [],
-        nftParams.contractAddress,
-        orderParams,
-        '',
-      ),
+      await getReservoirTokenIds(nftParams.contractAddress, orderParams),
     ]);
     console.timeEnd('query-time');
 
-    if (!nfts.length || !owners.length || !orders.length) {
+    if (!nfts.length || !owners.length || !orderTokenIds.length) {
       return {
         page: page,
         size: limit,
@@ -169,14 +155,10 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
 
     // Apply Pagination
     const filtered = [];
-    for (let i = 0; i < orders.length; i++) {
-      const order = orders[i];
+    for (let i = 0; i < orderTokenIds.length; i++) {
+      const tokenId = orderTokenIds[i];
 
-      const nft = nfts.find(
-        (nft) =>
-          order.make.assetType.tokenId === nft.tokenId &&
-          order.make.assetType.contract === nft.contractAddress.toLowerCase(),
-      );
+      const nft = nfts.find((nft) => tokenId === nft.tokenId);
 
       if (!nft) {
         continue;
@@ -193,16 +175,6 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
         continue;
       }
 
-      // ERC1155 may have more than one active listing
-      let nftOrders = [];
-      if (AssetClass.ERC721_BUNDLE != order.make.assetType.assetClass) {
-        nftOrders = orders.filter(
-          (o) =>
-            o.make.assetType.contract === order.make.assetType.contract &&
-            o.make.assetType.tokenId === order.make.assetType.tokenId,
-        );
-      }
-
       const ownerAddresses = ownersInfo.map((owner) => ({
         owner: owner.address,
         value: owner.value
@@ -210,7 +182,6 @@ export class ReservoirNftOwnerOrderStrategy implements IStrategy {
           : ethers.BigNumber.from(owner.value).toString(),
       }));
 
-      nft.orders = nftOrders;
       nft.owners = ownerAddresses;
 
       filtered.push(nft);

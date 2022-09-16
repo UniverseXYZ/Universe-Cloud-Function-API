@@ -6,10 +6,9 @@ import {
   IQueryParameters,
   IStrategy,
 } from '../../interfaces';
-import { TokenModel, OrderModel, OrderStatus, OrderSide } from '../../models';
+import { TokenModel } from '../../models';
 import { buildNftQueryFilters } from '../../services/nfts/builders';
 import { buildOwnerQuery } from '../../services/owners/owners.service';
-import { getReservoirOrdersByTokenIds } from '../../services/reservoir/reservoir.service';
 
 export class ReservoirNftOwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -192,17 +191,10 @@ export class ReservoirNftOwnerStrategy implements IStrategy {
 
     const paginated = filtered.slice(generalParams.skippedItems);
 
-    const orders = await getReservoirOrdersByTokenIds(paginated);
-
-    const paginatedWithOrders = paginated.map((nft) => ({
-      ...nft,
-      orders: orders[`${nft.contractAddress.toLowerCase()}:${nft.tokenId}`],
-    }));
-
     return {
       page: page,
       size: limit,
-      nfts: paginatedWithOrders,
+      nfts: paginated,
     };
   }
 }

@@ -3,6 +3,73 @@ import { constants } from 'ethers';
 import { IReservoirOrderParameters } from '../../interfaces';
 import { SortOrderOptionsEnum } from '../orders/builders/order.builder';
 
+export const getReservoirTokenIds = async (
+  contractAddress: string,
+  params: IReservoirOrderParameters,
+) => {
+  let filteredTokenIds = [];
+  let tokenPrices = await getBestPriceForEveryToken(contractAddress);
+
+  switch (params.orderSort) {
+    case SortOrderOptionsEnum.HighestPrice:
+      tokenPrices = Object.fromEntries(
+        Object.entries(tokenPrices).sort(
+          ([, a]: [string, number], [, b]: [string, number]) => b - a,
+        ),
+      );
+      break;
+    case SortOrderOptionsEnum.LowestPrice:
+      tokenPrices = Object.fromEntries(
+        Object.entries(tokenPrices).sort(
+          ([, a]: [string, number], [, b]: [string, number]) => a - b,
+        ),
+      );
+      break;
+    case SortOrderOptionsEnum.TokenIdAscending:
+      tokenPrices = Object.fromEntries(
+        Object.entries(tokenPrices).sort(
+          ([a]: [string, number], [b]: [string, number]) =>
+            Number(a) - Number(b),
+        ),
+      );
+      break;
+    case SortOrderOptionsEnum.TokenIdDescending:
+      tokenPrices = Object.fromEntries(
+        Object.entries(tokenPrices).sort(
+          ([a]: [string, number], [b]: [string, number]) =>
+            Number(b) - Number(a),
+        ),
+      );
+      break;
+    default:
+      break;
+  }
+
+  if (params.maxPrice || params.minPrice || params.buyNow) {
+    if (params.buyNow && !params.maxPrice && !params.minPrice) {
+      filteredTokenIds = Object.values(tokenPrices);
+    } else {
+      Object.keys(tokenPrices).forEach((tokenId) => {
+        const price = tokenPrices[tokenId];
+        if (
+          (params.minPrice && !params.maxPrice && price >= params.minPrice) ||
+          (params.maxPrice && !params.minPrice && price <= params.maxPrice) ||
+          (params.maxPrice &&
+            params.minPrice &&
+            price >= params.minPrice &&
+            price <= params.maxPrice)
+        ) {
+          filteredTokenIds.push(tokenId);
+        }
+      });
+    }
+    if (!filteredTokenIds.length) {
+      return [];
+    }
+  }
+  return filteredTokenIds;
+};
+
 export const getReservoirOrdersByOrderParameters = async (
   finalTokens: any[],
   contractAddress: string,

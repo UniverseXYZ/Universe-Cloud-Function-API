@@ -8,7 +8,6 @@ import {
 import { TokenModel } from '../../models';
 import { buildNftQueryFilters } from '../../services/nfts/builders';
 import { getOwnersByTokens } from '../../services/owners/owners.service';
-import { getReservoirOrdersByTokenIds } from '../../services/reservoir/reservoir.service';
 
 export class ReservoirNftStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
@@ -98,10 +97,10 @@ export class ReservoirNftStrategy implements IStrategy {
       };
     }
 
-    const [owners, orders] = await Promise.all([
-      getOwnersByTokens(data, nftParams.tokenType.toString()),
-      getReservoirOrdersByTokenIds(data),
-    ]);
+    const owners = await getOwnersByTokens(
+      data,
+      nftParams.tokenType.toString(),
+    );
 
     const finalData = data.map((nft) => {
       const ownersInfo = owners.filter(
@@ -120,7 +119,6 @@ export class ReservoirNftStrategy implements IStrategy {
       return {
         ...nft,
         owners: ownerAddresses,
-        orders: orders[`${nft.contractAddress.toLowerCase()}:${nft.tokenId}`],
       };
     });
 

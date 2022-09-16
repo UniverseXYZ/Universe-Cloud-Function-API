@@ -12,7 +12,6 @@ import {
 } from '../../services/nfts/helpers/nft.helpers';
 import { buildGeneralParams } from '../../services/nfts/builders';
 import {
-  OwnerOrderStrategy,
   HistoryStrategy,
   ReservoirNftStrategy,
   ReservoirNftOwnerStrategy,
