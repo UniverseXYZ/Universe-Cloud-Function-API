@@ -95,6 +95,7 @@ Currently supported tokens:
 - XYZ
 - DAI
 - USDC
+- APE
 
 ## Query Strategies
 

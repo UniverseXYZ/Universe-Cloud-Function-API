@@ -33,6 +33,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
     { value: daiPrice },
     { value: usdcPrice },
     { value: xyzPrice },
+    { value: apePrice },
   ] = await fetchTokenPrices();
 
   console.log(`ETH Price: ${ethPrice}`);
@@ -40,6 +41,7 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
   console.log(`XYZ Price: ${xyzPrice}`);
   console.log(`DAI Price: ${daiPrice}`);
   console.log(`WETH Price: ${wethPrice}`);
+  console.log(`APE Price: ${apePrice}`);
 
   if (orderSide === OrderSide.BUY) {
     return [
@@ -102,6 +104,17 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                     $divide: [
                       { $toDecimal: "$make.value" },
                       Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.XYZ]) * xyzPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$make.assetType.contract", apePrice],
+                  },
+                  then: {
+                    $divide: [
+                      { $toDecimal: "$make.value" },
+                      Math.pow(10, Utils.TOKEN_DECIMALS[TOKENS.APE]) * apePrice,
                     ],
                   },
                 },
@@ -193,6 +206,22 @@ export const addPriceSortingAggregation = async (orderSide: OrderSide) => {
                         $divide: [
                           { $toDecimal: "$take.value" },
                           { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.XYZ]] },
+                        ],
+                      },
+                      xyzPrice,
+                    ],
+                  },
+                },
+                {
+                  case: {
+                    $eq: ["$take.assetType.contract", apePrice],
+                  },
+                  then: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $toDecimal: "$take.value" },
+                          { $pow: [10, Utils.TOKEN_DECIMALS[TOKENS.APE]] },
                         ],
                       },
                       xyzPrice,
