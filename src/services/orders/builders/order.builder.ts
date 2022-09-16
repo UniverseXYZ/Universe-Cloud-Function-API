@@ -14,7 +14,7 @@ import {
 
 import { Utils } from '../../../utils';
 
-enum SortOrderOptionsEnum {
+export enum SortOrderOptionsEnum {
   RecentlyListed = 1,
   HighestPrice = 2,
   LowestPrice = 3,

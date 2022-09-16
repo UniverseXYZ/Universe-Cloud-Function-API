@@ -4,11 +4,11 @@ import {
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from '../interfaces';
-import { TokenModel } from '../models';
-import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
-import { buildOwnerQuery } from '../services/owners/owners.service';
-import { getBundleOrdersByTokens } from '../services/orders/orders.service';
+} from '../../interfaces';
+import { TokenModel } from '../../models';
+import { getOrdersLookup } from '../../services/orders/lookups/order.lookup';
+import { buildOwnerQuery } from '../../services/owners/owners.service';
+import { getBundleOrdersByTokens } from '../../services/orders/orders.service';
 
 export class OwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {

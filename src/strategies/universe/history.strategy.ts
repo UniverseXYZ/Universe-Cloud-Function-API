@@ -7,7 +7,7 @@ import {
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from '../interfaces';
+} from '../../interfaces';
 import {
   TokenModel,
   OrderModel,
@@ -15,15 +15,16 @@ import {
   OrderSide,
   TransferHistoryModel,
   AssetClass,
-} from '../models';
-import { buildHistoryQueryFilters } from '../services/history/builders/history.builder';
-import { buildNftQueryFilters } from '../services/nfts/builders';
-import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
+} from '../../models';
+import { buildHistoryQueryFilters } from '../../services/history/builders/history.builder';
+import { buildNftQueryFilters } from '../../services/nfts/builders';
+import { buildOrderQueryFilters } from '../../services/orders/builders/order.builder';
 import {
   buildOwnerQuery,
   getOwnersByTokens,
-} from '../services/owners/owners.service';
-import { getOrdersByTokens } from '../services/orders/orders.service';
+} from '../../services/owners/owners.service';
+import { getOrdersByTokens } from '../../services/orders/orders.service';
+import { getReservoirOrdersByOrderParameters } from '../../services/reservoir/reservoir.service';
 
 /**
  * History strategy is an experimental strategy designed to support sorting
@@ -66,10 +67,6 @@ export class HistoryStrategy implements IStrategy {
       historyParams,
     );
     const { nftFilters } = await buildNftQueryFilters(nftParams);
-    const { finalFilters } = await buildOrderQueryFilters(
-      orderParams,
-      generalParams,
-    );
 
     // in fact nftParams is never empty because nftParams.contractAddress is required for this strategy!
     const isNftParamsEmpty = this.isEmptyParams(nftParams);
@@ -96,13 +93,14 @@ export class HistoryStrategy implements IStrategy {
         : buildOwnerQuery(ownerParams, nftParams.tokenType.toString()),
       isOrderParamsEmpty
         ? Promise.resolve([])
-        : OrderModel.aggregate([{ $match: finalFilters }], {
-            collation: {
-              locale: 'en',
-              strength: 2,
-              numericOrdering: true,
-            },
-          }),
+        : // We always have contractAddress because of the NFT Embed Collection page
+          // This strategy shouldn't execute if we're on Single Embed Page
+          await getReservoirOrdersByOrderParameters(
+            [],
+            nftParams.contractAddress,
+            orderParams,
+            '',
+          ),
     ]);
     console.timeEnd('query-time');
 
@@ -150,27 +148,12 @@ export class HistoryStrategy implements IStrategy {
       }
 
       if (!isOrderParamsEmpty) {
-        const nftOrders = orders.filter((order) => {
-          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
-            const contractIndex = order.make.assetType.contracts.indexOf(
+        const nftOrders = orders.filter(
+          (order) =>
+            order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType.contract?.toLowerCase() ===
               nft.contractAddress.toLowerCase(),
-            );
-            if (
-              -1 !== contractIndex &&
-              order.make.assetType.tokenIds[contractIndex] &&
-              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
-            ) {
-              return true;
-            }
-            return false;
-          } else {
-            return (
-              order.make.assetType.tokenId === nft.tokenId &&
-              order.make.assetType.contract?.toLowerCase() ===
-                nft.contractAddress.toLowerCase()
-            );
-          }
-        });
+        );
 
         if (!nftOrders.length) {
           continue;
@@ -200,10 +183,6 @@ export class HistoryStrategy implements IStrategy {
       historyParams,
     );
     const { nftFilters } = await buildNftQueryFilters(nftParams);
-    const { finalFilters } = await buildOrderQueryFilters(
-      orderParams,
-      generalParams,
-    );
 
     // in fact nftParams is never empty because nftParams.contractAddress is required for this strategy!
     const isNftParamsEmpty = this.isEmptyParams(nftParams);
@@ -230,13 +209,14 @@ export class HistoryStrategy implements IStrategy {
         : buildOwnerQuery(ownerParams, nftParams.tokenType.toString()),
       isOrderParamsEmpty
         ? Promise.resolve([])
-        : OrderModel.aggregate([{ $match: finalFilters }], {
-            collation: {
-              locale: 'en',
-              strength: 2,
-              numericOrdering: true,
-            },
-          }),
+        : // We always have contractAddress because of the NFT Embed Collection page
+          // This strategy shouldn't execute if we're on Single Embed Page
+          await getReservoirOrdersByOrderParameters(
+            [],
+            nftParams.contractAddress,
+            orderParams,
+            '',
+          ),
     ]);
     console.timeEnd('query-time');
 
@@ -295,27 +275,12 @@ export class HistoryStrategy implements IStrategy {
       }
 
       if (!isOrderParamsEmpty) {
-        const nftOrders = orders.filter((order) => {
-          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
-            const contractIndex = order.make.assetType.contracts.indexOf(
+        const nftOrders = orders.filter(
+          (order) =>
+            order.make.assetType.tokenId === nft.tokenId &&
+            order.make.assetType.contract?.toLowerCase() ===
               nft.contractAddress.toLowerCase(),
-            );
-            if (
-              -1 !== contractIndex &&
-              order.make.assetType.tokenIds[contractIndex] &&
-              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
-            ) {
-              return true;
-            }
-            return false;
-          } else {
-            return (
-              order.make.assetType.tokenId === nft.tokenId &&
-              order.make.assetType.contract?.toLowerCase() ===
-                nft.contractAddress.toLowerCase()
-            );
-          }
-        });
+        );
 
         if (!nftOrders.length) {
           continue;
@@ -375,27 +340,14 @@ export class HistoryStrategy implements IStrategy {
 
       paginated.forEach((nft) => {
         const orders = lookupOrders.filter((order) => {
-          if (AssetClass.ERC721_BUNDLE == order.make.assetType.assetClass) {
-            const contractIndex = order.make.assetType.contracts.indexOf(
-              nft.contractAddress.toLowerCase(),
-            );
-            if (
-              -1 !== contractIndex &&
-              order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
-            ) {
-              return true;
-            }
-            return false;
-          } else {
-            if (
-              order.make.assetType.contract ==
-                nft.contractAddress.toLowerCase() &&
-              order.make.assetType.tokenId == nft.tokenId
-            ) {
-              return true;
-            }
-            return false;
+          if (
+            order.make.assetType.contract ==
+              nft.contractAddress.toLowerCase() &&
+            order.make.assetType.tokenId == nft.tokenId
+          ) {
+            return true;
           }
+          return false;
         });
 
         nft.orders = orders;

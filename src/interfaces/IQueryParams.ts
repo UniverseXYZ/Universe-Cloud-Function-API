@@ -24,6 +24,16 @@ export interface IOrderParameters {
   buyNow: boolean;
 }
 
+export interface IReservoirOrderParameters {
+  beforeTimestamp: number;
+  minPrice: string;
+  maxPrice: string;
+  orderSort: number;
+  hasOffers: boolean;
+  tokenAddress: string;
+  buyNow: boolean;
+}
+
 export interface IOwnerParameters {
   ownerAddress: string;
 }

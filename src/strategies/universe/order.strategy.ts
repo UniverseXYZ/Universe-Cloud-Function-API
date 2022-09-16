@@ -4,12 +4,12 @@ import {
   IOrderParameters,
   IQueryParameters,
   IStrategy,
-} from '../interfaces';
-import { AssetClass, OrderModel, TokenModel } from '../models';
-import { buildOrderQueryFilters } from '../services/orders/builders/order.builder';
-import { getOwnersByTokens } from '../services/owners/owners.service';
-import { getNFTLookup } from '../services/nfts/lookups/nft.lookup';
-import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
+} from '../../interfaces';
+import { AssetClass, OrderModel, TokenModel } from '../../models';
+import { buildOrderQueryFilters } from '../../services/orders/builders/order.builder';
+import { getOwnersByTokens } from '../../services/owners/owners.service';
+import { getNFTLookup } from '../../services/nfts/lookups/nft.lookup';
+import { getOrdersLookup } from '../../services/orders/lookups/order.lookup';
 
 export class OrderStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {

@@ -3,25 +3,25 @@ import {
   IQueryParameters,
   IStrategy,
   TokenType,
-} from '../interfaces';
-import { ApiError, ERROR_MESSAGES, HTTP_STATUS_CODES } from '../errors';
+} from '../../interfaces';
+import { ApiError, ERROR_MESSAGES, HTTP_STATUS_CODES } from '../../errors';
 import {
   hasNftParamsOnly,
   hasOrderParamsOnly,
   hasOwnerParamsOnly,
-} from '../services/nfts/helpers/nft.helpers';
-import { buildGeneralParams } from '../services/nfts/builders';
+} from '../../services/nfts/helpers/nft.helpers';
+import { buildGeneralParams } from '../../services/nfts/builders';
 import {
   NftOrderStrategy,
   NftOwnerOrderStrategy,
-  NftOwnerStrategy,
+  OwnerOrderStrategy,
+  HistoryStrategy,
   NftStrategy,
   OrderStrategy,
-  OwnerOrderStrategy,
   OwnerStrategy,
-  HistoryStrategy,
-} from '../strategies';
-import { CloudActions } from '../validations';
+  NftOwnerStrategy,
+} from '../../strategies';
+import { CloudActions } from '../../validations';
 import { utils } from 'ethers';
 
 // The context defines the interface of interest to clients.
@@ -38,7 +38,7 @@ export class StrategyContext {
     // TODO:: Write down the minimum required params for the Cloud function
     // to be able to return a result without timing out from the DB
 
-    // Analysing the query paramters and chooses the optimal query strategy based on the parameters
+    // Analyzing the query parameters and chooses the optimal query strategy based on the parameters
     const {
       ownerAddress,
       tokenAddress,

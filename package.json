@@ -1,7 +1,7 @@
 {
   "name": "universe-cloud-function",
   "version": "1.0.0",
-  "description": "Cloud Function that queries NFTs and Orders from the Universe Database",
+  "description": "Cloud Function that queries NFTs from the Universe Database and Orders from Reservoir Protocol",
   "main": "index.js",
   "scripts": {
     "clean": "rimraf \"cloudfn/*\"",
@@ -33,13 +33,14 @@
     "eslint-plugin-prettier": "^4.0.0",
     "express": "^4.18.1",
     "mocha": "^4.1.0",
+    "mongodb-memory-server": "^8.7.2",
     "npm-run-all": "^4.1.2",
     "prettier": "^2.7.1",
     "rimraf": "^2.6.2",
-    "typescript": "^4.6.3",
-    "mongodb-memory-server": "^8.7.2"
+    "typescript": "^4.6.3"
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "dotenv": "^16.0.0",
     "ethers": "^5.6.4",
     "mongoose": "^6.2.10",

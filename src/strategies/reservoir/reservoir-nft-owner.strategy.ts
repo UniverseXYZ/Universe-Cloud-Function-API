@@ -5,14 +5,13 @@ import {
   IOwnerParameters,
   IQueryParameters,
   IStrategy,
-} from '../interfaces';
-import { TokenModel, OrderModel, OrderStatus, OrderSide } from '../models';
-import { buildNftQueryFilters } from '../services/nfts/builders';
-import { buildOwnerQuery } from '../services/owners/owners.service';
-import { getBundleOrdersByTokens } from '../services/orders/orders.service';
-import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
+} from '../../interfaces';
+import { TokenModel, OrderModel, OrderStatus, OrderSide } from '../../models';
+import { buildNftQueryFilters } from '../../services/nfts/builders';
+import { buildOwnerQuery } from '../../services/owners/owners.service';
+import { getReservoirOrdersByTokenIds } from '../../services/reservoir/reservoir.service';
 
-export class NftOwnerStrategy implements IStrategy {
+export class ReservoirNftOwnerStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
     return this.queryNftAndOwnerParams(
       parameters.nftParams,
@@ -67,7 +66,7 @@ export class NftOwnerStrategy implements IStrategy {
     });
     console.timeEnd('nft-query-time');
 
-    const filtered = [];
+    const filtered: any[] = [];
 
     if (!nfts.length || !owners.length) {
       return {
@@ -132,20 +131,17 @@ export class NftOwnerStrategy implements IStrategy {
     }
 
     console.time('nft-query-time');
-    const nfts = await TokenModel.aggregate(
-      [...nftFilters, { $sort: sort }, getOrdersLookup()],
-      {
-        collation: {
-          locale: 'en',
-          strength: 2,
-          numericOrdering: true,
-        },
+    const nfts = await TokenModel.aggregate([...nftFilters, { $sort: sort }], {
+      collation: {
+        locale: 'en',
+        strength: 2,
+        numericOrdering: true,
       },
-    );
+    });
 
     console.timeEnd('nft-query-time');
 
-    const filtered = [];
+    const filtered: any[] = [];
 
     if (!nfts.length || !owners.length) {
       return {
@@ -169,14 +165,17 @@ export class NftOwnerStrategy implements IStrategy {
         continue;
       }
 
-      const ownerAddresses = nftOwners.map((owner) => ({
+      const ownerAddresses = await nftOwners.map(async (owner) => ({
         owner: owner.address,
         value: owner.value
           ? owner.value.toString()
           : ethers.BigNumber.from(owner.value).toString(),
       }));
 
-      filtered.push({ ...nft, owners: ownerAddresses });
+      filtered.push({
+        ...nft,
+        owners: ownerAddresses,
+      });
 
       if (filtered.length === generalParams.skippedItems + limit) {
         break;
@@ -193,33 +192,17 @@ export class NftOwnerStrategy implements IStrategy {
 
     const paginated = filtered.slice(generalParams.skippedItems);
 
-    // additionally looking up for bundle orders with found NFTs
-    console.time('bundle-order-query-time');
-    const bundleOrders = await getBundleOrdersByTokens(paginated);
-    console.timeEnd('bundle-order-query-time');
+    const orders = await getReservoirOrdersByTokenIds(paginated);
 
-    const finalNfts = paginated.map((nft) => {
-      const orders = bundleOrders.filter((order) => {
-        const contractIndex = order.make.assetType.contracts.indexOf(
-          nft.contractAddress.toLowerCase(),
-        );
-        if (
-          -1 !== contractIndex &&
-          order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
-        ) {
-          return true;
-        }
-        return false;
-      });
-      nft.orders.push(...orders);
-
-      return nft;
-    });
+    const paginatedWithOrders = paginated.map((nft) => ({
+      ...nft,
+      orders: orders[`${nft.contractAddress.toLowerCase()}:${nft.tokenId}`],
+    }));
 
     return {
       page: page,
       size: limit,
-      nfts: finalNfts,
+      nfts: paginatedWithOrders,
     };
   }
 }

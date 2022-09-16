@@ -4,14 +4,13 @@ import {
   INFTParameters,
   IQueryParameters,
   IStrategy,
-} from '../interfaces';
-import { TokenModel } from '../models';
-import { buildNftQueryFilters } from '../services/nfts/builders';
-import { getOrdersLookup } from '../services/orders/lookups/order.lookup';
-import { getOwnersByTokens } from '../services/owners/owners.service';
-import { getBundleOrdersByTokens } from '../services/orders/orders.service';
+} from '../../interfaces';
+import { TokenModel } from '../../models';
+import { buildNftQueryFilters } from '../../services/nfts/builders';
+import { getOwnersByTokens } from '../../services/owners/owners.service';
+import { getReservoirOrdersByTokenIds } from '../../services/reservoir/reservoir.service';
 
-export class NftStrategy implements IStrategy {
+export class ReservoirNftStrategy implements IStrategy {
   execute(parameters: IQueryParameters) {
     return this.queryOnlyNftParams(
       parameters.nftParams,
@@ -79,7 +78,6 @@ export class NftStrategy implements IStrategy {
         { $sort: sort },
         { $skip: generalParams.skippedItems },
         { $limit: Number(limit) },
-        getOrdersLookup(),
       ],
       {
         collation: {
@@ -100,15 +98,10 @@ export class NftStrategy implements IStrategy {
       };
     }
 
-    const owners = await getOwnersByTokens(
-      data,
-      nftParams.tokenType.toString(),
-    );
-
-    // additionally looking up for bundle orders with found NFTs
-    console.time('bundle-order-query-time');
-    const bundleOrders = await getBundleOrdersByTokens(data);
-    console.timeEnd('bundle-order-query-time');
+    const [owners, orders] = await Promise.all([
+      getOwnersByTokens(data, nftParams.tokenType.toString()),
+      getReservoirOrdersByTokenIds(data),
+    ]);
 
     const finalData = data.map((nft) => {
       const ownersInfo = owners.filter(
@@ -124,23 +117,10 @@ export class NftStrategy implements IStrategy {
           : ethers.BigNumber.from(owner.value).toString(),
       }));
 
-      const orders = bundleOrders.filter((order) => {
-        const contractIndex = order.make.assetType.contracts.indexOf(
-          nft.contractAddress.toLowerCase(),
-        );
-        if (
-          -1 !== contractIndex &&
-          order.make.assetType.tokenIds[contractIndex].includes(nft.tokenId)
-        ) {
-          return true;
-        }
-        return false;
-      });
-      nft.orders.push(...orders);
-
       return {
         ...nft,
         owners: ownerAddresses,
+        orders: orders[`${nft.contractAddress.toLowerCase()}:${nft.tokenId}`],
       };
     });
 
