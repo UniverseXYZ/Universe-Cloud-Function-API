@@ -110,6 +110,7 @@ Currently supported tokens:
 - XYZ
 - DAI
 - USDC
+- APE
 
 ### History parameters
 
