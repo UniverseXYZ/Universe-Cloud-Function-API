@@ -1,11 +1,13 @@
 import { INFTParameters } from '../../../interfaces';
 import { getTokenIdsByCollectionAttributes } from '../../attributes/attributes.service';
-import config from '../../../config';
 
 enum NftSortOrderOptionsEnum {
   TokenIdAscending = 8,
   TokenIdDescending = 9,
 }
+
+const splitTokenIds = (tokenIds: string) =>
+  tokenIds.replace(/\s/g, '').split(',');
 
 export const buildNftQueryFilters = async (
   nftParams: INFTParameters,
@@ -34,10 +36,12 @@ export const buildNftQueryFilters = async (
   }
 
   if (searchQuery) {
-    filters.push({ $or: [
-      { tokenId: searchQuery },
-      {'metadata.name': { $regex: `.*${searchQuery}.*`, $options: 'i' } }
-    ]});
+    filters.push({
+      $or: [
+        { tokenId: searchQuery },
+        { 'metadata.name': { $regex: `.*${searchQuery}.*`, $options: 'i' } },
+      ],
+    });
   }
 
   // The user either is going to search by traits or by tokenIds (if its searching for a specific token info)
@@ -53,12 +57,21 @@ export const buildNftQueryFilters = async (
       };
     }
 
-    filters.push({
-      tokenId: { $in: ids },
-    });
-  } else if (tokenIds) {
-    const tokenIdsSplit = tokenIds.replace(/\s/g, '').split(',');
-
+    if (!!tokenIds) {
+      const tokenIdsSplit = splitTokenIds(tokenIds);
+      const intersectedIds = ids.filter((value) =>
+        tokenIdsSplit.includes(value),
+      );
+      filters.push({
+        tokenId: { $in: intersectedIds },
+      });
+    } else {
+      filters.push({
+        tokenId: { $in: ids },
+      });
+    }
+  } else if (!!tokenIds) {
+    const tokenIdsSplit = splitTokenIds(tokenIds);
     filters.push({
       tokenId: { $in: tokenIdsSplit },
     });
@@ -70,7 +83,6 @@ export const buildNftQueryFilters = async (
 
   const nftFilters = [] as any;
   // Assemble final order of filters
-
 
   if (filters.length && owners.length) {
     nftFilters.push({
@@ -100,6 +112,18 @@ export const buildNftQueryFilters = async (
     default:
       sort.updatedAt = -1;
       break;
+  }
+
+  if (!!tokenIds && !!sort.updatedAt) {
+    const tokenIdsSplit = splitTokenIds(tokenIds);
+    // create a new field that will be used in the sorting by __id_posn
+    nftFilters.push({
+      $addFields: { __id_posn: { $indexOfArray: [tokenIdsSplit, '$tokenId'] } },
+    });
+
+    // we need to delete the other sorting options and add a new one that sorts by array position
+    delete sort.updatedAt;
+    sort.__id_posn = 1;
   }
 
   console.log('NFT FILTERS:');
