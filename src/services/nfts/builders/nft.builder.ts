@@ -103,7 +103,7 @@ export const buildNftQueryFilters = async (
   }
 
 
-  if(tokenIds){
+  if (tokenIds) { 
     const tokenIdsSplit = tokenIds.replace(/\s/g, '').split(',');
 
     // create a new field that will be used in the sorting by __id_posn
