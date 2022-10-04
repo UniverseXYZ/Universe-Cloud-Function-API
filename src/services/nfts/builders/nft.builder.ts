@@ -55,7 +55,7 @@ export const buildNftQueryFilters = async (
       };
     }
 
-    if(!!tokenIds){
+    if (!!tokenIds) {
       const tokenIdsSplit = splitTokenIds(tokenIds)
       const intersectedIds = ids.filter(value => tokenIdsSplit.includes(value));
       filters.push({
@@ -67,7 +67,7 @@ export const buildNftQueryFilters = async (
       });
     }
 
-  } else if (tokenIds) {
+  } else if (!!tokenIds) {
     const tokenIdsSplit = splitTokenIds(tokenIds)
     filters.push({
       tokenId: { $in: tokenIdsSplit },
