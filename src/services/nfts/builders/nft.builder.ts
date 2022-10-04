@@ -7,6 +7,8 @@ enum NftSortOrderOptionsEnum {
   TokenIdDescending = 9,
 }
 
+const splitTokenIds = (tokenIds:string) => tokenIds.replace(/\s/g, '').split(',');
+
 export const buildNftQueryFilters = async (
   nftParams: INFTParameters,
   owners: any[] = [],
@@ -53,12 +55,20 @@ export const buildNftQueryFilters = async (
       };
     }
 
-    filters.push({
-      tokenId: { $in: ids },
-    });
-  } else if (tokenIds) {
-    const tokenIdsSplit = tokenIds.replace(/\s/g, '').split(',');
+    if(!!tokenIds){
+      const tokenIdsSplit = splitTokenIds(tokenIds)
+      const intersectedIds = ids.filter(value => tokenIdsSplit.includes(value));
+      filters.push({
+        tokenId: { $in: intersectedIds },
+      });
+    } else {
+      filters.push({
+        tokenId: { $in: ids },
+      });
+    }
 
+  } else if (tokenIds) {
+    const tokenIdsSplit = splitTokenIds(tokenIds)
     filters.push({
       tokenId: { $in: tokenIdsSplit },
     });
@@ -104,7 +114,7 @@ export const buildNftQueryFilters = async (
 
 
   if (!!tokenIds && !!sort.updatedAt) { 
-    const tokenIdsSplit = tokenIds.replace(/\s/g, '').split(',');
+    const tokenIdsSplit = splitTokenIds(tokenIds)
     // create a new field that will be used in the sorting by __id_posn
     nftFilters.push({
       "$addFields" : { "__id_posn" : { "$indexOfArray" : [ tokenIdsSplit, "$tokenId" ] } } 
