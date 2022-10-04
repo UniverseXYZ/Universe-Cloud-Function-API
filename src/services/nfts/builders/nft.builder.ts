@@ -103,18 +103,16 @@ export const buildNftQueryFilters = async (
   }
 
 
-  if (tokenIds) { 
+  if (!!tokenIds && !!sort.updatedAt) { 
     const tokenIdsSplit = tokenIds.replace(/\s/g, '').split(',');
-
     // create a new field that will be used in the sorting by __id_posn
     nftFilters.push({
       "$addFields" : { "__id_posn" : { "$indexOfArray" : [ tokenIdsSplit, "$tokenId" ] } } 
     })
 
     // we need to delete the other sorting options and add a new one that sorts by array position
-    delete sort.tokenId
-    delete sort.updatedAt
-    sort.__id_posn = 1
+      delete sort.updatedAt
+      sort.__id_posn = 1
   }
 
   console.log('NFT FILTERS:');
