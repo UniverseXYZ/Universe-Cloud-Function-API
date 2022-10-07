@@ -164,7 +164,7 @@ export class ReservoirNftOwnerStrategy implements IStrategy {
         continue;
       }
 
-      const ownerAddresses = await nftOwners.map(async (owner) => ({
+      const ownerAddresses = nftOwners.map((owner) => ({
         owner: owner.address,
         value: owner.value
           ? owner.value.toString()
