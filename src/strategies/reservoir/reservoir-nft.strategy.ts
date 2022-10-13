@@ -7,6 +7,7 @@ import {
 } from '../../interfaces';
 import { TokenModel } from '../../models';
 import { buildNftQueryFilters } from '../../services/nfts/builders';
+import { SortOrderOptionsEnum } from '../../services/orders/builders/order.builder';
 import { getOwnersByTokens } from '../../services/owners/owners.service';
 
 export class ReservoirNftStrategy implements IStrategy {
@@ -23,6 +24,8 @@ export class ReservoirNftStrategy implements IStrategy {
 
   private async countOnlyNftParams(nftParams: INFTParameters) {
     console.log('Counting only nft params');
+    // Exception to make sorting by highest/lowest price work
+    nftParams.reservoirIds = '';
 
     const { nftFilters } = await buildNftQueryFilters(nftParams);
 
@@ -57,7 +60,6 @@ export class ReservoirNftStrategy implements IStrategy {
   ) {
     console.log('Querying only nft params');
     const { page, limit } = generalParams;
-
     const { nftFilters, sort } = await buildNftQueryFilters(nftParams);
 
     if (!nftFilters.length) {
@@ -71,7 +73,7 @@ export class ReservoirNftStrategy implements IStrategy {
     console.log('Querying...');
     console.time('query-time');
 
-    const data = await TokenModel.aggregate(
+    let data = await TokenModel.aggregate(
       [
         ...nftFilters,
         { $sort: sort },
@@ -88,6 +90,37 @@ export class ReservoirNftStrategy implements IStrategy {
     );
 
     console.timeEnd('query-time');
+
+    // If we have tokenIds sort that means we're sorting for lowest/highest price
+    // We want to add NFTs that don't have orders
+    const { searchQuery, reservoirIds, contractAddress, hasPriceFilter } = nftParams;
+    if (data.length !== limit && !!reservoirIds && !hasPriceFilter) {
+      const filters = [
+        {
+          tokenId: { $not: { $in: reservoirIds.split(',') } },
+          contractAddress: contractAddress,
+        },
+      ] as any;
+
+      if (searchQuery) {
+        filters.push({
+          $or: [
+            { tokenId: searchQuery },
+            {
+              'metadata.name': { $regex: `.*${searchQuery}.*`, $options: 'i' },
+            },
+          ],
+        });
+      }
+
+      const needed = limit - data.length;
+      const moreNfts = await TokenModel.find({ $and: filters })
+        .sort({ createdAt: -1 })
+        .limit(needed)
+        .lean();
+
+      data = [...data, ...moreNfts];
+    }
 
     if (!data.length) {
       return {

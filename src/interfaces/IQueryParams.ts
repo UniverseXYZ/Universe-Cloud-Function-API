@@ -7,6 +7,8 @@ export interface INFTParameters {
   tokenType: TokenType;
   searchQuery: string;
   tokenIds: string;
+  reservoirIds: string;
+  hasPriceFilter: number;
   traits: string;
   nftSort: number;
 }
@@ -63,12 +65,14 @@ export interface IExecutionParameters {
   tokenType: string;
   searchQuery: string;
   tokenIds: string;
+  reservoirIds: string;
   traits: string;
   nftSort: string;
   page: string;
   limit: string;
   side: string;
   maker: string;
+  hasPriceFilter: string;
   // NFT Type
   assetClass: string;
   // New checkbox

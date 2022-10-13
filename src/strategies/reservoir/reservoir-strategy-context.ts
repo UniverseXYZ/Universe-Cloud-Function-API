@@ -44,6 +44,7 @@ export class ReservoirStrategyContext {
       tokenType,
       searchQuery,
       tokenIds,
+      reservoirIds,
       traits,
       nftSort,
       page,
@@ -57,6 +58,7 @@ export class ReservoirStrategyContext {
       hasOffers,
       buyNow,
       historySort,
+      hasPriceFilter
     } = params;
 
     const orderSort = params.orderSort;
@@ -67,6 +69,8 @@ export class ReservoirStrategyContext {
           ? utils.getAddress(contractAddress)
           : '',
         tokenIds,
+        reservoirIds,
+        hasPriceFilter: Number(hasPriceFilter),
         searchQuery,
         tokenType: TokenType[tokenType] || '',
         traits,

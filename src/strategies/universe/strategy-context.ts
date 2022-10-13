@@ -47,6 +47,7 @@ export class StrategyContext {
       searchQuery,
       tokenIds,
       traits,
+      reservoirIds,
       nftSort,
       page,
       limit,
@@ -59,6 +60,7 @@ export class StrategyContext {
       hasOffers,
       buyNow,
       historySort,
+      hasPriceFilter
     } = params;
 
     const orderSort = params.orderSort;
@@ -69,6 +71,8 @@ export class StrategyContext {
           ? utils.getAddress(contractAddress)
           : '',
         tokenIds,
+        reservoirIds,
+        hasPriceFilter: Number(hasPriceFilter),
         searchQuery,
         tokenType: TokenType[tokenType] || '',
         traits,
