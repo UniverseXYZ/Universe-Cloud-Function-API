@@ -25,7 +25,10 @@ export class ReservoirNftStrategy implements IStrategy {
   private async countOnlyNftParams(nftParams: INFTParameters) {
     console.log('Counting only nft params');
     // Exception to make sorting by highest/lowest price work
-    nftParams.reservoirIds = '';
+    const { reservoirIds, hasPriceFilter, traits } = nftParams;
+    if (!!reservoirIds && !hasPriceFilter && !traits) {
+      nftParams.reservoirIds = '';
+    }
 
     const { nftFilters } = await buildNftQueryFilters(nftParams);
 
@@ -93,8 +96,14 @@ export class ReservoirNftStrategy implements IStrategy {
 
     // If we have tokenIds sort that means we're sorting for lowest/highest price
     // We want to add NFTs that don't have orders
-    const { searchQuery, reservoirIds, contractAddress, hasPriceFilter } = nftParams;
-    if (data.length !== limit && !!reservoirIds && !hasPriceFilter) {
+    const {
+      searchQuery,
+      reservoirIds,
+      contractAddress,
+      hasPriceFilter,
+      traits,
+    } = nftParams;
+    if (data.length !== limit && !!reservoirIds && !hasPriceFilter && !traits) {
       const filters = [
         {
           tokenId: { $not: { $in: reservoirIds.split(',') } },
