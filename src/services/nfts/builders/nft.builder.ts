@@ -11,7 +11,7 @@ export const buildNftQueryFilters = async (
   nftParams: INFTParameters,
   owners: any[] = [],
 ) => {
-  const { contractAddress, tokenIds, searchQuery, tokenType, traits, nftSort } =
+  const { contractAddress, tokenIds, searchQuery, tokenType, traits, nftSort, isTNFT } =
     nftParams;
   const filters = [] as any;
 
@@ -31,6 +31,10 @@ export const buildNftQueryFilters = async (
       }
       owners = filteredOwners;
     }
+  }
+
+  if (isTNFT) {
+    filters.push({'metadata.is_tnft': true });
   }
 
   if (searchQuery) {

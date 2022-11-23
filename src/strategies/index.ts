@@ -1,5 +1,6 @@
 export * from './strategy-context';
 export * from './nft.strategy';
+export * from './tnft-owner.strategy';
 export * from './owner.strategy';
 export * from './order.strategy';
 
