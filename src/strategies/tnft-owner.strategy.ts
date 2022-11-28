@@ -30,17 +30,13 @@ export class TNFTOwnerStrategy implements IStrategy {
     ownerParams: IOwnerParameters,
     tokenType: string,
   ) {
-    console.log('Counting only TNFT owner params');
 
     const ownerQuery = buildOwnerQuery(ownerParams, tokenType);
 
-    console.time('query-time');
     const owners = await ownerQuery;
-    console.timeEnd('query-time');
 
     let data = [];
     if (owners.length) {
-      console.time('query-time2');
       data = await TokenModel.aggregate(
         [
           {
@@ -56,7 +52,6 @@ export class TNFTOwnerStrategy implements IStrategy {
         ],
         { collation: { locale: 'en', strength: 2 } },
       );
-      console.timeEnd('query-time2');
     }
 
     return {
@@ -69,7 +64,6 @@ export class TNFTOwnerStrategy implements IStrategy {
     generalParams: IGeneralParameters,
     tokenType: string,
   ) {
-    console.log('Querying only TNFT owner params');
     const { page, limit } = generalParams;
 
     const ownerQuery = buildOwnerQuery(
@@ -79,10 +73,8 @@ export class TNFTOwnerStrategy implements IStrategy {
       // generalParams.limit,
     );
 
-    console.time('query-time');
     const owners = await ownerQuery;
 
-    console.timeEnd('query-time');
 
     if (!owners.length) {
       return {
@@ -92,7 +84,6 @@ export class TNFTOwnerStrategy implements IStrategy {
       };
     }
 
-    console.time('query-time2');
 
     const data = await TokenModel.aggregate(
       [
@@ -112,12 +103,9 @@ export class TNFTOwnerStrategy implements IStrategy {
       { collation: { locale: 'en', strength: 2 } },
     );
 
-    console.timeEnd('query-time2');
 
     // additionally looking up for bundle orders with found NFTs
-    console.time('bundle-order-query-time');
     const bundleOrders = await getBundleOrdersByTokens(data);
-    console.timeEnd('bundle-order-query-time');
 
     const finalData = data.map((nft) => {
       const ownersInfo = owners.filter(
