@@ -8,6 +8,7 @@ export interface INFTParameters {
   searchQuery: string;
   tokenIds: string;
   traits: string;
+  isTNFT: boolean;
   nftSort: number;
 }
 
@@ -54,6 +55,7 @@ export interface IExecutionParameters {
   searchQuery: string;
   tokenIds: string;
   traits: string;
+  isTNFT: string;
   nftSort: string;
   page: string;
   limit: string;

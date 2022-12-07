@@ -49,6 +49,10 @@ Because Cloud Functions basically are serverless single endpoint APIs, we use th
 - Current configuration searches for a substring match inside `metadata.name`.
 - Can be changed to use autocomplete, fuzzy search or any other valid Atlas Search configuration.
 
+##### `isTNFT`: Allowed values: "true" | undefined.
+- Format: `isTNFT=true`
+- If true, returns only NFTs that are tNFTs (metadata.is_tnft: true)
+
 ##### `tokenIds`: Any valid string
 
 - Format: `350,1280,4200`

@@ -20,6 +20,7 @@ import {
   OwnerOrderStrategy,
   OwnerStrategy,
   HistoryStrategy,
+  TNFTOwnerStrategy,
 } from '../strategies';
 import { CloudActions } from '../validations';
 import { utils } from 'ethers';
@@ -38,7 +39,7 @@ export class StrategyContext {
     // TODO:: Write down the minimum required params for the Cloud function
     // to be able to return a result without timing out from the DB
 
-    // Analysing the query paramters and chooses the optimal query strategy based on the parameters
+    // Analysing the query parameters and chooses the optimal query strategy based on the parameters
     const {
       ownerAddress,
       tokenAddress,
@@ -59,6 +60,7 @@ export class StrategyContext {
       hasOffers,
       buyNow,
       historySort,
+      isTNFT
     } = params;
 
     const orderSort = params.orderSort;
@@ -73,6 +75,7 @@ export class StrategyContext {
         tokenType: TokenType[tokenType] || '',
         traits,
         nftSort: Number(nftSort),
+        isTNFT: isTNFT === 'true'
       },
       orderParams: {
         minPrice,
@@ -191,6 +194,11 @@ export class StrategyContext {
 
     if (hasHistoryParams) {
       this.setStrategy(new HistoryStrategy());
+    }
+    if (
+      onlyOwnerParams && this.queryParams.nftParams.isTNFT
+    ) {
+      this.setStrategy(new TNFTOwnerStrategy());
     }
   }
 
