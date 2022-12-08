@@ -51,7 +51,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
       ownerParams,
       nftParams.tokenType.toString(),
     );
-    const { finalFilters, sortingAggregation, sort } =
+    const { finalFilters, sortingAggregation, sort, sorting } =
       await buildOrderQueryFilters(orderParams, generalParams);
 
     console.time('query-time');
@@ -64,13 +64,16 @@ export class NftOwnerOrderStrategy implements IStrategy {
         },
       }),
       ownerQuery,
-      OrderModel.aggregate([{ $match: finalFilters }], {
-        collation: {
-          locale: 'en',
-          strength: 2,
-          numericOrdering: true,
+      OrderModel.aggregate(
+        [{ $match: finalFilters }, ...sortingAggregation, { $sort: sort }],
+        {
+          collation: {
+            locale: 'en',
+            strength: 2,
+            numericOrdering: true,
+          },
         },
-      }),
+      ),
     ]);
     console.timeEnd('query-time');
 
@@ -81,6 +84,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
     }
 
     const filtered = [];
+    const uniqueFiltered = new Set();
     for (let i = 0; i < orders.length; i++) {
       const order = orders[i];
 
@@ -119,12 +123,15 @@ export class NftOwnerOrderStrategy implements IStrategy {
       if (!ownersInfo.length) {
         continue;
       }
-
-      filtered.push(nft);
+      if (sorting === 1) {
+        uniqueFiltered.add(nft.tokenId && nft.contractAddress && nft);
+      } else {
+        filtered.push(nft);
+      }
     }
 
     return {
-      count: filtered.length,
+      count: sorting === 1 ? uniqueFiltered.size : filtered.length,
     };
   }
 
@@ -152,7 +159,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
       ownerParams,
       nftParams.tokenType.toString(),
     );
-    const { finalFilters, sortingAggregation, sort } =
+    const { finalFilters, sortingAggregation, sort, sorting } =
       await buildOrderQueryFilters(orderParams, generalParams);
 
     console.time('query-time');
@@ -188,6 +195,7 @@ export class NftOwnerOrderStrategy implements IStrategy {
 
     // Apply Pagination
     const filtered = [];
+    const uniqueFiltered = new Set();
     for (let i = 0; i < orders.length; i++) {
       const order = orders[i];
 
@@ -247,26 +255,45 @@ export class NftOwnerOrderStrategy implements IStrategy {
       nft.orders = nftOrders;
       nft.owners = ownerAddresses;
 
-      filtered.push(nft);
-      if (filtered.length === generalParams.skippedItems + limit) {
-        break;
+      if (sorting === 1) {
+        uniqueFiltered.add(nft.tokenId && nft.contractAddress && nft);
+        if (uniqueFiltered.size === generalParams.skippedItems + limit) {
+          break;
+        }
+      } else {
+        filtered.push(nft);
+        if (filtered.length === generalParams.skippedItems + limit) {
+          break;
+        }
       }
     }
 
-    if (!filtered.length) {
-      return {
-        page: page,
-        size: limit,
-        nfts: [],
-      };
+    const emptyResponse = {
+      page: page,
+      size: limit,
+      nfts: [],
+    };
+
+    if (sorting === 1) {
+      if (!uniqueFiltered.size) {
+        return emptyResponse;
+      }
+    } else {
+      if (!filtered.length) {
+        return emptyResponse;
+      }
     }
 
+    const uniqeToArr = [...uniqueFiltered];
+
     const paginated = filtered.slice(generalParams.skippedItems);
+    const paginatedUnique = uniqeToArr.slice(generalParams.skippedItems);
 
     return {
       page: page,
       size: limit,
-      nfts: paginated,
+      nfts: sorting === 1 ? paginatedUnique : paginated,
+      count: paginatedUnique.length,
     };
   }
 }
